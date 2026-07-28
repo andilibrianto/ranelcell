@@ -1303,7 +1303,20 @@
     }
 
     function hasShippingItems() {
-        return hasAksesoris() || hasPerdana();
+        // Semua barang sekarang wajib melalui proses pengiriman
+        return cart.length > 0; 
+    }
+
+    function isDigitalItem(item) {
+        if (item.type === 'pulsa') return true;
+        if (item.type === 'token_pln') return true;
+        if (item.type === 'game') return true;
+        if (item.type === 'paket_data' && paketMode === 'isi_ulang') return true;
+        return false;
+    }
+
+    function hasDeliverableItems() {
+        return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
 
     function getGrandTotal() {
@@ -1864,9 +1877,15 @@
         }
     }
 
-    async function addToCart(itemData) {
-        // Cek batasan jam untuk Aksesoris & Kartu Perdana
-        if (itemData.type === 'aksesoris' || itemData.type === 'perdana') {
+        async function addToCart(itemData) {
+        // Cek apakah item ini barang yang dibatasi jamnya
+        let isRestrictedItem = (itemData.type === 'aksesoris' || itemData.type === 'perdana' || (itemData.type === 'paket_data' && paketMode === 'voucher'));
+        
+        // Cek apakah di keranjang sudah ada barang yang dibatasi jamnya
+        let cartHasRestricted = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
+
+        // Jika item dibatasi ATAU keranjang ada barang dibatasi, maka cek jam
+        if (isRestrictedItem || cartHasRestricted) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
             hideLoading();
@@ -1884,7 +1903,7 @@
         if (existing) existing.quantity++;
         else cart.push({ ...itemData, id: Date.now(), quantity: 1 });
         updateCartUI();
-        showToast('Ditambahkan ke Keranjang', 'success');
+        showToast('Ditambahkan ke pesanan', 'success');
     }
 
     function updateQty(idx, delta) {
@@ -2070,6 +2089,14 @@
         </div>`;
 
         if (hasShippingItems()) {
+            // Jika tidak ada barang fisik, paksa metode menjadi 'Ambil di Toko'
+            if (!hasDeliverableItems() && shippingMode === 'deliver') {
+                shippingMode = 'pickup';
+                shippingCost = 0;
+                appliedPromoCode = '';
+                promoDiscount = 0;
+            }
+
             const ongkirChecked = shippingCost > 0;
             const ongkirBtnDisabled = ongkirChecked ? 'disabled' : '';
             const ongkirBtnText = ongkirChecked ? 'Silahkan Lanjutkan Pembayaran' : 'Cek Ongkir';
@@ -2079,7 +2106,7 @@
                 <h3 class="section-label">Pilih Pengiriman</h3>
                 <div class="toggle-group">
                     <button type="button" class="toggle-btn ${shippingMode==='pickup'?'active':''}" onclick="setShippingMode('pickup')">Ambil di Toko</button>
-                    <button type="button" class="toggle-btn ${shippingMode==='deliver'?'active':''}" onclick="setShippingMode('deliver')">Kirim ke Alamat</button>
+                    ${hasDeliverableItems() ? `<button type="button" class="toggle-btn ${shippingMode==='deliver'?'active':''}" onclick="setShippingMode('deliver')">Kirim ke Alamat</button>` : ''}
                 </div>
                 <div class="mt-3 p-3 bg-dk-700 rounded-lg text-xs text-gray-300">
                     ${getShippingInfoHtml()}
@@ -2089,7 +2116,8 @@
                 </button>
             </div>`;
             
-            if (shippingMode === 'deliver' && shippingCost > 0) {
+                        const isVoucherMode = hasPaketData() && paketMode === 'voucher';
+            if (shippingMode === 'deliver' && shippingCost > 0 && !isVoucherMode) {
                 const promoApplied = !!appliedPromoCode;
                 html += `
                 <div class="mb-5">
@@ -2101,7 +2129,7 @@
                             `<button onclick="applyPromoCode()" class="btn-pk px-4 text-xs py-2">Cek Promo</button>`
                         }
                     </div>
-                    ${promoApplied ? `<p class="text-[11px] text-red-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Kode <b>${appliedPromoCode}</b> diterapkan! Anda hemat ${formatRp(promoDiscount)}</p>` : ''}
+                    ${promoApplied ? `<p class="text-[11px] text-green-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Kode <b>${appliedPromoCode}</b> diterapkan! Anda hemat ${formatRp(promoDiscount)}</p>` : ''}
                 </div>`;
             }
         }
@@ -2167,8 +2195,18 @@
 
         function getShippingInfoHtml() {
         if (!shippingMode) return 'Silakan pilih metode pengiriman.';
+        
+        const hasDigital = cart.some(i => isDigitalItem(i));
+        const hasPhysical = hasDeliverableItems();
+        
         if (shippingMode === 'pickup') {
-            return `<i class="fas fa-store mr-1 text-pk/60"></i> Pesanan akan diambil langsung di toko Ranel Cell.<br><span class="text-gray-400">${storeAddress1}</span>`;
+            let text = "Pesanan akan diambil langsung di toko Ranel Cell.";
+            if (hasDigital && !hasPhysical) {
+                text = "Serial Number / Bukti Transaksi akan diambil langsung di toko Ranel Cell, jika anda pilih pembayaran CoD.";
+            } else if (hasDigital && hasPhysical) {
+                text = "Pesanan & Serial Number akan diambil langsung di toko Ranel Cell.";
+            }
+            return `<i class="fas fa-store mr-1 text-pk/60"></i> ${text}<br><span class="text-gray-400">${storeAddress1}</span>`;
         }
         if (shippingMode === 'deliver') {
             if (shippingCost > 0) {
@@ -2182,34 +2220,73 @@
         }
     }
 
-        function setShippingMode(mode) {
+        async function setShippingMode(mode) {
         if (shippingMode === mode) return;
-        saveCurrentFormData();
         
+        // Jika user memilih Kirim ke Alamat
+        if (mode === 'deliver') {
+            // Jika di keranjang ada barang fisik/voucher yang dibatasi jamnya
+            if (hasDeliverableItems()) {
+                showLoading('');
+                const isOpen = await isAccessoryServiceOpen();
+                hideLoading();
+                
+                if (isOpen === false) {
+                    // Cek apakah ada Aksesoris atau Kartu Perdana di keranjang
+                    const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+                    
+                    if (hasPhysicalItems) {
+                        // 1. Jika Aksesoris/Perdana: Langsung tolak dengan pop-up ini
+                        showConfirmModal(
+                            "Maaf, Layanan Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", 
+                            "Silakan melakukan pemesanan kembali pada jam operasional toko.", 
+                            () => { 
+                                // Tombol Oke diklik
+                            }, 
+                            'fa-solid fa-circle-exclamation',
+                            'Oke',
+                            '' 
+                        );
+                        return; // Batalkan aksi, tetap di mode sebelumnya
+                    } else {
+                        // 2. Jika hanya Voucher: Munculkan pop-up ini dan paksa ke Ambil di Toko
+                        showConfirmModal(
+                            "Maaf, Kirim ke Alamat Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", 
+                            "Anda hanya bisa memilih Ambil di Toko pada jam ini.", 
+                            () => { 
+                                // Tombol Oke diklik
+                            }, 
+                            'fa-solid fa-triangle-exclamation',
+                            'Oke',
+                            '' 
+                        );
+                        mode = 'pickup'; // Paksa kembali ke Ambil di Toko
+                    }
+                } else if (isOpen === null) {
+                    showToast("Pastikan internet Anda aktif.", "error", 3500);
+                    return;
+                }
+            }
+        }
+
+        saveCurrentFormData();
         shippingMode = mode;
         
         if (mode === 'pickup') {
-            // Jika pindah ke ambil di toko, hapung ongkir dan promo
             shippingCost = 0;
             appliedPromoCode = '';
             promoDiscount = 0;
         } else if (mode === 'deliver') {
-            // Jika kembali ke kirim ke alamat
             if (destinationLat !== null && destinationLng !== null) {
-                // Jika lokasi tujuan sebelumnya sudah ada (sudah pernah cek ongkir), hitung ulang ongkirnya secara otomatis
                 const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
-                
                 if (dist > 10) {
-                    // Jika ternyata jaraknya lebih dari 10 km, reset ongkir
                     shippingCost = 0;
                     appliedPromoCode = '';
                     promoDiscount = 0;
                 } else {
-                    // Hitung ulang ongkir berdasarkan koordinat yang tersimpan
                     shippingCost = calculateShippingCost(dist);
                 }
             } else {
-                // Jika belum pernah cek ongkir sama sekali
                 shippingCost = 0;
                 appliedPromoCode = '';
                 promoDiscount = 0;
@@ -2418,12 +2495,34 @@
         }
     }
 
-    function setPaketMode(mode) {
+            async function setPaketMode(mode) {
+        // Jika user beralih ke voucher, cek jam operasional dulu
+        if (mode === 'voucher') {
+            showLoading('');
+            const isOpen = await isAccessoryServiceOpen();
+            hideLoading();
+            
+            if (isOpen === false) {
+                showToast("Maaf, Layanan Pengiriman Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", "error", 3500);
+                return; // Batalkan jika jam tutup
+            } else if (isOpen === null) {
+                showToast("Pastikan internet Anda aktif.", "error", 3500);
+                return;
+            }
+        }
+
         paketMode = mode;
+        
+        // Jika pilih voucher, hapus promo karena tidak berlaku
+        if (mode === 'voucher') {
+            appliedPromoCode = '';
+            promoDiscount = 0;
+        }
+        
         renderOrderForm();
     }
 
-    async function submitOrder() {
+        async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
         const telp = document.getElementById('cust-telp').value.trim();
         const alamat = document.getElementById('cust-alamat').value.trim();
@@ -2439,7 +2538,6 @@
                 errors.push(`${label} wajib diisi`);
             }
         });
-        // TAMBAHKAN INI: Validasi Nama Pelanggan
         document.querySelectorAll('.nama-pelanggan-input').forEach(inp => {
             if (!inp.value.trim()) {
                 const label = inp.closest('.id-pel-group').querySelector('.id-pel-group-label .truncate').textContent;
@@ -2447,15 +2545,14 @@
             }
         });
 
-        if (hasShippingItems()) {
-            if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
-            if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
-        }
+        // Cek pengiriman untuk SEMUA pesanan
+        if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
+        if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
 
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
 
-        // Validasi Jam Operasional Khusus Aksesoris & Kartu Perdana
-        if (hasAksesoris() || hasPerdana()) {
+        // Validasi Jam Operasional HANYA jika ada barang fisik/voucher
+        if (hasDeliverableItems()) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
             hideLoading();
@@ -2467,8 +2564,11 @@
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
                 return;
             } else {
-                showToast("Lanjutkan Pembayaran", "success", 2000);
+                showToast("Pesanan Segera di Proses", "success", 2000);
             }
+        } else {
+            // Jika murni barang digital 24 jam, langsung proses
+            showToast("Pesanan Segera di Proses", "success", 2000);
         }
 
         savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
@@ -2484,7 +2584,6 @@
             idMap[idx].push(inp.value.trim());
         });
         
-        // TAMBAHKAN INI: Pemetaan Nama Pelanggan
         const namaMap = {};
         document.querySelectorAll('.nama-pelanggan-input').forEach(inp => {
             const idx = parseInt(inp.dataset.idx);
@@ -2492,6 +2591,7 @@
             namaMap[idx].push(inp.value.trim().toUpperCase());
         });
         window._orderData.namaPelanggan = namaMap;
+        
         window._orderData.idPelanggan = idMap;
         window._orderData.shippingMode = shippingMode;
         window._orderData.shippingCost = shippingCost;
@@ -2625,7 +2725,7 @@
         showView('view-payment');
     }
 
-    function renderPayment() {
+        function renderPayment() {
         const el = document.getElementById('payment-content');
         const total = getGrandTotal(); 
         el.innerHTML = `
@@ -2657,6 +2757,16 @@
                     </div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
                 </button>
+                <button onclick="selectPayment('cod')" class="card card-hover p-4 flex items-center gap-4 w-full text-left">
+                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-money-bill-wave text-green-400 text-lg"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm">Cash on Delivery (CoD)</p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">Bayar tunai saat pesanan diterima</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
+                </button>
             </div>
             <div class="card p-3 mt-6 border-dk-500/50">
                 <p class="text-[11px] text-gray-500 text-center"><i class="fa-solid fa-shield-halved text-pk/50 mr-1"></i>Pembayaran aman dan terverifikasi oleh Ranel Cell</p>
@@ -2670,6 +2780,9 @@
         } else if (method === 'qris') {
             selectedPaymentMethod = 'QRIS Bank Lain / eWallet';
             showView('view-qris'); renderQRIS();
+        } else if (method === 'cod') {
+            selectedPaymentMethod = 'Cash on Delivery (CoD)';
+            sendOrderToWhatsApp();
         }
     }
 
@@ -2881,7 +2994,7 @@
                         <li><i class="fa-solid fa-location-dot w-4 text-pk/60"></i> Alamat: ${storeAddress1}</li>
                         <li><i class="fa-brands fa-whatsapp w-4 text-pk/60"></i> WhatsApp / No. HP: 0819-3666-4217</li>
                         <li><i class="fa-brands fa-tiktok w-4 text-pk/60"></i> Tiktok: @ranelcell</li>
-                        <li><i class="fa-solid fa-clock w-4 text-pk/60"></i> Jam Operasional: Setiap Hari, Pukul 07.00 - 00.00 WIB</li>
+                        <li><i class="fa-solid fa-clock w-4 text-pk/60"></i> Operasional Toko: Setiap Hari, Pukul 07.00 - 00.00 WIB</li>
                     </ul>
                 </div>
 
