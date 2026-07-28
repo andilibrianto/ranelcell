@@ -719,7 +719,7 @@
             {name:"3 Hari",items:[["7GB",18000],["9GB",21000]]},
             {name:"5 Hari",items:[["4GB",15000],["7GB",21000],["9GB",25000]]},
             {name:"7 Hari",items:[["5GB",22000],["9GB",30000]]},
-            {name:"14 Hari",items:[["5GB",16000],["5GB",25000]]},
+            {name:"14 Hari",items:[["5GB",16000],["9GB",25000]]},
             {name:"28 Hari",items:[["7GB",36000],["10GB",44500],["18GB",55000],["25GB",68000],["42GB",95000]]}
         ]},
         { provider:"INDOSAT / IM3", durations:[
@@ -1227,8 +1227,17 @@
     function confirmRemoveItem(idx) {
         const item = cart[idx];
         if (!item) return;
-        showConfirmModal("Hapus Barang?", `Apakah anda yakin ingin menghapus ${item.name}?`, () => {
+        showConfirmModal("Hapus Barang?", `Apakah anda yakin ingin mengapus ${item.name}?`, () => {
             cart.splice(idx, 1);
+            
+            // Cek jika barang fisik habis, hapus promo otomatis
+            const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+            if (!hasPhysicalItems && promoDiscount > 0) {
+                appliedPromoCode = '';
+                promoDiscount = 0;
+                showToast('Kode promo tidak valid!!!', 'info');
+            }
+
             updateCartUI(); 
             renderOrderForm();
         }, 'fa-solid fa-trash-can');
@@ -1303,8 +1312,7 @@
     }
 
     function hasShippingItems() {
-        // Semua barang sekarang wajib melalui proses pengiriman
-        return cart.length > 0; 
+        return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
 
     function isDigitalItem(item) {
@@ -1909,6 +1917,15 @@
     function updateQty(idx, delta) {
         cart[idx].quantity += delta;
         if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+        
+        // Cek jika barang fisik habis, hapus promo otomatis
+        const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+        if (!hasPhysicalItems && promoDiscount > 0) {
+            appliedPromoCode = '';
+            promoDiscount = 0;
+            showToast('Kode promo tidak valid!!!', 'info');
+        }
+
         updateCartUI(); renderOrderForm();
     }
 
@@ -2116,8 +2133,11 @@
                 </button>
             </div>`;
             
-                        const isVoucherMode = hasPaketData() && paketMode === 'voucher';
-            if (shippingMode === 'deliver' && shippingCost > 0 && !isVoucherMode) {
+                    // Cek apakah ada barang fisik (Aksesoris/Perdana) di keranjang
+            const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+            
+            // Tampilkan promo HANYA jika ada barang fisik di keranjang
+            if (shippingMode === 'deliver' && shippingCost > 0 && hasPhysicalItems) {
                 const promoApplied = !!appliedPromoCode;
                 html += `
                 <div class="mb-5">
@@ -2126,7 +2146,7 @@
                         <input type="text" id="promo-code-input" class="form-input flex-1 text-sm uppercase" placeholder="Masukkan kode promo" value="${appliedPromoCode}" ${promoApplied ? 'readonly' : ''} oninput="this.value = this.value.toUpperCase()">
                         ${promoApplied ? 
                             `<button onclick="removePromoCode()" class="btn-outline px-4 text-xs py-2">Hapus</button>` :
-                            `<button onclick="applyPromoCode()" class="btn-pk px-4 text-xs py-2">Cek Promo</button>`
+                            `<button onclick="applyPromoCode()" class="btn-pk px-4 text-xs py-2">Pakai</button>`
                         }
                     </div>
                     ${promoApplied ? `<p class="text-[11px] text-green-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Kode <b>${appliedPromoCode}</b> diterapkan! Anda hemat ${formatRp(promoDiscount)}</p>` : ''}
@@ -2220,7 +2240,7 @@
         }
     }
 
-        async function setShippingMode(mode) {
+    async function setShippingMode(mode) {
         if (shippingMode === mode) return;
         
         // Jika user memilih Kirim ke Alamat
@@ -2546,7 +2566,6 @@
         });
 
         // Cek pengiriman untuk SEMUA pesanan
-        if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
         if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
 
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
@@ -2725,9 +2744,9 @@
         showView('view-payment');
     }
 
-        function renderPayment() {
-        const el = document.getElementById('payment-content');
-        const total = getGrandTotal(); 
+    function renderPayment() {
+    const el = document.getElementById('payment-content');
+    const total = getGrandTotal(); 
         el.innerHTML = `
             <div class="text-center mb-6">
                 <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-pk/10 flex items-center justify-center">
@@ -2757,6 +2776,8 @@
                     </div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
                 </button>
+                
+            ${hasShippingItems() ? `
                 <button onclick="selectPayment('cod')" class="card card-hover p-4 flex items-center gap-4 w-full text-left">
                     <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
                         <i class="fa-solid fa-money-bill-wave text-green-400 text-lg"></i>
@@ -2767,6 +2788,7 @@
                     </div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
                 </button>
+                ` : ''}
             </div>
             <div class="card p-3 mt-6 border-dk-500/50">
                 <p class="text-[11px] text-gray-500 text-center"><i class="fa-solid fa-shield-halved text-pk/50 mr-1"></i>Pembayaran aman dan terverifikasi oleh Ranel Cell</p>
