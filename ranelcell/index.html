@@ -2523,7 +2523,7 @@
             hideLoading();
             
             if (isOpen === false) {
-                showToast("Maaf, Layanan Pengiriman Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", "error", 3500);
+                showToast("Maaf, Layanan Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", "error", 3500);
                 return; // Batalkan jika jam tutup
             } else if (isOpen === null) {
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
@@ -2583,11 +2583,11 @@
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
                 return;
             } else {
-                showToast("Pesanan Segera di Proses", "success", 2000);
+                showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
             }
         } else {
             // Jika murni barang digital 24 jam, langsung proses
-            showToast("Pesanan Segera di Proses", "success", 2000);
+            showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
         }
 
         savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
