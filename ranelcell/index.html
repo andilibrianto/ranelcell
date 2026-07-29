@@ -183,6 +183,49 @@
 
         @keyframes pulsePk { 0%,100%{box-shadow:0 0 0 0 rgba(255,45,120,0.4)} 50%{box-shadow:0 0 0 12px rgba(255,45,120,0)} }
         .pulse-pk { animation:pulsePk 1.5s ease infinite; }
+                /* Animasi Modern untuk Thank You Popup */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            70% { transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        @keyframes checkPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 45, 120, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(255, 45, 120, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 45, 120, 0); }
+        }
+        .animate-check-pulse { animation: checkPulse 1.5s ease-out infinite; }
+
+        @keyframes logoPop {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-logo-pop {
+            animation: logoPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes logoPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); } /* Membesar 15% */
+            100% { transform: scale(1); }
+        }
+        .animate-pulse-logo {
+            animation: logoPulse 1.5s ease-in-out 0.5s infinite; /* Delay 0.5s agar pop dulu */
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-up-delay-1 { animation: fadeUp 0.4s ease-out 0.1s forwards; opacity: 0; }
+        .animate-fade-up-delay-2 { animation: fadeUp 0.4s ease-out 0.2s forwards; opacity: 0; }
+        .animate-fade-up-delay-3 { animation: fadeUp 0.4s ease-out 0.3s forwards; opacity: 0; }
+
+        #thank-you-card {
+            border: 1px solid rgba(255, 45, 120, 0.3);
+            box-shadow: 0 10px 40px rgba(255, 45, 120, 0.15);
+        }
 
         /* Animasi Titik Loading */
         .loading-dots::after {
@@ -322,15 +365,22 @@
         </div>
     </div>
 
-    <!-- Modal Terima Kasih Dinamis -->
-    <div id="thank-you-overlay" class="hidden fixed inset-0 z-[9999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="card p-6 max-w-xs w-full text-center fade-up">
-            <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center">
-                <i class="fa-solid fa-circle-check text-pk text-2xl"></i>
+            <!-- Modal Terima Kasih Dinamis dengan Timer -->
+    <div id="thank-you-overlay" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div id="thank-you-card" class="card relative p-8 max-w-xs w-full text-center overflow-hidden animate-pop-in">
+            <div class="w-20 h-20 mx-auto mb-5 flex items-center justify-center animate-logo-pop">
+                <img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo Ranel Cell" class="w-14 h-14 object-contain animate-pulse-logo">
             </div>
-            <h3 class="text-base font-bold mb-2">Terima Kasih!</h3>
-            <p id="thank-you-message" class="text-xs text-gray-400 mb-6">Terima Kasih Sudah Memilih Layanan di Ranel Cell, Kami Tunggu Pembelian Anda Selanjutnya</p>
-            <button onclick="location.reload()" class="btn-pk w-full text-sm py-3">Kembali ke Beranda</button>
+            <h3 id="thank-you-title" class="text-lg font-bold mb-2 animate-fade-up-delay-1">Terima Kasih!</h3>
+            <p id="thank-you-message" class="text-xs text-gray-400 mb-6 animate-fade-up-delay-2">Terima Kasih Sudah Memilih Layanan di Ranel Cell</p>
+            <button onclick="location.reload()" class="btn-pk w-full text-sm py-3 animate-fade-up-delay-3">
+                Kembali ke Home
+            </button>
+            
+            <!-- Garis Lurus Countdown di Tepi Bawah Card -->
+            <div class="absolute bottom-0 left-0 w-full h-1 bg-dk-700">
+                <div id="timer-line" class="h-full bg-pk" style="transform: scaleX(1); transform-origin: left;"></div>
+            </div>
         </div>
     </div>
 
@@ -946,7 +996,7 @@
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            const isOpen = !(hour >= 22 || hour < 7);
+            const isOpen = !(hour >= 23.28 || hour < 6);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
@@ -991,9 +1041,43 @@
         modalCancelCallback = null; // Reset callback batal
     }
 
+            let thankYouTimerInterval = null;
+
     function showThankYouOverlay(message = "Terima Kasih Sudah Memilih Layanan di Ranel Cell, Kami Tunggu Pembelian Anda Selanjutnya") {
-        document.getElementById('thank-you-message').textContent = message;
-        document.getElementById('thank-you-overlay').classList.remove('hidden');
+        const overlay = document.getElementById('thank-you-overlay');
+        const card = document.getElementById('thank-you-card');
+        const msgEl = document.getElementById('thank-you-message');
+        const timerLine = document.getElementById('timer-line');
+        
+        msgEl.textContent = message;
+        overlay.classList.remove('hidden');
+        
+        // Reset animasi CSS setiap kali popup muncul
+        card.style.animation = 'none';
+        void card.offsetWidth; 
+        card.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
+
+        // Logika Timer 15 Detik (Garis Lurus)
+        let timeLeft = 15;
+        const totalTime = 15;
+        
+        // Set awal garis penuh (scaleX 1)
+        timerLine.style.transition = 'none';
+        timerLine.style.transform = 'scaleX(1)';
+        void timerLine.offsetWidth; // Trigger reflow
+        
+        // Mulai animasi menyusut (scaleX 0) selama 15 detik
+        timerLine.style.transition = `transform ${totalTime}s linear`;
+        timerLine.style.transform = 'scaleX(0)';
+
+        clearInterval(thankYouTimerInterval);
+        thankYouTimerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+                clearInterval(thankYouTimerInterval);
+                location.reload();
+            }
+        }, 1000);
     }
 
         function toggleAnnouncement(event) {
@@ -2103,7 +2187,7 @@
                 <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
                 <input type="tel" id="cust-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
             </div>
-            <div class="mb-3 ${isVoucherOutsideHours ? 'hidden' : ''}">
+            <div class="mb-3 ${(hasShippingItems() && !isVoucherOutsideHours) ? '' : 'hidden'}">
                 <label class="text-[11px] text-gray-500 mb-1 flex items-center justify-between">
                     <span>Alamat Lengkap</span>
                     ${(hasShippingItems() && destinationLat !== null) ? `
@@ -2554,8 +2638,10 @@
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
 
-        // Alamat wajib hanya jika ADA opsi pengiriman
-        if (!isVoucherOutsideHours && !alamat) errors.push('Alamat lengkap wajib diisi');
+        const hasShipping = hasShippingItems() && !isVoucherOutsideHours;
+        
+        // Alamat wajib hanya jika ada opsi pengiriman
+        if (hasShipping && !alamat) errors.push('Alamat lengkap wajib diisi');
         
         document.querySelectorAll('.id-pel-input').forEach(inp => {
             if (!inp.value.trim()) {
@@ -2570,9 +2656,13 @@
             }
         });
 
-        if (!isVoucherOutsideHours) {
+        if (hasShipping) {
             if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
             if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
+        } else {
+            // Jika tidak ada pengiriman (murni digital), pastikan variabel dikosongkan
+            shippingMode = null;
+            shippingCost = 0;
         }
 
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
@@ -2590,7 +2680,7 @@
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
                 return;
             } else {
-                showToast("Pesanan Segera di Proses", "success", 2000);
+                showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
             }
         } else {
             if (isVoucherOutsideHours) {
@@ -2599,7 +2689,7 @@
                 appliedPromoCode = '';
                 promoDiscount = 0;
             }
-            showToast("Pesanan Segera di Proses", "success", 2000);
+            showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
         }
 
         savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
@@ -3253,7 +3343,7 @@
                             return r||fetch(e.request).then(function(res){
                                 if(res.status===200&&res.type==='basic'){
                                     var c=res.clone();
-                                    caches.open('ranel-v2.5').then(function(cache){cache.put(e.request,c);});
+                                    caches.open('ranel-v3').then(function(cache){cache.put(e.request,c);});
                                 }
                                 return res;
                             }).catch(function(){
