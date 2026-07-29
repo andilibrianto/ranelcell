@@ -933,25 +933,25 @@
 
     let modalConfirmCallback = null;
     let modalCancelCallback = null;
+    let serverTimeIsOpen = null;
 
     // Cek Jam Operasional via Server (Tidak bisa dibohongi)
-    async function isAccessoryServiceOpen() {
+        async function isAccessoryServiceOpen() {
         try {
-            // Tambahan { cache: 'no-cache' } agar tidak menyimpan cache waktu lama
             const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Jakarta', {
                 cache: 'no-cache'
             });
-            if (!response.ok) throw new Error('Pastikan Terhubung Interner');
+            if (!response.ok) throw new Error('Gagal mengambil waktu server');
             
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            if (hour >= 22 || hour < 7) {
-                return false;
-            }
-            return true;
+            const isOpen = !(hour >= 22 || hour < 7);
+            serverTimeIsOpen = isOpen; // Simpan statusnya di sini
+            return isOpen;
         } catch (error) {
             console.error("Gagal verifikasi waktu:", error);
+            serverTimeIsOpen = null;
             return null;
         }
     }
@@ -1059,8 +1059,14 @@
         viewHistory.push(viewId);
         const next = document.getElementById(viewId);
         if (next) { next.classList.add('active'); next.scrollTop = 0; }
-        if (viewId === 'view-order') shouldRestoreForm = true;
-        if (viewId === 'view-order') renderOrderForm();
+        if (viewId === 'view-order') {
+            shouldRestoreForm = true;
+            renderOrderForm(); // Render pertama kali
+            // Cek jam di background, lalu render ulang jika jam sudah didapat
+            isAccessoryServiceOpen().then(() => {
+                if (currentView === 'view-order') renderOrderForm();
+            });
+        }
         if (viewId === 'view-payment') renderPayment();
         if (viewId === 'view-profil') renderProfil();
         if (viewId === 'view-karir') renderKarir();
@@ -1885,14 +1891,10 @@
         }
     }
 
-        async function addToCart(itemData) {
-        // Cek apakah item ini barang yang dibatasi jamnya
-        let isRestrictedItem = (itemData.type === 'aksesoris' || itemData.type === 'perdana' || (itemData.type === 'paket_data' && paketMode === 'voucher'));
-        
-        // Cek apakah di keranjang sudah ada barang yang dibatasi jamnya
-        let cartHasRestricted = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
+    async function addToCart(itemData) {
+        let isRestrictedItem = (itemData.type === 'aksesoris' || itemData.type === 'perdana');
+        let cartHasRestricted = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
 
-        // Jika item dibatasi ATAU keranjang ada barang dibatasi, maka cek jam
         if (isRestrictedItem || cartHasRestricted) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
@@ -1905,6 +1907,9 @@
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
                 return;
             }
+        } else {
+            // Voucher/Digital: Cek jam di background tanpa loading, hanya untuk update UI
+            isAccessoryServiceOpen();
         }
 
         const existing = cart.find(c => c.name === itemData.name);
@@ -1980,6 +1985,15 @@
         }
 
         if (!hasShippingItems()) {
+            shippingMode = null;
+            shippingCost = 0;
+            appliedPromoCode = '';
+            promoDiscount = 0;
+        }
+        const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+        const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
+        
+        if (isVoucherOutsideHours) {
             shippingMode = null;
             shippingCost = 0;
             appliedPromoCode = '';
@@ -2089,7 +2103,7 @@
                 <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
                 <input type="tel" id="cust-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
             </div>
-            <div class="mb-3">
+            <div class="mb-3 ${isVoucherOutsideHours ? 'hidden' : ''}">
                 <label class="text-[11px] text-gray-500 mb-1 flex items-center justify-between">
                     <span>Alamat Lengkap</span>
                     ${(hasShippingItems() && destinationLat !== null) ? `
@@ -2105,7 +2119,7 @@
             </div>
         </div>`;
 
-        if (hasShippingItems()) {
+        if (hasShippingItems() && !isVoucherOutsideHours) {
             // Jika tidak ada barang fisik, paksa metode menjadi 'Ambil di Toko'
             if (!hasDeliverableItems() && shippingMode === 'deliver') {
                 shippingMode = 'pickup';
@@ -2515,22 +2529,7 @@
         }
     }
 
-            async function setPaketMode(mode) {
-        // Jika user beralih ke voucher, cek jam operasional dulu
-        if (mode === 'voucher') {
-            showLoading('');
-            const isOpen = await isAccessoryServiceOpen();
-            hideLoading();
-            
-            if (isOpen === false) {
-                showToast("Maaf, Layanan Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", "error", 3500);
-                return; // Batalkan jika jam tutup
-            } else if (isOpen === null) {
-                showToast("Pastikan internet Anda aktif.", "error", 3500);
-                return;
-            }
-        }
-
+                function setPaketMode(mode) {
         paketMode = mode;
         
         // Jika pilih voucher, hapus promo karena tidak berlaku
@@ -2542,16 +2541,22 @@
         renderOrderForm();
     }
 
-        async function submitOrder() {
+    async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
         const telp = document.getElementById('cust-telp').value.trim();
-        const alamat = document.getElementById('cust-alamat').value.trim();
+        const alamat = document.getElementById('cust-alamat') ? document.getElementById('cust-alamat').value.trim() : '';
         const keterangan = document.getElementById('cust-keterangan').value.trim();
         
         let errors = [];
         if (!nama) errors.push('Nama lengkap wajib diisi');
         if (!telp || telp.length < 8) errors.push('Nomor telepon tidak valid');
-        if (!alamat) errors.push('Alamat lengkap wajib diisi');
+        
+        const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+        const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
+
+        // Alamat wajib hanya jika ADA opsi pengiriman
+        if (!isVoucherOutsideHours && !alamat) errors.push('Alamat lengkap wajib diisi');
+        
         document.querySelectorAll('.id-pel-input').forEach(inp => {
             if (!inp.value.trim()) {
                 const label = inp.closest('.id-pel-group').querySelector('.id-pel-group-label .truncate').textContent;
@@ -2565,13 +2570,15 @@
             }
         });
 
-        // Cek pengiriman untuk SEMUA pesanan
-        if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
+        if (!isVoucherOutsideHours) {
+            if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
+            if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
+        }
 
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
 
-        // Validasi Jam Operasional HANYA jika ada barang fisik/voucher
-        if (hasDeliverableItems()) {
+        // Validasi Jam HANYA untuk barang fisik
+        if (hasPhysicalItems) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
             hideLoading();
@@ -2583,11 +2590,16 @@
                 showToast("Pastikan internet Anda aktif.", "error", 3500);
                 return;
             } else {
-                showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
+                showToast("Pesanan Segera di Proses", "success", 2000);
             }
         } else {
-            // Jika murni barang digital 24 jam, langsung proses
-            showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
+            if (isVoucherOutsideHours) {
+                shippingMode = null;
+                shippingCost = 0;
+                appliedPromoCode = '';
+                promoDiscount = 0;
+            }
+            showToast("Pesanan Segera di Proses", "success", 2000);
         }
 
         savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
@@ -2744,9 +2756,12 @@
         showView('view-payment');
     }
 
-    function renderPayment() {
-    const el = document.getElementById('payment-content');
-    const total = getGrandTotal(); 
+        function renderPayment() {
+        const el = document.getElementById('payment-content');
+        const total = getGrandTotal(); 
+        const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
+        const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
+        
         el.innerHTML = `
             <div class="text-center mb-6">
                 <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-pk/10 flex items-center justify-center">
@@ -2777,7 +2792,7 @@
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
                 </button>
                 
-            ${hasShippingItems() ? `
+                ${hasShippingItems() && !isVoucherOutsideHours ? `
                 <button onclick="selectPayment('cod')" class="card card-hover p-4 flex items-center gap-4 w-full text-left">
                     <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
                         <i class="fa-solid fa-money-bill-wave text-green-400 text-lg"></i>
@@ -2791,7 +2806,7 @@
                 ` : ''}
             </div>
             <div class="card p-3 mt-6 border-dk-500/50">
-                <p class="text-[11px] text-gray-500 text-center"><i class="fa-solid fa-shield-halved text-pk/50 mr-1"></i>Pembayaran aman dan terverifikasi oleh Ranel Cell</p>
+                <p class="text-[11px] text-gray-500 text-center"><i class="fa-solid fa-shield-halved text-pk/50 mr-1"></i>Pembayaran aman dan terverifikasi oleh admin</p>
             </div>`;
     }
 
@@ -3164,8 +3179,7 @@
                     perdanaBack();
                 } else if (activeView.id === 'view-pengaduan') {
                     showView('view-home');
-                } else if (activeView.id === 'view-preview') {  // TAMBAHKAN INI
-                  
+                } else if (activeView.id === 'view-preview') {
                 } else if (activeView.id !== 'view-home') {
                     const backBtn = activeView.querySelector('header button[aria-label="Kembali"]');
                     if (backBtn) backBtn.click();
@@ -3186,7 +3200,7 @@
         homeViewEl.addEventListener('scroll', () => {
             if (currentView !== 'view-home') return;
             const { scrollTop, scrollHeight, clientHeight } = homeViewEl;
-            // Munculkan tombol jika sisa scroll di bawah 150px
+            // Munculkan tombol jika sisa scroll di bawah 550px
             if (scrollHeight - (scrollTop + clientHeight) < 550) {
                 scrollTopBtnEl.classList.add('visible');
             } else {
