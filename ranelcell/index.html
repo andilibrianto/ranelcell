@@ -780,7 +780,7 @@
             {name:"30 Hari",items:[["3GB",35000]]}
         ]},
         { provider:"TRI", durations:[
-            {name:"30 Hari",items:[["3GB",35000]]}
+            {name:"30 Hari",items:[["3GB",25000]]}
         ]},
         { provider:"XL", durations:[
             {name:"30 Hari",items:[["3GB",20000],["10GB",34000],["23GB",47000]]}
@@ -3253,7 +3253,7 @@
                             return r||fetch(e.request).then(function(res){
                                 if(res.status===200&&res.type==='basic'){
                                     var c=res.clone();
-                                    caches.open('ranel-v2').then(function(cache){cache.put(e.request,c);});
+                                    caches.open('ranel-v2.5').then(function(cache){cache.put(e.request,c);});
                                 }
                                 return res;
                             }).catch(function(){
