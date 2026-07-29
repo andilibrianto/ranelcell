@@ -2160,7 +2160,7 @@
                         <input type="text" id="promo-code-input" class="form-input flex-1 text-sm uppercase" placeholder="Masukkan kode promo" value="${appliedPromoCode}" ${promoApplied ? 'readonly' : ''} oninput="this.value = this.value.toUpperCase()">
                         ${promoApplied ? 
                             `<button onclick="removePromoCode()" class="btn-outline px-4 text-xs py-2">Hapus</button>` :
-                            `<button onclick="applyPromoCode()" class="btn-pk px-4 text-xs py-2">Pakai</button>`
+                            `<button onclick="applyPromoCode()" class="btn-pk px-4 text-xs py-2">Cek Promo</button>`
                         }
                     </div>
                     ${promoApplied ? `<p class="text-[11px] text-green-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Kode <b>${appliedPromoCode}</b> diterapkan! Anda hemat ${formatRp(promoDiscount)}</p>` : ''}
@@ -3253,7 +3253,7 @@
                             return r||fetch(e.request).then(function(res){
                                 if(res.status===200&&res.type==='basic'){
                                     var c=res.clone();
-                                    caches.open('ranel-v1').then(function(cache){cache.put(e.request,c);});
+                                    caches.open('ranel-v2').then(function(cache){cache.put(e.request,c);});
                                 }
                                 return res;
                             }).catch(function(){
