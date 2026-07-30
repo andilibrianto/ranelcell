@@ -15,7 +15,7 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(function(OneSignal) {
         OneSignal.init({
-          appId: "73c9d7c7-6f6f-4151-97ac-a2b5392f09b1", // GANTI DENGAN APP ID ANDA
+          appId: "94241f11-7641-4874-a6d8-3e1e41cf69e3", // GANTI DENGAN APP ID ANDA
           notifyButton: {
             enable: true, /* Menampilkan ikon lonceng kecil di pojok website */
           },
@@ -3363,7 +3363,7 @@
                     if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v3.5'; // Wajib ganti versi jika ada update
+                    const CACHE_NAME = 'ranel-cell-v4'; // Wajib ganti versi jika ada update
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     // Hapus cache lama secara paksa saat Service Worker update
