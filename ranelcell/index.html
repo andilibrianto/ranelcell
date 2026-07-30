@@ -996,7 +996,7 @@
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            const isOpen = !(hour >= 21.30 || hour < 6);
+            const isOpen = !(hour >= 22 || hour < 6.45);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
@@ -3333,7 +3333,7 @@
                     if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v1'; // Wajib ganti versi jika ada update
+                    const CACHE_NAME = 'ranel-cell-v2'; // Wajib ganti versi jika ada update
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     // Hapus cache lama secara paksa saat Service Worker update
