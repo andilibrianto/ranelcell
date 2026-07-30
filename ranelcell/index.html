@@ -3330,12 +3330,31 @@
         link.href=icon192; 
         document.head.appendChild(link);
         
-            if ('serviceWorker' in navigator) {
+                    if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
+                    const CACHE_NAME = 'ranel-cell-v1'; // Wajib ganti versi jika ada update
                     self.addEventListener('install',function(e){self.skipWaiting();});
-                    self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
+                    
+                    // Hapus cache lama secara paksa saat Service Worker update
+                    self.addEventListener('activate',function(e){
+                        e.waitUntil(
+                            caches.keys().then(function(cacheNames) {
+                                return Promise.all(
+                                    cacheNames.map(function(cacheName) {
+                                        if (cacheName !== CACHE_NAME) {
+                                            return caches.delete(cacheName); // Hapus cache versi lama
+                                        }
+                                    })
+                                );
+                            }).then(function() {
+                                return self.clients.claim();
+                            })
+                        );
+                    });
+                    
                     self.addEventListener('fetch',function(e){
+                        // Jangan cache API waktu dan peta
                         if (e.request.url.includes('timeapi.io') || e.request.url.includes('nominatim.openstreetmap.org')) {
                             return; 
                         }
@@ -3343,7 +3362,7 @@
                             return r||fetch(e.request).then(function(res){
                                 if(res.status===200&&res.type==='basic'){
                                     var c=res.clone();
-                                    caches.open('ranel-v3').then(function(cache){cache.put(e.request,c);});
+                                    caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,c);});
                                 }
                                 return res;
                             }).catch(function(){
@@ -3355,7 +3374,14 @@
             } catch(e) {}
         }
     }
-
+    // --- KODE AUTO UPDATE SERVICE WORKER ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            // Saat sistem mendeteksi ada Service Worker baru, langsung refresh halaman
+            window.location.reload();
+        });
+    }
+    // ---------------------------------------
     function init() { setupPWA(); updateCartUI(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
