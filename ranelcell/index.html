@@ -11,6 +11,35 @@
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
     <link rel="manifest" id="manifest-link">
     <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(function(OneSignal) {
+        OneSignal.init({
+          appId: "94241f11-7641-4874-a6d8-3e1e41cf69e3", // GANTI DENGAN APP ID ANDA
+          notifyButton: {
+            enable: true, /* Menampilkan ikon lonceng kecil di pojok website */
+          },
+          allowLocalhostAsSecureOrigin: true, /* Agar bisa tes di localhost */
+          promptOptions: {
+            slidedown: {
+              prompts: [
+                {
+                  type: "push", // prompt notifikasi push
+                  autoPrompt: true, /* Otomatis muncul pop-up izin saat user buka web */
+                  text: {
+                    headline: "Dapatkan Promo & Info Terbaru!",
+                    body: "Izinkan notifikasi agar tidak ketinggalan promo spesial dari RANEL CELL.",
+                    acceptButton: "Izinkan",
+                    cancelButton: "Nanti Saja"
+                  }
+                }
+              ]
+            }
+          }
+        });
+      });
+    </script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -3318,6 +3347,7 @@
             background_color:"#0A0A0A", 
             theme_color:"#FF2D78",
             orientation:"portrait-primary",
+            gcm_sender_id: "482941778795",
             icons:[
                 {src:icon192, sizes:"192x192", type:"image/png"},
                 {src:icon512, sizes:"512x512", type:"image/png"},
