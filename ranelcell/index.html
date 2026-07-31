@@ -3365,15 +3365,7 @@
         document.head.appendChild(link);
     }
     // ---------------------------------------
-    function init() { setupPWA(); updateCartUI(); 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
-        }
-    }
+    function init() { setupPWA(); updateCartUI(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
     </script>
