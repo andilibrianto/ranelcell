@@ -15,17 +15,20 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(function(OneSignal) {
         OneSignal.init({
-          appId: "94241f11-7641-4874-a6d8-3e1e41cf69e3", // GANTI DENGAN APP ID ANDA
+          appId: "YOUR-APP-ID-HERE", // GANTI DENGAN APP ID ANDA
           notifyButton: {
-            enable: true, /* Menampilkan ikon lonceng kecil di pojok website */
+            enable: true,
           },
-          allowLocalhostAsSecureOrigin: true, /* Agar bisa tes di localhost */
+          allowLocalhostAsSecureOrigin: true,
+          // TAMBAHKAN KODE INI AGAR ONESIGNAL PAKE FILE SW KITA:
+          serviceWorkerParam: { scope: "/" },
+          serviceWorkerPath: "OneSignalSDKWorker.js",
           promptOptions: {
             slidedown: {
               prompts: [
                 {
-                  type: "push", // prompt notifikasi push
-                  autoPrompt: true, /* Otomatis muncul pop-up izin saat user buka web */
+                  type: "push",
+                  autoPrompt: true,
                   text: {
                     headline: "Dapatkan Promo & Info Terbaru!",
                     body: "Izinkan notifikasi agar tidak ketinggalan promo spesial dari RANEL CELL.",
@@ -38,6 +41,7 @@
           }
         });
       });
+    </script>
     </script>
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -3363,7 +3367,7 @@
                     if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v4'; // Wajib ganti versi jika ada update
+                    const CACHE_NAME = 'ranel-cell-v4.5'; // Wajib ganti versi jika ada update
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     // Hapus cache lama secara paksa saat Service Worker update
