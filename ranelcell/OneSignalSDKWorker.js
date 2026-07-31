@@ -2,7 +2,7 @@
 importScripts('https://cdn.onesignal.com/sdks/OneSignalSDKWorker.js');
 
 // 2. Kode Service Worker PWA Anda (digabung agar tidak bentrok)
-const CACHE_NAME = 'ranel-cell-cache-v6.5'; 
+const CACHE_NAME = 'ranel-cell-cache-v7'; 
 self.addEventListener('install',function(e){self.skipWaiting();});
 
 self.addEventListener('activate',function(e){
