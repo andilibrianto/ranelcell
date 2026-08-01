@@ -3326,10 +3326,10 @@
 
         // --- PENGATURAN IN-APP MESSAGE LOKAL ---
     const IAM_CONFIG = {
-        id: 'promo_v.0.0.1', // Ganti ID ini jika ingin pesan baru muncul lagi
+        id: 'promo_v.0.0.3', // Ganti ID ini jika ingin pesan baru muncul lagi
         title: 'Beli Kartu Perdana, GRATIS ONGKIR! 🚚✨',
         message: 'Sekarang, setiap pembelian Kartu Perdana jenis apa pun langsung dapet GRATIS ONGKIR ke rumahmu!<br> Biar makin hemat, jangan lupa masukin kode promo ini ya:<br><br> 🎟️ Kode Promo: <b>PROMOWEB</b>',
-        showOnce: false, // true = tampil 1 kali per user. false = tampil terus
+        showOnce: true, // true = tampil 1 kali per user. false = tampil terus
         buttonText: 'Saya Mau', // Teks tombol
         buttonAction: 'view-perdana' // ID halaman tujuan (misal: view-accessories, view-game, view-perdana)
     };
@@ -3413,7 +3413,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-cache-v5'; // Naikkan versi cache
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.1';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     self.addEventListener('activate',function(e){
                         e.waitUntil(
