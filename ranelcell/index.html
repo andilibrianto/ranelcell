@@ -364,10 +364,10 @@
     <div id="toast" class="toast"></div>
 
     <!-- Loading Overlay Dinamis -->
-    <div id="loading-overlay" class="hidden fixed inset-0 z-[9995] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="loading-overlay" class="fixed inset-0 z-[9995] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="flex flex-col items-center gap-3">
             <div class="text-2xl font-extrabold text-pk tracking-[0.2em]">LOADING<span class="loading-dots"></span></div>
-            <p id="loading-text" class="text-sm font-medium text-gray-300">Memuat...</p>
+            <p id="loading-text" class="text-sm font-medium text-gray-300"></p>
         </div>
     </div>
 
@@ -737,7 +737,7 @@
         </div>
 
                 <!-- View Login -->
-        <div id="view-login" class="view active">
+        <div id="view-login" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
                     <h2 class="text-sm font-bold flex-1 text-center">Masuk Akun</h2>
@@ -1103,7 +1103,7 @@
     let paketMode = 'isi_ulang';
     let pricelistState = { category:null, provider:null, duration:null, cekJenis:null };
     let perdanaState = { provider:null, duration:null };
-    let currentView = 'view-login';
+    let currentView = 'view-home';
     let viewHistory = ['view-home'];
     let savedFormData = null;
     let shouldRestoreForm = false;
@@ -3561,7 +3561,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.0.5'; // Naikkan versi ke v7
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.7'; // Naikkan versi ke v7
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3690,32 +3690,29 @@
 
         updateCartUI();
     }
-    // Cek status login saat aplikasi pertama kali dibuka
+                // Cek status login saat aplikasi pertama kali dibuka
     function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
+            // Firebase sudah selesai ngecek, sembunyikan layar loading
+            hideLoading();
+
             if (user) {
                 // Jika user sudah login
                 isUserLoggedIn = true;
                 updateAuthUI();
                 
-                // Jika user ada di halaman login/signup, pindah ke Home
-                if (currentView === 'view-login' || currentView === 'view-signup') {
-                    showView('view-home');
-                }
+                // PAKSA tampil halaman utama, agar tidak blank saat di-refresh
+                showView('view-home');
                 
-                // TAMBAHKAN INI: Cek In-App Message hanya saat user sudah login & di halaman utama
-                if (currentView === 'view-home') {
-                    checkInAppMessage();
-                }
+                // Tampilkan In-App Message
+                checkInAppMessage();
             } else {
                 // Jika user belum login
                 isUserLoggedIn = false;
                 updateAuthUI();
                 
-                // Paksa pindah ke halaman login (kecuali jika dia sedang di halaman signup)
-                if (currentView !== 'view-login' && currentView !== 'view-signup') {
-                    showView('view-login');
-                }
+                // PAKSA tampil halaman login
+                showView('view-login');
             }
         });
     }
