@@ -15,20 +15,26 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        
+                // Import Firestore
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         // PASTE KONFIGURASI FIREBASE ANDA DI SINI
         const firebaseConfig = {
-    apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
-    authDomain: "ranel-cell.firebaseapp.com",
-    projectId: "ranel-cell",
-    storageBucket: "ranel-cell.firebasestorage.app",
-    messagingSenderId: "267696476787",
-    appId: "1:267696476787:web:5fda181cfdaeec413e5006"
-  };
+            apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
+            authDomain: "ranel-cell.firebaseapp.com",
+            projectId: "ranel-cell",
+            storageBucket: "ranel-cell.firebasestorage.app",
+            messagingSenderId: "267696476787",
+            appId: "1:267696476787:web:5fda181cfdaeec413e5006"
+        };
 
         // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        
+        // Inisialisasi Firestore Database
+        const db = getFirestore(app);
         
         // Paksa Firebase untuk selalu mengingat sesi login di memori HP/Browser
         setPersistence(auth, browserLocalPersistence);
@@ -36,13 +42,17 @@
         // Eksport agar bisa dipakai di script utama
         window.firebaseAuth = {
             auth,
+            db, // TAMBAHKAN INI
+            doc, // TAMBAHKAN INI
+            setDoc, // TAMBAHKAN INI
+            getDoc, // TAMBAHKAN INI
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
             signOut,
             onAuthStateChanged,
             updateProfile,
             sendEmailVerification,
-            sendPasswordResetEmail // Tambahan fungsi reset password
+            sendPasswordResetEmail
         };
         
         // Beri sinyal ke aplikasi utama bahwa Firebase sudah siap!
@@ -774,7 +784,7 @@
             </div>
         </div>
 
-        <!-- View Sign Up -->
+                <!-- View Sign Up -->
         <div id="view-signup" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -787,6 +797,10 @@
                     <div class="mb-4">
                         <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
                         <input type="text" id="signup-nama" class="form-input" placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
+                        <input type="tel" id="signup-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
                     </div>
                     <div class="mb-4">
                         <label class="text-[11px] text-gray-500 mb-1 block">Email</label>
@@ -2350,16 +2364,23 @@
             </div>`;
         }
 
-            html += `
-            <div class="mb-5">
+        // Cek data login untuk auto-fill
+        const loggedInUser = isUserLoggedIn ? window.firebaseAuth.auth.currentUser : null;
+        const autoNama = (loggedInUser && loggedInUser.displayName) ? loggedInUser.displayName : '';
+        // Ambil no telp dari variabel global (Firestore)
+        const autoTelp = (loggedInUser && window.currentUserTelp) ? window.currentUserTelp : '';
+        const isReadOnly = isUserLoggedIn ? 'readonly' : '';
+
+        html += `
+        <div class="mb-5">
             <h3 class="section-label">Data Pemesan</h3>
             <div class="mb-3">
                 <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
-                <input type="text" id="cust-nama" class="form-input" placeholder="Masukkan nama lengkap">
+                <input type="text" id="cust-nama" class="form-input" placeholder="Masukkan nama lengkap" value="${autoNama}" ${isReadOnly}>
             </div>
             <div class="mb-3">
                 <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
-                <input type="tel" id="cust-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
+                <input type="tel" id="cust-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}>
             </div>
             <div class="mb-3 ${(hasShippingItems() && !isVoucherOutsideHours) ? '' : 'hidden'}">
                 <label class="text-[11px] text-gray-500 mb-1 flex items-center justify-between">
@@ -3566,7 +3587,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.0.8'; // Naikkan versi ke v7
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.9';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3608,99 +3629,125 @@
     }
     // ---------------------------------------
         // --- FIREBASE AUTH LOGIC ---
-    let isUserLoggedIn = false;
+        let isUserLoggedIn = false;
+    let isProcessingAuth = false; // Tambahan: Flag untuk mencegah tabrakan proses
 
-        function handleSignup() {
+                function handleSignup() {
         const nama = document.getElementById('signup-nama').value.trim();
+        const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value.trim();
 
-        if (!nama || !email || !password) { showToast('Semua field wajib diisi', 'error'); return; }
+        if (!nama || !telp || !email || !password) { showToast('Semua field wajib diisi', 'error'); return; }
+        if (telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
         if (password.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
 
+        isProcessingAuth = true; // Nyalakan flag agar checkAuthState tidak ikut campur
         showLoading('');
+        
         window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password)
             .then((userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
 
-                // 1. Update profile nama
-                window.firebaseAuth.updateProfile(user, { displayName: nama }).then(() => {
-                    
-                    // 2. Kirim Email Verifikasi
+                window.firebaseAuth.updateProfile(user, { displayName: nama }).then(async () => {
+                    try {
+                        await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
+                            nama: nama,
+                            telp: telp,
+                            email: email,
+                            createdAt: new Date().toISOString()
+                        });
+                        window.currentUserTelp = telp;
+                    } catch (err) {
+                        console.error("Gagal simpan ke Firestore:", err);
+                        showToast("Gagal simpan data: " + err.message, "error", 5000);
+                    }
+
                     window.firebaseAuth.sendEmailVerification(user).then(() => {
-                        
-                        // Simpan email yang baru didaftarkan sebelum dihapus
                         const registeredEmail = document.getElementById('signup-email').value;
 
-                        // Reset form signup
                         document.getElementById('signup-nama').value = '';
+                        document.getElementById('signup-telp').value = '';
                         document.getElementById('signup-email').value = '';
                         document.getElementById('signup-password').value = '';
 
                         showToast('Pendaftaran berhasil! Cek email Anda dibagian SPAM untuk verifikasi.', 'success', 4000);
                         
-                        // 3. Logout paksa agar user tidak bisa masuk sebelum verifikasi
                         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                            isProcessingAuth = false; // Matikan flag karena proses sudah selesai
+                            window.currentUserTelp = ''; 
                             updateAuthUI();
                             showView('view-login');
                             
-                            // 4. Salin email ke halaman login & langsung fokus ke kolom password
                             document.getElementById('login-email').value = registeredEmail;
                             document.getElementById('login-password').focus();
                         });
                     }).catch((err) => {
+                        isProcessingAuth = false; 
                         showToast('Gagal mengirim email verifikasi: ' + err.message, 'error');
                     });
                 });
             })
             .catch((error) => {
                 hideLoading();
+                isProcessingAuth = false; // Matikan flag jika ada error
                 if (error.code === 'auth/email-already-in-use') showToast('Email sudah terdaftar', 'error');
                 else showToast('Gagal daftar: ' + error.message, 'error');
             });
     }
 
-        function handleLogin() {
+            function handleLogin() {
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value.trim();
 
         if (!email || !password) { showToast('Email dan password wajib diisi', 'error'); return; }
 
+        isProcessingAuth = true; // Nyalakan flag
         showLoading('');
+        
         window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password)
-            .then((userCredential) => {
+            .then(async (userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
 
-                // CEK APAKAH EMAIL SUDAH DIVERIFIKASI
                 if (!user.emailVerified) {
-                    // Jika belum verifikasi, tolak login dan kirim email verifikasi baru
                     showToast('Email belum diverifikasi. Silakan cek email Anda.', 'error', 4000);
-                    
-                    // Kirim ulang email verifikasi (opsional, tapi memudahkan user)
                     window.firebaseAuth.sendEmailVerification(user);
                     
-                    // Logout paksa
                     window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                        isProcessingAuth = false; // Matikan flag
                         updateAuthUI();
-                        // Tetap di halaman login
                         if (currentView !== 'view-login') showView('view-login');
                     });
                     return;
                 }
 
-                // Jika sudah verifikasi, izinkan masuk
-                // Reset form login
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-password').value = '';
+
+                // Ambil data user dari Firestore
+                try {
+                    const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+                    const docSnap = await window.firebaseAuth.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        window.currentUserTelp = docSnap.data().telp;
+                    } else {
+                        window.currentUserTelp = '';
+                    }
+                } catch (err) {
+                    console.error("Gagal ambil data Firestore:", err);
+                    window.currentUserTelp = '';
+                }
 
                 showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
+                isProcessingAuth = false; // Matikan flag
             })
             .catch((error) => {
                 hideLoading();
+                isProcessingAuth = false; // Matikan flag
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
                     showToast('Email atau password salah', 'error');
                 } else {
@@ -3743,9 +3790,10 @@
             'Batal'
         );
     }
-    function handleLogout() {
+        function handleLogout() {
         showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
             window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                window.currentUserTelp = ''; // Kosongkan no telp dari memori saat logout
                 showToast('Akun Berhasil Dikeluarkan', 'info');
                 showView('view-login');
                 updateAuthUI();
@@ -3759,16 +3807,17 @@
 
         updateCartUI();
     }
-                // Cek status login saat aplikasi pertama kali dibuka
-        function checkAuthState() {
-        window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
-            // Firebase sudah selesai ngecek, sembunyikan layar loading
+        // Cek status login saat aplikasi pertama kali dibuka atau refresh
+    function checkAuthState() {
+        window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
+            // 1. Langsung sembunyikan layar loading
             hideLoading();
 
+            // Abaikan jika user sedang dalam proses manual login/signup
+            if (isProcessingAuth) return;
+
             if (user) {
-                // CEK VERIFIKASI EMAIL SAAT REFRESH
                 if (!user.emailVerified) {
-                    // Jika belum verifikasi, logout paksa
                     showToast('Silakan verifikasi email Anda terlebih dahulu.', 'info', 3000);
                     window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
                         isUserLoggedIn = false;
@@ -3778,39 +3827,52 @@
                     return;
                 }
 
-                // Jika sudah login & terverifikasi
                 isUserLoggedIn = true;
                 updateAuthUI();
                 showView('view-home');
                 checkInAppMessage();
+
+                try {
+                    const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+                    const docSnap = await window.firebaseAuth.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        window.currentUserTelp = docSnap.data().telp; 
+                    } else {
+                        window.currentUserTelp = '';
+                    }
+                } catch (err) {
+                    console.error("Gagal ambil data Firestore:", err);
+                    window.currentUserTelp = '';
+                }
+
             } else {
-                // Jika user belum login
                 isUserLoggedIn = false;
+                window.currentUserTelp = ''; 
                 updateAuthUI();
                 showView('view-login');
             }
         });
-    }
-            function init() { 
-        setupPWA(); 
-        updateCartUI();
-    }
 
-    // Pastikan Service Worker lama dibersihkan saat aplikasi dibuka
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                // Hapus SW lama agar file SW baru (v7) langsung diambil
-                registration.unregister();
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading-overlay');
+            if (loadingEl && !loadingEl.classList.contains('hidden')) {
+                hideLoading();
+                if (!isUserLoggedIn) showView('view-login');
             }
-        });
+        }, 5000);
     }
 
-    // Jalankan init() saat halaman selesai dimuat
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+        function init() { 
+        setupPWA(); 
+        updateCartUI(); 
+        
+        // Pastikan Firebase sudah siap sebelum cek status login
+        const checkFirebaseReady = setInterval(() => {
+            if (window.firebaseAuth) {
+                clearInterval(checkFirebaseReady);
+                checkAuthState();
+            }
+        }, 50); // Cek setiap 50 milidetik
     }
 
     // DENGARKAN SINYAL DARI FIREBASE!
