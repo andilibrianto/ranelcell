@@ -3547,7 +3547,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.0.2';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.3';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     self.addEventListener('activate',function(e){
                         e.waitUntil(
@@ -3698,12 +3698,24 @@
             }
         });
     }
-    function init() { setupPWA(); updateCartUI(); checkInAppMessage(); }
-    if (window.firebaseAuth) {
+        function init() { 
+        setupPWA(); 
+        updateCartUI(); 
+        checkInAppMessage();
+        
+        // Cek apakah Firebase sudah siap
+        if (window.firebaseAuth) {
             checkAuthState();
+        } else {
+            // Jika belum siap, tunggu sampai siap lalu jalankan checkAuthState
+            const checkFirebaseReady = setInterval(() => {
+                if (window.firebaseAuth) {
+                    clearInterval(checkFirebaseReady);
+                    checkAuthState();
+                }
+            }, 50); // Cek setiap 50 milidetik
         }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
+    }
     </script>
 </body>
 </html>
