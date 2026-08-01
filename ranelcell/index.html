@@ -33,15 +33,18 @@
         // Paksa Firebase untuk selalu mengingat sesi login di memori HP/Browser
         setPersistence(auth, browserLocalPersistence);
 
-        // Eksport agar bisa dipakai di script utama
+                // Eksport agar bisa dipakai di script utama
         window.firebaseAuth = {
             auth,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
             signOut,
             onAuthStateChanged,
-            updateProfile // Tambahan fungsi updateProfile
+            updateProfile
         };
+        
+        // Beri sinyal ke aplikasi utama bahwa Firebase sudah siap!
+        window.dispatchEvent(new Event('firebase-ready'));
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -3518,10 +3521,10 @@
     }
     // ---------------------------------------
 
-    function setupPWA() {
-    const iconUrl = './Gambar/PWA_512.png'; // Ganti dengan nama file gambar Anda
-    const icon192 = iconUrl; 
-    const icon512 = iconUrl;
+        function setupPWA() {
+        const iconUrl = './Gambar/PWA_512.png'; 
+        const icon192 = iconUrl; 
+        const icon512 = iconUrl;
 
         document.getElementById('manifest-link').href = URL.createObjectURL(new Blob([JSON.stringify({
             name:"RANEL CELL", 
@@ -3547,8 +3550,9 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.0.3';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.4'; // Naikkan versi ke v7
                     self.addEventListener('install',function(e){self.skipWaiting();});
+                    
                     self.addEventListener('activate',function(e){
                         e.waitUntil(
                             caches.keys().then(function(cacheNames) {
@@ -3564,8 +3568,10 @@
                             })
                         );
                     });
+                    
                     self.addEventListener('fetch',function(e){
-                        if (e.request.url.includes('timeapi.io') || e.request.url.includes('nominatim.openstreetmap.org')) {
+                        // Jangan cache API waktu, peta, DAN script Firebase
+                        if (e.request.url.includes('timeapi.io') || e.request.url.includes('nominatim.openstreetmap.org') || e.request.url.includes('gstatic.com') || e.request.url.includes('firebaseio.com')) {
                             return; 
                         }
                         e.respondWith(caches.match(e.request).then(function(r){
@@ -3698,24 +3704,36 @@
             }
         });
     }
-        function init() { 
+            function init() { 
         setupPWA(); 
         updateCartUI(); 
         checkInAppMessage();
-        
-        // Cek apakah Firebase sudah siap
+    }
+
+    // Pastikan Service Worker lama dibersihkan saat aplikasi dibuka
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                // Hapus SW lama agar file SW baru (v7) langsung diambil
+                registration.unregister();
+            }
+        });
+    }
+
+    // Jalankan init() saat halaman selesai dimuat
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // DENGARKAN SINYAL DARI FIREBASE!
+    // Saat Firebase sudah siap, langsung jalankan checkAuthState()
+    window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
-        } else {
-            // Jika belum siap, tunggu sampai siap lalu jalankan checkAuthState
-            const checkFirebaseReady = setInterval(() => {
-                if (window.firebaseAuth) {
-                    clearInterval(checkFirebaseReady);
-                    checkAuthState();
-                }
-            }, 50); // Cek setiap 50 milidetik
         }
-    }
+    });
     </script>
 </body>
 </html>
