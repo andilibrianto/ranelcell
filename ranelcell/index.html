@@ -470,6 +470,11 @@
         <i class="fa-solid fa-arrow-up text-sm"></i>
     </button>
 
+    <!-- Tambahan: Tombol Floating Logout -->
+    <button id="fab-logout" onclick="handleLogout()" class="hidden fixed right-6 z-40 w-11 h-11 rounded-full bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Keluar Akun" style="bottom: 148px;">
+        <i class="fa-solid fa-right-from-bracket text-sm"></i>
+    </button>
+
     <div id="app" class="relative min-h-screen">
 
         <div id="view-home" class="view">
@@ -1389,6 +1394,15 @@
         if (homeHeaderBadge) {
             if (count > 0) { homeHeaderBadge.style.display = 'flex'; homeHeaderBadge.textContent = count; }
             else { homeHeaderBadge.style.display = 'none'; }
+        }
+        // Logika tampil tombol floating logout
+        const fabLogout = document.getElementById('fab-logout');
+        if (fabLogout) {
+            if (isUserLoggedIn && currentView === 'view-home') {
+                fabLogout.classList.remove('hidden');
+            } else {
+                fabLogout.classList.add('hidden');
+            }
         }
     }
 
@@ -3291,9 +3305,6 @@
                         <i class="fa-solid fa-location-dot text-lg"></i>
                     </a>
                 </div>
-                <button onclick="handleLogout()" class="btn-outline w-full text-sm py-3 mt-3 border-red-500 text-red-400">
-                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Keluar Akun
-                </button>
                 <button onclick="showView('view-home')" class="btn-pk w-full text-sm py-3">
                     <i class="fa-solid fa-house mr-2"></i> Kembali ke Beranda
                 </button>
@@ -3463,10 +3474,10 @@
 
         // --- PENGATURAN IN-APP MESSAGE LOKAL ---
     const IAM_CONFIG = {
-        id: 'promo_v.0.0.3', // Ganti ID ini jika ingin pesan baru muncul lagi
+        id: 'promo_v.0.0.1', // Ganti ID ini jika ingin pesan baru muncul lagi
         title: 'Beli Kartu Perdana, GRATIS ONGKIR! 🚚✨',
         message: 'Sekarang, setiap pembelian Kartu Perdana jenis apa pun langsung dapet GRATIS ONGKIR ke rumahmu!<br> Biar makin hemat, jangan lupa masukin kode promo ini ya:<br><br> 🎟️ Kode Promo: <b>PROMOWEB</b>',
-        showOnce: true, // true = tampil 1 kali per user. false = tampil terus
+        showOnce: false, // true = tampil 1 kali per user. false = tampil terus
         buttonText: 'Saya Mau', // Teks tombol
         buttonAction: 'view-perdana' // ID halaman tujuan (misal: view-accessories, view-game, view-perdana)
     };
@@ -3550,7 +3561,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.0.4'; // Naikkan versi ke v7
+                    const CACHE_NAME = 'ranel-cell-v.0.0.0.5'; // Naikkan versi ke v7
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3673,31 +3684,35 @@
         }, 'fa-solid fa-right-from-bracket');
     }
 
-            function updateAuthUI() {
+        function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
         isUserLoggedIn = !!user;
+
+        updateCartUI();
     }
-
-    // Fungsi handleAuthClick() dihapus karena tombolnya sudah tidak ada
-
     // Cek status login saat aplikasi pertama kali dibuka
-        function checkAuthState() {
+    function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
             if (user) {
-                // Jika user ditemukan (sudah login sebelumnya)
+                // Jika user sudah login
                 isUserLoggedIn = true;
                 updateAuthUI();
                 
-                // Jika dia ada di halaman login/signup, pindah ke Home
+                // Jika user ada di halaman login/signup, pindah ke Home
                 if (currentView === 'view-login' || currentView === 'view-signup') {
                     showView('view-home');
                 }
+                
+                // TAMBAHKAN INI: Cek In-App Message hanya saat user sudah login & di halaman utama
+                if (currentView === 'view-home') {
+                    checkInAppMessage();
+                }
             } else {
-                // Jika belum login sama sekali
+                // Jika user belum login
                 isUserLoggedIn = false;
                 updateAuthUI();
                 
-                // Paksa ke halaman login
+                // Paksa pindah ke halaman login (kecuali jika dia sedang di halaman signup)
                 if (currentView !== 'view-login' && currentView !== 'view-signup') {
                     showView('view-login');
                 }
@@ -3706,8 +3721,7 @@
     }
             function init() { 
         setupPWA(); 
-        updateCartUI(); 
-        checkInAppMessage();
+        updateCartUI();
     }
 
     // Pastikan Service Worker lama dibersihkan saat aplikasi dibuka
