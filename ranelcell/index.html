@@ -11,6 +11,38 @@
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
     <link rel="manifest" id="manifest-link">
     <script src="https://cdn.tailwindcss.com"></script>
+        <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+        // PASTE KONFIGURASI FIREBASE ANDA DI SINI
+        const firebaseConfig = {
+    apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
+    authDomain: "ranel-cell.firebaseapp.com",
+    projectId: "ranel-cell",
+    storageBucket: "ranel-cell.firebasestorage.app",
+    messagingSenderId: "267696476787",
+    appId: "1:267696476787:web:5fda181cfdaeec413e5006"
+  };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Paksa Firebase untuk selalu mengingat sesi login di memori HP/Browser
+        setPersistence(auth, browserLocalPersistence);
+
+        // Eksport agar bisa dipakai di script utama
+        window.firebaseAuth = {
+            auth,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signOut,
+            onAuthStateChanged,
+            updateProfile // Tambahan fungsi updateProfile
+        };
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
@@ -437,7 +469,7 @@
 
     <div id="app" class="relative min-h-screen">
 
-        <div id="view-home" class="view active">
+        <div id="view-home" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -447,7 +479,7 @@
                             <p class="text-[12px] text-dk-400 leading-tight">Jl. Granting I No. 1-3, Surabaya</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2">                        
                         <button onclick="toggleAnnouncement(event)" class="h-9 px-3 rounded-full bg-pk/10 border border-pk/30 flex items-center gap-2 text-xs font-bold text-pk active:scale-95 transition-transform" aria-label="Fitur Baru">
                             Fitur Baru
                             <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
@@ -459,6 +491,7 @@
                     </div>
                 </div>
             </header>
+
             <main class="max-w-lg mx-auto px-4 pb-32">
                 <section class="pt-8 pb-6 text-center fade-up">
                     <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-pk/10 border border-pk/20 text-pk text-xs font-medium mb-5">
@@ -693,6 +726,72 @@
                 </div>
             </header>
             <div id="karir-form-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
+        </div>
+
+                <!-- View Login -->
+        <div id="view-login" class="view active">
+            <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+                <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+                    <h2 class="text-sm font-bold flex-1 text-center">Masuk Akun</h2>
+                </div>
+            </header>
+            <div class="max-w-lg mx-auto px-4 py-8 pb-32 flex flex-col justify-center min-h-[80vh]">
+                <div class="text-center mb-8 fade-up">
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-pk to-pk-light flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-pk/30"><img src="./Gambar/Logo_BL_intuls_NoBCKG.png" alt=""></div>
+                    <h2 class="text-xl font-bold">Selamat Datang</h2>
+                    <p class="text-xs text-gray-400 mt-1">Masuk untuk melanjutkan transaksi</p>
+                </div>
+                <div class="card p-6 fade-up fade-up-d1">
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Email</label>
+                        <input type="email" id="login-email" class="form-input" placeholder="Masukkan Email Anda">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Password</label>
+                        <div class="relative">
+                            <input type="password" id="login-password" class="form-input pr-10" placeholder="Minimal 6 karakter">
+                            <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                                <i class="fa-solid fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="handleLogin()" class="btn-pk w-full text-center mb-3">Masuk</button>
+                    <p class="text-center text-xs text-gray-400">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Sign Up -->
+        <div id="view-signup" class="view">
+            <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+                <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+                    <button onclick="goToLogin()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+                    <h2 class="text-sm font-bold flex-1">Daftar Akun Baru</h2>
+                </div>
+            </header>
+            <div class="max-w-lg mx-auto px-4 py-8 pb-32 flex flex-col justify-center min-h-[80vh]">
+                <div class="card p-6 fade-up">
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
+                        <input type="text" id="signup-nama" class="form-input" placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Email</label>
+                        <input type="email" id="signup-email" class="form-input" placeholder="Masukkan Email Anda">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Password</label>
+                        <div class="relative">
+                            <input type="password" id="signup-password" class="form-input pr-10" placeholder="Minimal 6 karakter">
+                            <button type="button" onclick="togglePassword('signup-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                                <i class="fa-solid fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="handleSignup()" class="btn-pk w-full text-center mb-3">Daftar Sekarang</button>
+                    <p class="text-center text-xs text-gray-400">Sudah punya akun? <button onclick="goToLogin()" class="text-pk font-semibold">Masuk di sini</button></p>
+                </div>
+            </div>
         </div>
 
         <div id="view-pricelist" class="view">
@@ -996,7 +1095,7 @@
     let paketMode = 'isi_ulang';
     let pricelistState = { category:null, provider:null, duration:null, cekJenis:null };
     let perdanaState = { provider:null, duration:null };
-    let currentView = 'view-home';
+    let currentView = 'view-login';
     let viewHistory = ['view-home'];
     let savedFormData = null;
     let shouldRestoreForm = false;
@@ -1186,7 +1285,40 @@
 
     function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
     function onlyDigits(val) { return val.replace(/[^0-9]/g, ''); }
+        // Fungsi untuk melihat/sembunyikan password
+    function togglePassword(inputId, btnEl) {
+        const input = document.getElementById(inputId);
+        const icon = btnEl.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    // Fungsi pindah halaman sambil reset field
+    function goToLogin() {
+        // Kosongkan field signup jika ada
+        document.getElementById('signup-nama').value = '';
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+        
+        // Pindah ke halaman login
+        showView('view-login');
+    }
 
+    function goToSignup() {
+        // Kosongkan field login jika ada
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+        
+        // Pindah ke halaman signup
+        showView('view-signup');
+    }
     let toastTimer;
     function showToast(msg, type='success', duration = 2500) {
         const t = document.getElementById('toast');
@@ -3156,7 +3288,9 @@
                         <i class="fa-solid fa-location-dot text-lg"></i>
                     </a>
                 </div>
-
+                <button onclick="handleLogout()" class="btn-outline w-full text-sm py-3 mt-3 border-red-500 text-red-400">
+                    <i class="fa-solid fa-right-from-bracket mr-2"></i> Keluar Akun
+                </button>
                 <button onclick="showView('view-home')" class="btn-pk w-full text-sm py-3">
                     <i class="fa-solid fa-house mr-2"></i> Kembali ke Beranda
                 </button>
@@ -3451,7 +3585,123 @@
         }
     }
     // ---------------------------------------
+        // --- FIREBASE AUTH LOGIC ---
+    let isUserLoggedIn = false;
+
+        function handleSignup() {
+        const nama = document.getElementById('signup-nama').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value.trim();
+
+        if (!nama || !email || !password) { showToast('Semua field wajib diisi', 'error'); return; }
+        if (password.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
+
+        showLoading('');
+        window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password)
+            .then((userCredential) => {
+                hideLoading();
+                // Update profile nama menggunakan fungsi modular v10
+                window.firebaseAuth.updateProfile(userCredential.user, { displayName: nama }).then(() => {
+                    // Reset form signup
+                    document.getElementById('signup-nama').value = '';
+                    document.getElementById('signup-email').value = '';
+                    document.getElementById('signup-password').value = '';
+
+                    showToast('Pendaftaran berhasil! Selamat Berbelanja.', 'success');
+                    showView('view-home');
+                    updateAuthUI();
+                }).catch((err) => {
+                    // Reset form signup meskipun update profile gagal
+                    document.getElementById('signup-nama').value = '';
+                    document.getElementById('signup-email').value = '';
+                    document.getElementById('signup-password').value = '';
+
+                    showToast('Pendaftaran berhasil! Selamat datang.', 'success');
+                    showView('view-home');
+                    updateAuthUI();
+                });
+            })
+            .catch((error) => {
+                hideLoading();
+                if (error.code === 'auth/email-already-in-use') showToast('Email sudah terdaftar', 'error');
+                else showToast('Pastikan Data Yang Anda Isi Telah Benar ' + (error.message), 'error');
+            });
+    }
+
+        function handleLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+
+        if (!email || !password) { showToast('Email dan password wajib diisi', 'error'); return; }
+
+        showLoading('');
+        window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password)
+            .then(() => {
+                hideLoading();
+                
+                // Reset form login
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+
+                showToast('Selamat Berbelanja!', 'success');
+                showView('view-home');
+                updateAuthUI();
+            })
+            .catch((error) => {
+                hideLoading();
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    showToast('Email atau password salah', 'error');
+                } else {
+                    showToast('Akun Tidak Terdaftar! Silahkan Daftar Terlebih Dahulu', 'error');
+                }
+            });
+    }
+
+    function handleLogout() {
+        showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
+            window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                showToast('Akun Berhasil Dikeluarkan', 'info');
+                showView('view-login');
+                updateAuthUI();
+            });
+        }, 'fa-solid fa-right-from-bracket');
+    }
+
+            function updateAuthUI() {
+        const user = window.firebaseAuth.auth.currentUser;
+        isUserLoggedIn = !!user;
+    }
+
+    // Fungsi handleAuthClick() dihapus karena tombolnya sudah tidak ada
+
+    // Cek status login saat aplikasi pertama kali dibuka
+        function checkAuthState() {
+        window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
+            if (user) {
+                // Jika user ditemukan (sudah login sebelumnya)
+                isUserLoggedIn = true;
+                updateAuthUI();
+                
+                // Jika dia ada di halaman login/signup, pindah ke Home
+                if (currentView === 'view-login' || currentView === 'view-signup') {
+                    showView('view-home');
+                }
+            } else {
+                // Jika belum login sama sekali
+                isUserLoggedIn = false;
+                updateAuthUI();
+                
+                // Paksa ke halaman login
+                if (currentView !== 'view-login' && currentView !== 'view-signup') {
+                    showView('view-login');
+                }
+            }
+        });
+    }
     function init() { setupPWA(); updateCartUI(); checkInAppMessage(); }
+    if (window.firebaseAuth) {
+            checkAuthState();
+        }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
     else init();
     </script>
