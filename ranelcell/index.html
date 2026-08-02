@@ -3538,8 +3538,8 @@
         homeViewEl.addEventListener('scroll', () => {
             if (currentView !== 'view-home') return;
             const { scrollTop, scrollHeight, clientHeight } = homeViewEl;
-            // Munculkan tombol jika sisa scroll di bawah 550px
-            if (scrollHeight - (scrollTop + clientHeight) < 550) {
+            // Munculkan tombol jika sisa scroll di bawah 600px
+            if (scrollHeight - (scrollTop + clientHeight) < 700) {
                 scrollTopBtnEl.classList.add('visible');
             } else {
                 scrollTopBtnEl.classList.remove('visible');
@@ -3641,7 +3641,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.1.1';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.1.2';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3728,14 +3728,28 @@
 
                         showToast('Pendaftaran berhasil! Cek email Anda dibagian SPAM untuk verifikasi.', 'success', 4000);
                         
+                                                // 3. Logout paksa agar user tidak bisa masuk sebelum verifikasi
                         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
                             isProcessingAuth = false; // Matikan flag karena proses sudah selesai
                             window.currentUserTelp = ''; 
                             updateAuthUI();
                             showView('view-login');
                             
+                            // 4. Salin email ke halaman login & langsung fokus ke kolom password
                             document.getElementById('login-email').value = registeredEmail;
                             document.getElementById('login-password').focus();
+                            
+                            // 5. Munculkan pop-up pemberitahuan cek SPAM/PROMOSI
+                            showConfirmModal(
+                                "Cek Email Anda!", 
+                                "Kami telah mengirim link verifikasi ke email Anda.\n\nSilakan cek folder SPAM atau PROMOSI pada email Anda.", 
+                                () => { 
+                                    // Tombol "Saya Mengerti" diklik (Tidak ada aksi khusus, hanya tutup modal)
+                                }, 
+                                'fa-solid fa-envelope-circle-check', // Ikon amplop centang
+                                'Saya Mengerti', 
+                                '' // Sembunyikan tombol batal
+                            );
                         });
                     }).catch((err) => {
                         isProcessingAuth = false; 
