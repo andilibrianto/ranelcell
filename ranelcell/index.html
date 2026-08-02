@@ -548,7 +548,7 @@
 
                 <!-- Tambahan: Section Detail Akun User -->
                 <section id="user-profile-section" class="mb-8 fade-up fade-up-d1 hidden">
-                    <h3 class="section-label">Detail Akun</h3>
+                    <h3 class="section-label">PROFIL AKUN</h3>
                     <div class="card p-4 border-pk/20">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-3">
@@ -847,29 +847,29 @@
                 </div>
             </div>
         </div>
-        <!-- View Edit Profil -->
+               <!-- View Edit Profil -->
         <div id="view-edit-profile" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-                    <button onclick="showView('view-home')" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
-                    <h2 class="text-sm font-bold flex-1">Edit Profil</h2>
+                    <button onclick="confirmEditBack()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+                    <h2 class="text-sm font-bold flex-1">Edit Akun</h2>
                 </div>
             </header>
             <div class="max-w-lg mx-auto px-4 py-8 pb-32">
                 <div class="card p-6 fade-up">
                     <div class="mb-4">
                         <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
-                        <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap">
+                        <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap" oninput="checkProfileChanges()">
                     </div>
                     <div class="mb-4">
                         <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
-                        <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
+                        <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value); checkProfileChanges()">
                     </div>
                     <div class="mb-6">
                         <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
                         <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
                     </div>
-                    <button onclick="saveProfile()" class="btn-pk w-full text-center">
+                    <button id="save-profile-btn" onclick="saveProfile()" class="btn-pk w-full text-center" disabled style="opacity: 0.5; cursor: not-allowed;">
                         <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
                     </button>
                 </div>
@@ -3641,7 +3641,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.1.0';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.1.1';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3869,7 +3869,7 @@
         document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
     }
 
-    function showEditProfile() {
+        function showEditProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
@@ -3878,9 +3878,64 @@
         document.getElementById('edit-telp').value = window.currentUserTelp || '';
         document.getElementById('edit-email').value = user.email || '';
         
+        // Simpan data awal untuk deteksi perubahan
+        initialEditNama = user.displayName || '';
+        initialEditTelp = window.currentUserTelp || '';
+        
+        // Pastikan tombol simpan mati saat pertama kali buka halaman
+        const saveBtn = document.getElementById('save-profile-btn');
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+        
         showView('view-edit-profile');
     }
+    // Variabel untuk menyimpan data awal sebelum diedit
+    let initialEditNama = '';
+    let initialEditTelp = '';
 
+    // Fungsi untuk mendeteksi perubahan form
+    function checkProfileChanges() {
+        const currentNama = document.getElementById('edit-nama').value.trim();
+        const currentTelp = document.getElementById('edit-telp').value.trim();
+        
+        const saveBtn = document.getElementById('save-profile-btn');
+        
+        // Jika nama atau telepon berubah dari nilai awalnya
+        if (currentNama !== initialEditNama || currentTelp !== initialEditTelp) {
+            saveBtn.disabled = false;
+            saveBtn.style.opacity = '1';
+            saveBtn.style.cursor = 'pointer';
+        } else {
+            // Jika kembali sama seperti awal
+            saveBtn.disabled = true;
+            saveBtn.style.opacity = '0.5';
+            saveBtn.style.cursor = 'not-allowed';
+        }
+    }
+
+    // Fungsi tombol kembali dengan pengecekan perubahan
+    function confirmEditBack() {
+        const currentNama = document.getElementById('edit-nama').value.trim();
+        const currentTelp = document.getElementById('edit-telp').value.trim();
+        
+        // Jika ada perubahan yang belum disimpan, munculkan pop-up peringatan
+        if (currentNama !== initialEditNama || currentTelp !== initialEditTelp) {
+            showConfirmModal(
+                "Buang Perubahan?", 
+                "Anda memiliki perubahan yang belum disimpan. Yakin ingin meninggalkan halaman ini?", 
+                () => {
+                    showView('view-home');
+                }, 
+                'fa-solid fa-triangle-exclamation',
+                'Ya, Buang',
+                'Batal'
+            );
+        } else {
+            // Jika tidak ada perubahan, langsung kembali
+            showView('view-home');
+        }
+    }
     async function saveProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
@@ -3891,7 +3946,7 @@
         if (!nama) { showToast('Nama lengkap wajib diisi', 'error'); return; }
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
 
-        showLoading('Menyimpan perubahan...');
+        showLoading('');
         try {
             // 1. Update nama di Firebase Auth
             await window.firebaseAuth.updateProfile(user, { displayName: nama });
