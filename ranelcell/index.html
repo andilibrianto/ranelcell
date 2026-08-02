@@ -544,7 +544,34 @@
                         </div>
                     </div>
                 </section>
+                </section> <!-- Penutup section Cara Pesan -->
 
+                <!-- Tambahan: Section Detail Akun User -->
+                <section id="user-profile-section" class="mb-8 fade-up fade-up-d1 hidden">
+                    <h3 class="section-label">Detail Akun</h3>
+                    <div class="card p-4 border-pk/20">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <p id="home-user-name" class="font-bold text-sm">Nama User</p>
+                                    <p id="home-user-email" class="text-[11px] text-gray-400">email@user.com</p>
+                                </div>
+                            </div>
+                            <button onclick="showEditProfile()" class="text-xs text-pk font-semibold flex items-center gap-1 active:opacity-70 transition-opacity">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                        </div>
+                        <div class="border-t border-dk-500/50 pt-3 text-xs space-y-1">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">No. Telepon</span>
+                                <span id="home-user-telp" class="text-white font-medium">0812xxxx</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -820,7 +847,34 @@
                 </div>
             </div>
         </div>
-
+        <!-- View Edit Profil -->
+        <div id="view-edit-profile" class="view">
+            <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+                <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+                    <button onclick="showView('view-home')" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+                    <h2 class="text-sm font-bold flex-1">Edit Profil</h2>
+                </div>
+            </header>
+            <div class="max-w-lg mx-auto px-4 py-8 pb-32">
+                <div class="card p-6 fade-up">
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
+                        <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap">
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
+                        <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
+                    </div>
+                    <div class="mb-6">
+                        <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
+                        <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
+                    </div>
+                    <button onclick="saveProfile()" class="btn-pk w-full text-center">
+                        <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </div>
         <div id="view-pricelist" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -3743,6 +3797,7 @@
                 showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
+                renderUserProfile();
                 isProcessingAuth = false; // Matikan flag
             })
             .catch((error) => {
@@ -3794,20 +3849,81 @@
         showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
             window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
                 window.currentUserTelp = ''; // Kosongkan no telp dari memori saat logout
+                document.getElementById('user-profile-section').classList.add('hidden');
                 showToast('Akun Berhasil Dikeluarkan', 'info');
                 showView('view-login');
                 updateAuthUI();
             });
         }, 'fa-solid fa-right-from-bracket');
     }
+    // --- FUNGSI PROFIL USER ---
+    function renderUserProfile() {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
 
+        // Tampilkan section profil
+        document.getElementById('user-profile-section').classList.remove('hidden');
+        // Isi data di halaman utama
+        document.getElementById('home-user-name').textContent = user.displayName || 'User';
+        document.getElementById('home-user-email').textContent = user.email || '-';
+        document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
+    }
+
+    function showEditProfile() {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
+
+        // Isi form edit dengan data saat ini
+        document.getElementById('edit-nama').value = user.displayName || '';
+        document.getElementById('edit-telp').value = window.currentUserTelp || '';
+        document.getElementById('edit-email').value = user.email || '';
+        
+        showView('view-edit-profile');
+    }
+
+    async function saveProfile() {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
+
+        const nama = document.getElementById('edit-nama').value.trim().toUpperCase();
+        const telp = document.getElementById('edit-telp').value.trim();
+
+        if (!nama) { showToast('Nama lengkap wajib diisi', 'error'); return; }
+        if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
+
+        showLoading('Menyimpan perubahan...');
+        try {
+            // 1. Update nama di Firebase Auth
+            await window.firebaseAuth.updateProfile(user, { displayName: nama });
+            
+            // 2. Update data di Firestore (merge: true agar tidak menimpa field lain)
+            await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
+                nama: nama,
+                telp: telp
+            }, { merge: true });
+
+            // 3. Update variabel global di aplikasi
+            window.currentUserTelp = telp;
+            
+            hideLoading();
+            showToast('Profil berhasil diperbarui', 'success');
+            
+            // 4. Update tampilan halaman utama & kembali ke home
+            renderUserProfile();
+            showView('view-home');
+        } catch (err) {
+            hideLoading();
+            console.error("Gagal update profil:", err);
+            showToast('Gagal memperbarui profil: ' + err.message, 'error');
+        }
+    }
         function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
         isUserLoggedIn = !!user;
 
         updateCartUI();
     }
-        // Cek status login saat aplikasi pertama kali dibuka atau refresh
+            // Cek status login saat aplikasi pertama kali dibuka atau refresh
     function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             // 1. Langsung sembunyikan layar loading
@@ -3817,6 +3933,7 @@
             if (isProcessingAuth) return;
 
             if (user) {
+                // CEK VERIFIKASI EMAIL SAAT REFRESH
                 if (!user.emailVerified) {
                     showToast('Silakan verifikasi email Anda terlebih dahulu.', 'info', 3000);
                     window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
@@ -3832,6 +3949,7 @@
                 showView('view-home');
                 checkInAppMessage();
 
+                // 2. Ambil data user dari Firestore di BACKGROUD
                 try {
                     const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
                     const docSnap = await window.firebaseAuth.getDoc(docRef);
@@ -3845,7 +3963,11 @@
                     window.currentUserTelp = '';
                 }
 
+                // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
+                renderUserProfile();
+
             } else {
+                // Jika user belum login
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
                 updateAuthUI();
@@ -3853,6 +3975,7 @@
             }
         });
 
+        // Batas waktu (Timeout) 5 detik
         setTimeout(() => {
             const loadingEl = document.getElementById('loading-overlay');
             if (loadingEl && !loadingEl.classList.contains('hidden')) {
