@@ -3948,6 +3948,67 @@
             'Batal'
         );
     }
+        async function handleLogin() {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+
+        if (!email || !password) { showToast('Email dan password wajib diisi', 'error'); return; }
+
+        isProcessingAuth = true; // Nyalakan flag
+        showLoading('Memproses login...');
+        
+        window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password)
+            .then(async (userCredential) => {
+                hideLoading();
+                const user = userCredential.user;
+
+                // CEK APAKAH EMAIL SUDAH DIVERIFIKASI
+                if (!user.emailVerified) {
+                    showToast('Email belum diverifikasi. Silahkan cek email Anda difolder SPAM ', 'error', 4000);
+                    window.firebaseAuth.sendEmailVerification(user);
+                    
+                    window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                        isProcessingAuth = false; // Matikan flag
+                        updateAuthUI();
+                        if (currentView !== 'view-login') showView('view-login');
+                    });
+                    return;
+                }
+
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+
+                // Ambil data user dari Firestore
+                try {
+                    const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+                    const docSnap = await window.firebaseAuth.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        window.currentUserTelp = docSnap.data().telp;
+                    } else {
+                        window.currentUserTelp = '';
+                    }
+                } catch (err) {
+                    console.error("Gagal ambil data Firestore:", err);
+                    window.currentUserTelp = '';
+                }
+
+                showToast('Selamat Berbelanja', 'success');
+                showView('view-home');
+                updateAuthUI();
+                renderUserProfile();
+                updateHomeGreeting();
+                isProcessingAuth = false; // Matikan flag
+            })
+            .catch((error) => {
+                hideLoading();
+                isProcessingAuth = false; // Matikan flag
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    showToast('Email atau password salah', 'error');
+                } else {
+                    showToast('Gagal masuk: ' + error.message, 'error');
+                }
+            });
+    }
         function handleLogout() {
         showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
                 window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
