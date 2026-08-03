@@ -1230,7 +1230,7 @@
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            const isOpen = !(hour >= 24 || hour < 6.45);
+            const isOpen = !(hour >= 21 || hour < 6.45);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
@@ -2916,61 +2916,52 @@
             showToast('Peta direset ke lokasi toko', 'info');
         }
     }
-            // Fungsi untuk mengambil lokasi GPS yang sangat akurat dari perangkat
+    // Fungsi untuk mengambil lokasi GPS yang sangat akurat dari perangkat
     function getUserLocation() {
         if (!navigator.geolocation) {
             showToast("Browser Anda tidak mendukung GPS", "error");
             return;
         }
 
-        // 1. MUNCULKAN ANIMASI LOADING
         showLoading("Mendeteksi lokasi GPS...");
         
-        // Beri jeda 100ms agar browser sempat merender animasi loading ke layar
-        // sebelum memulai proses geolocation yang berat.
-        setTimeout(() => {
-            // Opsi enableHighAccuracy: true memaksa perangkat menggunakan GPS
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    // 2. SEMBUNYIKAN LOADING SAAT GPS KETEMU
-                    hideLoading();
-                    
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy; // Tingkat akurasi dalam meter
+        // Opsi enableHighAccuracy: true memaksa perangkat menggunakan GPS (bukan WiFi/Cell Tower)
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                hideLoading();
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const accuracy = position.coords.accuracy; // Tingkat akurasi dalam meter
 
-                    // Set koordinat tujuan
-                    destinationLat = lat;
-                    destinationLng = lng;
+                // Set koordinat tujuan
+                destinationLat = lat;
+                destinationLng = lng;
 
-                    // Pindahkan marker ke lokasi GPS dan zoom peta
-                    if (mapMarker && mapInstance) {
-                        mapMarker.setLatLng([lat, lng]);
-                        mapInstance.setView([lat, lng], 16); // Zoom level 16
-                        showToast(`Lokasi GPS ditemukan (Akurasi: ${Math.round(accuracy)} meter)`, "success");
-                    }
-                },
-                (error) => {
-                    // 3. SEMBUNYIKAN LOADING JIKA TERJADI ERROR / DITOLAK
-                    hideLoading();
-                    
-                    let errMsg = "Gagal mengambil lokasi GPS.";
-                    if (error.code === 1) {
-                        errMsg = "Akses lokasi ditolak. Mohon izinkan akses lokasi di pengaturan browser Anda.";
-                    } else if (error.code === 2) {
-                        errMsg = "Lokasi tidak tersedia. Coba keluar ruangan atau periksa koneksi internet.";
-                    } else if (error.code === 3) {
-                        errMsg = "Waktu permintaan lokasi habis. Silakan coba lagi.";
-                    }
-                    showToast(errMsg, "error", 4000);
-                },
-                {
-                    enableHighAccuracy: true, // Meminta akurasi setinggi mungkin
-                    timeout: 10000,           // Batas waktu 10 detik
-                    maximumAge: 0              // Jangan gunakan data lokasi lama yang di-cache
+                // Pindahkan marker ke lokasi GPS dan zoom peta
+                if (mapMarker && mapInstance) {
+                    mapMarker.setLatLng([lat, lng]);
+                    mapInstance.setView([lat, lng], 16); // Zoom level 16 (cukup dekat untuk melihat jalan)
+                    showToast(`Lokasi GPS ditemukan (Akurasi: ${Math.round(accuracy)} meter)`, "success");
                 }
-            );
-        }, 100); // Jeda 100ms
+            },
+            (error) => {
+                hideLoading();
+                let errMsg = "Gagal mengambil lokasi GPS.";
+                if (error.code === 1) {
+                    errMsg = "Akses lokasi ditolak. Mohon izinkan akses lokasi di pengaturan browser Anda.";
+                } else if (error.code === 2) {
+                    errMsg = "Lokasi tidak tersedia. Coba keluar ruangan atau periksa koneksi internet.";
+                } else if (error.code === 3) {
+                    errMsg = "Waktu permintaan lokasi habis. Silakan coba lagi.";
+                }
+                showToast(errMsg, "error", 4000);
+            },
+            {
+                enableHighAccuracy: true, // Meminta akurasi setinggi mungkin
+                timeout: 10000,           // Batas waktu 5 detik
+                maximumAge: 0              // Jangan gunakan data lokasi lama yang di-cache
+            }
+        );
     }
                 function setPaketMode(mode) {
         paketMode = mode;
