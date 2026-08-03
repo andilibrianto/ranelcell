@@ -14,7 +14,7 @@
         <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
         
                 // Import Firestore
         import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -48,13 +48,16 @@
             getDoc, 
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
-            signInWithPopup, // Tambahan untuk Google Login
-            GoogleAuthProvider, // Tambahan untuk Google Login
+            signInWithPopup, 
+            GoogleAuthProvider, 
             signOut,
             onAuthStateChanged,
             updateProfile,
             sendEmailVerification,
-            sendPasswordResetEmail
+            sendPasswordResetEmail,
+            updatePassword, // Tambahan untuk ubah password
+            reauthenticateWithCredential, // Tambahan untuk verifikasi password lama
+            EmailAuthProvider // Tambahan untuk verifikasi password lama
         };
         
         // Beri sinyal ke aplikasi utama bahwa Firebase sudah siap!
@@ -903,6 +906,24 @@
                         <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
                         <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
                     </div>
+
+                    <!-- Tambahan: Form Ubah Password -->
+                    <div class="mt-6 pt-6 border-t border-dk-500/50">
+                        <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
+                        <div class="mb-3">
+                            <label class="text-[11px] text-gray-500 mb-1 block">Password Lama</label>
+                            <input type="password" id="edit-old-password" class="form-input" placeholder="Kosongkan jika tidak ganti password">
+                        </div>
+                        <div class="mb-3">
+                            <label class="text-[11px] text-gray-500 mb-1 block">Password Baru</label>
+                            <input type="password" id="edit-new-password" class="form-input" placeholder="Minimal 6 karakter">
+                        </div>
+                        <div class="mb-6">
+                            <label class="text-[11px] text-gray-500 mb-1 block">Konfirmasi Password Baru</label>
+                            <input type="password" id="edit-confirm-password" class="form-input" placeholder="Ulangi password baru">
+                        </div>
+                    </div>
+
                     <button id="save-profile-btn" onclick="saveProfile()" class="btn-pk w-full text-center" disabled style="opacity: 0.5; cursor: not-allowed;">
                         <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
                     </button>
@@ -4045,40 +4066,82 @@
             showView('view-home');
         }
     }
-    async function saveProfile() {
+        async function saveProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
         const nama = document.getElementById('edit-nama').value.trim().toUpperCase();
         const telp = document.getElementById('edit-telp').value.trim();
+        const oldPass = document.getElementById('edit-old-password').value;
+        const newPass = document.getElementById('edit-new-password').value;
+        const confPass = document.getElementById('edit-confirm-password').value;
 
+        // Validasi dasar
         if (!nama) { showToast('Nama lengkap wajib diisi', 'error'); return; }
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
 
-        showLoading('');
+        showLoading('Menyimpan perubahan...');
         try {
             // 1. Update nama di Firebase Auth
             await window.firebaseAuth.updateProfile(user, { displayName: nama });
             
-            // 2. Update data di Firestore (merge: true agar tidak menimpa field lain)
+            // 2. Update data di Firestore
             await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
                 nama: nama,
                 telp: telp
             }, { merge: true });
 
-            // 3. Update variabel global di aplikasi
+            // 3. Update variabel global
             window.currentUserTelp = telp;
-            
+
+            // 4. Cek jika user ingin ganti password (jika kolom password lama diisi)
+            if (oldPass || newPass || confPass) {
+                if (!oldPass || !newPass || !confPass) {
+                    hideLoading();
+                    showToast('Semua kolom password wajib diisi', 'error');
+                    return;
+                }
+                if (newPass.length < 6) {
+                    hideLoading();
+                    showToast('Password baru minimal 6 karakter', 'error');
+                    return;
+                }
+                if (newPass !== confPass) {
+                    hideLoading();
+                    showToast('Konfirmasi password tidak cocok', 'error');
+                    return;
+                }
+
+                // Proses Re-authentication (Verifikasi password lama)
+                const credential = window.firebaseAuth.EmailAuthProvider.credential(user.email, oldPass);
+                await window.firebaseAuth.reauthenticateWithCredential(user, credential);
+                
+                // Jika lolos verifikasi, update password baru
+                await window.firebaseAuth.updatePassword(user, newPass);
+                
+                // Kosongkan kolom password setelah berhasil
+                document.getElementById('edit-old-password').value = '';
+                document.getElementById('edit-new-password').value = '';
+                document.getElementById('edit-confirm-password').value = '';
+                showToast('Password berhasil diubah', 'success');
+            }
+
             hideLoading();
             showToast('Profil berhasil diperbarui', 'success');
             
-            // 4. Update tampilan halaman utama & kembali ke home
+            // Update tampilan halaman utama & kembali ke home
             renderUserProfile();
             showView('view-home');
         } catch (err) {
             hideLoading();
             console.error("Gagal update profil:", err);
-            showToast('Gagal memperbarui profil: ' + err.message, 'error');
+            if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+                showToast('Password lama yang Anda masukkan salah', 'error');
+            } else if (err.code === 'auth/requires-recent-login') {
+                showToast('Sesi telah berakhir. Silakan logout lalu login kembali untuk mengubah password.', 'error', 5000);
+            } else {
+                showToast('Gagal memperbarui profil: ' + err.message, 'error');
+            }
         }
     }
         function updateAuthUI() {
