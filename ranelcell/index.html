@@ -1224,7 +1224,7 @@
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            const isOpen = !(hour >= 22 || hour < 6.45);
+            const isOpen = !(hour >= 21.40 || hour < 6.45);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
