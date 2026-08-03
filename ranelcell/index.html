@@ -556,7 +556,7 @@
                                     <i class="fa-solid fa-user"></i>
                                 </div>
                                 <div>
-                                    <p id="home-user-name" class="font-bold text-sm">Nama User</p>
+                                    <p id="home-user-name" class="font-bold text-sm uppercase">Nama User</p>
                                     <p id="home-user-email" class="text-[11px] text-gray-400">email@user.com</p>
                                 </div>
                             </div>
@@ -1964,7 +1964,6 @@
         function renderPengaduan() {
         const content = document.getElementById('pengaduan-content');
         
-        // Ambil tanggal hari ini untuk batas maksimal input tanggal
         const today = new Date();
         const yyyy = today.getFullYear();
         let mm = today.getMonth() + 1; // Bulan dimulai dari 0
@@ -1972,7 +1971,10 @@
         if (dd < 10) dd = '0' + dd;
         if (mm < 10) mm = '0' + mm;
         const maxDate = `${yyyy}-${mm}-${dd}`;
-
+        const loggedInUser = isUserLoggedIn ? window.firebaseAuth.auth.currentUser : null;
+        const autoNama = (loggedInUser && loggedInUser.displayName) ? loggedInUser.displayName.toUpperCase() : '';
+        const autoTelp = (loggedInUser && window.currentUserTelp) ? window.currentUserTelp : '';
+        const isReadOnly = isUserLoggedIn ? 'readonly' : '';
         content.innerHTML = `
             <div class="card p-4 mb-5 border-pk/20 fade-up">
                 <div class="flex items-center gap-3">
@@ -1980,8 +1982,8 @@
                     <div><p class="font-semibold text-sm">Layanan Pengaduan 24 Jam</p></div>
                 </div>
             </div>
-            <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label><input type="text" id="pengaduan-nama" class="form-input" placeholder="Masukkan nama lengkap"></div>
-            <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor WhatsApp</label><input type="tel" id="pengaduan-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)"></div>
+            <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label><input type="text" id="pengaduan-nama" class="form-input" placeholder="Masukkan nama lengkap" value="${autoNama}" ${isReadOnly}></div>
+            <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor WhatsApp</label><input type="tel" id="pengaduan-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}></div>
             <div class="mb-4">
                 <label class="text-[11px] text-gray-500 mb-1 block">Kategori Pengaduan</label>
                 <select id="pengaduan-kategori" class="form-input" onchange="togglePengaduanFields()">
@@ -3641,7 +3643,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.1.2';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.1.3';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3725,10 +3727,8 @@
                         document.getElementById('signup-telp').value = '';
                         document.getElementById('signup-email').value = '';
                         document.getElementById('signup-password').value = '';
-
-                        showToast('Pendaftaran berhasil! Cek email Anda dibagian SPAM untuk verifikasi.', 'success', 4000);
                         
-                                                // 3. Logout paksa agar user tidak bisa masuk sebelum verifikasi
+                        // 3. Logout paksa agar user tidak bisa masuk sebelum verifikasi
                         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
                             isProcessingAuth = false; // Matikan flag karena proses sudah selesai
                             window.currentUserTelp = ''; 
