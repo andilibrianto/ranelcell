@@ -3789,6 +3789,7 @@
         
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
+            // Minta prompt untuk select account setiap kali login
             provider.setCustomParameters({ prompt: 'select_account' });
             
             const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, provider);
@@ -3799,50 +3800,26 @@
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             
             if (!docSnap.exists()) {
-                // JIKA DATA TIDAK ADA: Buatkan datanya di Firestore otomatis (telp kosong)
+                // Jika belum ada (user baru lewat Google), buat dokumennya
                 await window.firebaseAuth.setDoc(docRef, {
                     nama: user.displayName || 'Pengguna Google',
-                    telp: '', 
+                    telp: '', // Nomor telepon dikosongkan dulu
                     email: user.email,
                     createdAt: new Date().toISOString()
                 });
                 window.currentUserTelp = '';
-                
-                hideLoading();
-                isProcessingAuth = false;
-                
-                // Arahkan ke halaman Edit Profil untuk meminta nomor telepon
-                showToast('Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
-                showView('view-edit-profile');
-                
-                // Isi form edit profil secara otomatis
-                document.getElementById('edit-nama').value = user.displayName || '';
-                document.getElementById('edit-telp').value = '';
-                document.getElementById('edit-email').value = user.email || '';
             } else {
-                // JIKA DATA ADA: Ambil nomor telepon dan masuk langsung ke aplikasi
+                // Jika sudah ada, ambil nomor teleponnya
                 window.currentUserTelp = docSnap.data().telp || '';
-                
-                // Jika user lama tapi teleponnya belum diisi, arahkan ke Edit Profil
-                if (!window.currentUserTelp) {
-                    hideLoading();
-                    isProcessingAuth = false;
-                    showToast('Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
-                    showView('view-edit-profile');
-                    document.getElementById('edit-nama').value = user.displayName || '';
-                    document.getElementById('edit-telp').value = '';
-                    document.getElementById('edit-email').value = user.email || '';
-                    return;
-                }
-                
-                hideLoading();
-                showToast('Berhasil masuk dengan Google!', 'success');
-                showView('view-home');
-                updateAuthUI();
-                renderUserProfile();
-                updateHomeGreeting();
-                isProcessingAuth = false; // Matikan flag
             }
+            
+            hideLoading();
+            showToast('Berhasil masuk dengan Google!', 'success');
+            showView('view-home');
+            updateAuthUI();
+            renderUserProfile();
+            updateHomeGreeting();
+            isProcessingAuth = false; // Matikan flag
         } catch (error) {
             hideLoading();
             isProcessingAuth = false; // Matikan flag
