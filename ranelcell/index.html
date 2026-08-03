@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" id="manifest-link">
     <script src="https://cdn.tailwindcss.com"></script>
         <!-- Firebase SDK -->
     <script type="module">
@@ -810,12 +810,7 @@
                         </div>
                     </div>
                     <button onclick="handleLogin()" class="btn-pk w-full text-center mb-3">Masuk</button>
-                    <p class="text-center text-xs text-gray-400 mb-4">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
-                    
-                    <!-- Tambahan Tombol Install PWA -->
-                    <button id="pwa-install-btn" onclick="triggerPwaInstall()" class="btn-outline w-full text-sm py-2.5 hidden">
-                        <i class="fa-solid fa-download mr-2"></i> Install Aplikasi
-                    </button>
+                    <p class="text-center text-xs text-gray-400">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
                 </div>
                 <footer class="max-w-lg mx-auto px-4 pt-8 pb-10 text-center border-t border-dk-600/30 mt-8">
                 <div class="footer-text">
@@ -1400,20 +1395,23 @@
             icon.classList.add('fa-eye');
         }
     }
-        // Fungsi pindah halaman sambil reset field
-        function goToLogin() {
+    // Fungsi pindah halaman sambil reset field
+    function goToLogin() {
+        // Kosongkan field signup jika ada
         document.getElementById('signup-nama').value = '';
-        document.getElementById('signup-telp').value = '';
         document.getElementById('signup-email').value = '';
         document.getElementById('signup-password').value = '';
         
+        // Pindah ke halaman login
         showView('view-login');
     }
 
-        function goToSignup() {
+    function goToSignup() {
+        // Kosongkan field login jika ada
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
         
+        // Pindah ke halaman signup
         showView('view-signup');
     }
     let toastTimer;
@@ -3628,52 +3626,6 @@
             localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
         }
     }
-            // --- DETEKSI INSTALL PWA ---
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        
-        // Tampilkan tombol install di halaman login
-        const installBtn = document.getElementById('pwa-install-btn');
-        if (installBtn) {
-            installBtn.classList.remove('hidden');
-        }
-    });
-
-    // Cek jika PWA sudah pernah diinstall, sembunyikan tombolnya
-    window.addEventListener('appinstalled', () => {
-        deferredPrompt = null;
-        const installBtn = document.getElementById('pwa-install-btn');
-        if (installBtn) installBtn.classList.add('hidden');
-        showToast('Aplikasi berhasil dipasang!', 'success');
-    });
-
-    function triggerPwaInstall() {
-        if (deferredPrompt) {
-            // Jika browser mendukung pop-up install otomatis
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    showToast('Memulai pemasangan...', 'success');
-                } else {
-                    showToast('Pemasangan dibatalkan', 'info');
-                }
-                deferredPrompt = null;
-                const installBtn = document.getElementById('pwa-install-btn');
-                if (installBtn) installBtn.classList.add('hidden');
-            });
-        } else {
-            // Jika browser tidak mendukung (misal Safari iPhone atau limitasi Android), munculkan instruksi manual
-            showConfirmModal(
-                "Cara Install Aplikasi", 
-                "1. Klik ikon titik tiga (⋮) di pojok kanan atas browser.\n\n2. Pilih menu 'Add to Home screen' atau 'Tambahkan ke Layar utama'.\n\n3. Klik 'Install' atau 'Tambahkan'.", 
-                () => { }, 
-                'fa-solid fa-mobile-screen',
-                'Saya Mengerti',
-                ''
-            );
-        }
-    }
     // ---------------------------------------
 
             function setupPWA() {
@@ -3682,34 +3634,23 @@
         const icon512 = iconUrl;
 
         document.getElementById('manifest-link').href = URL.createObjectURL(new Blob([JSON.stringify({
-            "name": "RANEL CELL",
-    "short_name": "RANEL CELL",
-    "description": "Pasti Murah, Pasti Hemat, Pasti Puas",
-    "start_url": ".",
-    "display": "standalone",
-    "background_color": "#0A0A0A",
-    "theme_color": "#FF2D78",
-    "orientation": "portrait-primary",
-    "version": "2.0",
-    "version_name": "2.0 RANEL CELL",
-    "icons": [
-        {
-            "src": "./Gambar/PWA_512.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "./Gambar/PWA_512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "./Gambar/PWA_512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "maskable"
-        }
-    ]
+            name:"RANEL CELL", 
+            short_name:"RANEL CELL",
+            description:"Pasti Murah, Pasti Hemat, Pasti Puas",
+            start_url:".", 
+            display:"standalone", 
+            background_color:"#0A0A0A", 
+            theme_color:"#FF2D78",
+            orientation:"portrait-primary",
+            
+            version: "3.0", 
+            version_name: "3.0 RANEL CELL", 
+            
+            icons:[
+                {src:icon192, sizes:"192x192", type:"image/png"},
+                {src:icon512, sizes:"512x512", type:"image/png"},
+                {src:icon512, sizes:"512x512", type:"image/png", purpose:"maskable"}
+            ]
         })],{type:'application/json'}));
         
         const link = document.createElement('link'); 
@@ -3720,52 +3661,42 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-cache-v8';
-self.addEventListener('install', function(e) {
-    self.skipWaiting();
-});
-
-self.addEventListener('activate', function(e) {
-    e.waitUntil(
-        caches.keys().then(function(cacheNames) {
-            return Promise.all(
-                cacheNames.map(function(cacheName) {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(function() {
-            return self.clients.claim();
-        })
-    );
-});
-
-self.addEventListener('fetch', function(e) {
-    // Jangan cache API waktu, peta, dan script Firebase
-    if (e.request.url.includes('timeapi.io') || 
-        e.request.url.includes('nominatim.openstreetmap.org') || 
-        e.request.url.includes('gstatic.com') || 
-        e.request.url.includes('firebaseio.com')) {
-        return; 
-    }
-    
-    e.respondWith(
-        caches.match(e.request).then(function(r) {
-            return r || fetch(e.request).then(function(res) {
-                if (res.status === 200 && res.type === 'basic') {
-                    var c = res.clone();
-                    caches.open(CACHE_NAME).then(function(cache) {
-                        cache.put(e.request, c);
+                    const CACHE_NAME = 'ranel-cell-v.0.0.1.4';
+                    self.addEventListener('install',function(e){self.skipWaiting();});
+                    
+                    self.addEventListener('activate',function(e){
+                        e.waitUntil(
+                            caches.keys().then(function(cacheNames) {
+                                return Promise.all(
+                                    cacheNames.map(function(cacheName) {
+                                        if (cacheName !== CACHE_NAME) {
+                                            return caches.delete(cacheName);
+                                        }
+                                    })
+                                );
+                            }).then(function() {
+                                return self.clients.claim();
+                            })
+                        );
                     });
-                }
-                return res;
-            }).catch(function() {
-                return new Response('Offline', {status: 503});
-            });
-        })
-    );
-});
+                    
+                    self.addEventListener('fetch',function(e){
+                        // Jangan cache API waktu, peta, DAN script Firebase
+                        if (e.request.url.includes('timeapi.io') || e.request.url.includes('nominatim.openstreetmap.org') || e.request.url.includes('gstatic.com') || e.request.url.includes('firebaseio.com')) {
+                            return; 
+                        }
+                        e.respondWith(caches.match(e.request).then(function(r){
+                            return r||fetch(e.request).then(function(res){
+                                if(res.status===200&&res.type==='basic'){
+                                    var c=res.clone();
+                                    caches.open(CACHE_NAME).then(function(cache){cache.put(e.request,c);});
+                                }
+                                return res;
+                            }).catch(function(){
+                                return new Response('Offline',{status:503});
+                            });
+                        }));
+                    });
                 `],{type:'application/javascript'}))).catch(()=>{});
             } catch(e) {}
         }
@@ -3773,8 +3704,8 @@ self.addEventListener('fetch', function(e) {
     // ---------------------------------------
         // --- FIREBASE AUTH LOGIC ---
     let isUserLoggedIn = false;
-    let isProcessingAuth = false;
-    let deferredPrompt = null; // Tambahan untuk menyimpan event install PWA
+    let isProcessingAuth = false; // Tambahan: Flag untuk mencegah tabrakan proses
+
                 function handleSignup() {
         const nama = document.getElementById('signup-nama').value.trim();
         const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
@@ -4157,11 +4088,6 @@ self.addEventListener('fetch', function(e) {
                 window.currentUserTelp = ''; 
                 updateAuthUI();
                 showView('view-login');
-                
-                // Cek apakah PWA bisa diinstall setelah halaman login muncul
-                setTimeout(() => {
-                    showInstallPwaModal();
-                }, 1500);
             }
         });
 
