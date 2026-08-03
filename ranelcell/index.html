@@ -3628,7 +3628,7 @@
     }
     // ---------------------------------------
 
-        function setupPWA() {
+            function setupPWA() {
         const iconUrl = './Gambar/PWA_512.png'; 
         const icon192 = iconUrl; 
         const icon512 = iconUrl;
@@ -3642,8 +3642,10 @@
             background_color:"#0A0A0A", 
             theme_color:"#FF2D78",
             orientation:"portrait-primary",
+            
             version: "3.0", 
-            version_name: "3.0 RANEL CELL"
+            version_name: "3.0 RANEL CELL", 
+            
             icons:[
                 {src:icon192, sizes:"192x192", type:"image/png"},
                 {src:icon512, sizes:"512x512", type:"image/png"},
@@ -3655,7 +3657,7 @@
         link.rel='apple-touch-icon'; 
         link.href=icon192; 
         document.head.appendChild(link);
-        
+    
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
