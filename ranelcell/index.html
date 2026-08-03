@@ -2916,19 +2916,22 @@
             showToast('Peta direset ke lokasi toko', 'info');
         }
     }
-    // Fungsi untuk mengambil lokasi GPS yang sangat akurat dari perangkat
+        // Fungsi untuk mengambil lokasi GPS yang sangat akurat dari perangkat
     function getUserLocation() {
         if (!navigator.geolocation) {
             showToast("Browser Anda tidak mendukung GPS", "error");
             return;
         }
 
+        // 1. MUNCULKAN ANIMASI LOADING (Layar hitam LOADING...)
         showLoading("Mendeteksi lokasi GPS...");
         
         // Opsi enableHighAccuracy: true memaksa perangkat menggunakan GPS (bukan WiFi/Cell Tower)
         navigator.geolocation.getCurrentPosition(
             (position) => {
+                // 2. SEMBUNYIKAN LOADING SAAT GPS KETEMU
                 hideLoading();
+                
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const accuracy = position.coords.accuracy; // Tingkat akurasi dalam meter
@@ -2945,7 +2948,9 @@
                 }
             },
             (error) => {
+                // 3. SEMBUNYIKAN LOADING JIKA TERJADI ERROR / DITOLAK
                 hideLoading();
+                
                 let errMsg = "Gagal mengambil lokasi GPS.";
                 if (error.code === 1) {
                     errMsg = "Akses lokasi ditolak. Mohon izinkan akses lokasi di pengaturan browser Anda.";
@@ -2958,7 +2963,7 @@
             },
             {
                 enableHighAccuracy: true, // Meminta akurasi setinggi mungkin
-                timeout: 5000,           // Batas waktu 5 detik
+                timeout: 10000,           // Batas waktu 10 detik
                 maximumAge: 0              // Jangan gunakan data lokasi lama yang di-cache
             }
         );
