@@ -1349,7 +1349,13 @@
         }
     });
 
-    function showView(viewId) {
+        function showView(viewId) {
+        // Daftar halaman yang diblokir jika nomor telepon kosong
+        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form'];
+        if (restrictedViews.includes(viewId)) {
+            if (!checkTelpRequired()) return; // Blokir akses SEBELUM hapus class active
+        }
+
         const cur = document.getElementById(currentView);
         if (cur) cur.classList.remove('active');
         
@@ -1367,20 +1373,13 @@
             perdanaState.duration = null;
         }
         
-        // Daftar halaman yang diblokir jika nomor telepon kosong
-        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order'];
-        if (restrictedViews.includes(viewId)) {
-            if (!checkTelpRequired()) return; // Blokir akses
-        }
-        
         currentView = viewId;
         viewHistory.push(viewId);
         const next = document.getElementById(viewId);
         if (next) { next.classList.add('active'); next.scrollTop = 0; }
         if (viewId === 'view-order') {
             shouldRestoreForm = true;
-            renderOrderForm(); // Render pertama kali
-            // Cek jam di background, lalu render ulang jika jam sudah didapat
+            renderOrderForm(); 
             isAccessoryServiceOpen().then(() => {
                 if (currentView === 'view-order') renderOrderForm();
             });
