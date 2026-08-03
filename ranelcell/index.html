@@ -14,7 +14,7 @@
         <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
         
                 // Import Firestore
         import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -39,7 +39,7 @@
         // Paksa Firebase untuk selalu mengingat sesi login di memori HP/Browser
         setPersistence(auth, browserLocalPersistence);
 
-                        // Eksport agar bisa dipakai di script utama
+                // Eksport agar bisa dipakai di script utama
         window.firebaseAuth = {
             auth,
             db, 
@@ -48,10 +48,8 @@
             getDoc, 
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
-            signInWithPopup, 
-            GoogleAuthProvider, 
-            signInWithRedirect, // Tambahan untuk Redirect
-            getRedirectResult, // Tambahan untuk Redirect
+            signInWithPopup, // Tambahan untuk Google Login
+            GoogleAuthProvider, // Tambahan untuk Google Login
             signOut,
             onAuthStateChanged,
             updateProfile,
@@ -3786,20 +3784,52 @@
     }
 
                 async function handleGoogleLogin() {
-        isProcessingAuth = true; // Nyalakan flag
-        showLoading('Mengarahkan ke Google...');
+        isProcessingAuth = true; // Nyalakan flag agar tidak bentrok
+        showLoading('Memproses login Google...');
         
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
+            // Minta prompt untuk select account setiap kali login
             provider.setCustomParameters({ prompt: 'select_account' });
             
-            // GANTI: Gunakan signInWithRedirect alih-alih signInWithPopup
-            await window.firebaseAuth.signInWithRedirect(window.firebaseAuth.auth, provider);
-            // Setelah redirect kembali, proses akan diteruskan oleh getRedirectResult di bawah
+            const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, provider);
+            const user = result.user;
+            
+            // Cek apakah user Google ini sudah punya data di Firestore
+            const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+            const docSnap = await window.firebaseAuth.getDoc(docRef);
+            
+            if (!docSnap.exists()) {
+                // Jika belum ada (user baru lewat Google), buat dokumennya
+                await window.firebaseAuth.setDoc(docRef, {
+                    nama: user.displayName || 'Pengguna Google',
+                    telp: '', // Nomor telepon dikosongkan dulu
+                    email: user.email,
+                    createdAt: new Date().toISOString()
+                });
+                window.currentUserTelp = '';
+            } else {
+                // Jika sudah ada, ambil nomor teleponnya
+                window.currentUserTelp = docSnap.data().telp || '';
+            }
+            
+            hideLoading();
+            showToast('Berhasil masuk dengan Google!', 'success');
+            showView('view-home');
+            updateAuthUI();
+            renderUserProfile();
+            updateHomeGreeting();
+            isProcessingAuth = false; // Matikan flag
         } catch (error) {
             hideLoading();
             isProcessingAuth = false; // Matikan flag
-            showToast('Gagal masuk dengan Google: ' + error.message, 'error');
+            if (error.code === 'auth/popup-closed-by-user') {
+                showToast('Login Google dibatalkan', 'info');
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                // Abaikan jika user klik tombol Google berkali-kali
+            } else {
+                showToast('Gagal masuk dengan Google: ' + error.message, 'error');
+            }
         }
     }
     function handleForgotPassword() {
@@ -4068,48 +4098,10 @@
         }, 5000);
     }
 
-            function init() { 
+        function init() { 
         setupPWA(); 
         updateCartUI(); 
         
-        // Tangkap hasil login Google Redirect
-        if (window.firebaseAuth) {
-            window.firebaseAuth.getRedirectResult(window.firebaseAuth.auth).then(async (result) => {
-                if (result.user) {
-                    // Jika berhasil login via redirect
-                    const user = result.user;
-                    const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
-                    const docSnap = await window.firebaseAuth.getDoc(docRef);
-                    
-                    if (!docSnap.exists()) {
-                        await window.firebaseAuth.setDoc(docRef, {
-                            nama: user.displayName || 'Pengguna Google',
-                            telp: '',
-                            email: user.email,
-                            createdAt: new Date().toISOString()
-                        });
-                        window.currentUserTelp = '';
-                    } else {
-                        window.currentUserTelp = docSnap.data().telp || '';
-                    }
-                    
-                    hideLoading();
-                    showToast('Berhasil masuk dengan Google!', 'success');
-                    showView('view-home');
-                    updateAuthUI();
-                    renderUserProfile();
-                    updateHomeGreeting();
-                    isProcessingAuth = false;
-                }
-            }).catch((error) => {
-                hideLoading();
-                isProcessingAuth = false;
-                if (error.code !== 'auth/popup-closed-by-user') {
-                    showToast('Gagal login Google: ' + error.message, 'error');
-                }
-            });
-        }
-
         // Pastikan Firebase sudah siap sebelum cek status login
         const checkFirebaseReady = setInterval(() => {
             if (window.firebaseAuth) {
