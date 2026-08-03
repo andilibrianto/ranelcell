@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-v.0.0.0.2.3';
+const CACHE_NAME = 'ranel-cell-v.0.0.0.2.4';
 self.addEventListener('install', function(e) {
     self.skipWaiting();
 });

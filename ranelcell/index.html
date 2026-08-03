@@ -3783,13 +3783,12 @@
             });
     }
 
-                async function handleGoogleLogin() {
+                    async function handleGoogleLogin() {
         isProcessingAuth = true; // Nyalakan flag agar tidak bentrok
         showLoading('Memproses login Google...');
         
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
-            // Minta prompt untuk select account setiap kali login
             provider.setCustomParameters({ prompt: 'select_account' });
             
             const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, provider);
@@ -3800,26 +3799,32 @@
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             
             if (!docSnap.exists()) {
-                // Jika belum ada (user baru lewat Google), buat dokumennya
-                await window.firebaseAuth.setDoc(docRef, {
-                    nama: user.displayName || 'Pengguna Google',
-                    telp: '', // Nomor telepon dikosongkan dulu
-                    email: user.email,
-                    createdAt: new Date().toISOString()
-                });
-                window.currentUserTelp = '';
+                // JIKA DATA TIDAK ADA: Logout paksa, munculkan popup, dan alihkan ke halaman signup
+                await window.firebaseAuth.signOut(window.firebaseAuth.auth);
+                hideLoading();
+                isProcessingAuth = false;
+                
+                showConfirmModal(
+                    "Akun Belum Terdaftar", 
+                    "Akun Google Anda belum terdaftar di sistem kami. Silakan lakukan pendaftaran terlebih dahulu.", 
+                    () => { 
+                        showView('view-signup');
+                    }, 
+                    'fa-solid fa-circle-exclamation', 
+                    'Daftar Sekarang', 
+                    '' // Sembunyikan tombol batal
+                );
             } else {
-                // Jika sudah ada, ambil nomor teleponnya
+                // JIKA DATA ADA: Ambil nomor telepon dan masuk ke aplikasi
                 window.currentUserTelp = docSnap.data().telp || '';
+                hideLoading();
+                showToast('Berhasil masuk dengan Google!', 'success');
+                showView('view-home');
+                updateAuthUI();
+                renderUserProfile();
+                updateHomeGreeting();
+                isProcessingAuth = false; // Matikan flag
             }
-            
-            hideLoading();
-            showToast('Berhasil masuk dengan Google!', 'success');
-            showView('view-home');
-            updateAuthUI();
-            renderUserProfile();
-            updateHomeGreeting();
-            isProcessingAuth = false; // Matikan flag
         } catch (error) {
             hideLoading();
             isProcessingAuth = false; // Matikan flag
