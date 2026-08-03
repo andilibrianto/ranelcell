@@ -4162,7 +4162,7 @@
         if (!nama) { showToast('Nama lengkap wajib diisi', 'error'); return; }
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
 
-        showLoading('Menyimpan perubahan...');
+        showLoading('');
         try {
             // 1. Update nama di Firebase Auth
             await window.firebaseAuth.updateProfile(user, { displayName: nama });
