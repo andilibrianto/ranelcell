@@ -1367,6 +1367,12 @@
             perdanaState.duration = null;
         }
         
+        // Daftar halaman yang diblokir jika nomor telepon kosong
+        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order'];
+        if (restrictedViews.includes(viewId)) {
+            if (!checkTelpRequired()) return; // Blokir akses
+        }
+        
         currentView = viewId;
         viewHistory.push(viewId);
         const next = document.getElementById(viewId);
@@ -1519,6 +1525,7 @@
     }
 
     function checkCartBeforeView(viewId) {
+        if (!checkTelpRequired()) return; // Blokir akses
         if (cart.length === 0) {
             showConfirmModal(
                 "Keranjang Kosong", 
@@ -1703,6 +1710,8 @@
     }
 
     function selectCategory(cat) {
+        if (!checkTelpRequired()) return; // Blokir jika nomor telp kosong
+        
         if (cat === 'cek_tagihan' && cart.length > 0) {
             showConfirmModal(
                 "Keranjang Tidak Kosong", 
@@ -3814,7 +3823,7 @@
             }
             
             hideLoading();
-            showToast('Berhasil masuk dengan Google!', 'success');
+            showToast('Selamat Berbelanja', 'success');
             showView('view-home');
             updateAuthUI();
             renderUserProfile();
@@ -4027,7 +4036,7 @@
 
         updateCartUI();
     }
-            // Cek status login saat aplikasi pertama kali dibuka atau refresh
+    // Cek status login saat aplikasi pertama kali dibuka atau refresh
     function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             // 1. Langsung sembunyikan layar loading
@@ -4097,7 +4106,38 @@
             }
         }, 5000);
     }
-
+    // Fungsi pengecek nomor telepon sebelum akses layanan
+    function checkTelpRequired() {
+        if (isUserLoggedIn && !window.currentUserTelp) {
+            showConfirmModal(
+                "Segera Lengkapi Nomor Telepon", 
+                "Anda belum mengisi nomor telepon. Silakan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
+                () => { 
+                    // Jika klik "Iya", arahkan ke halaman edit profil
+                    showView('view-edit-profile');
+                    
+                    // Isi form edit profil secara otomatis
+                    const user = window.firebaseAuth.auth.currentUser;
+                    if (user) {
+                        document.getElementById('edit-nama').value = user.displayName || '';
+                        document.getElementById('edit-telp').value = '';
+                        document.getElementById('edit-email').value = user.email || '';
+                        
+                        // Reset state tombol simpan
+                        const saveBtn = document.getElementById('save-profile-btn');
+                        saveBtn.disabled = true;
+                        saveBtn.style.opacity = '0.5';
+                        saveBtn.style.cursor = 'not-allowed';
+                    }
+                }, 
+                'fa-solid fa-phone-volume', 
+                'Iya', 
+                'Tidak'
+            );
+            return false; // Blokir akses
+        }
+        return true; // Izinkan akses
+    }
         function init() { 
         setupPWA(); 
         updateCartUI(); 
