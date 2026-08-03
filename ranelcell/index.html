@@ -884,12 +884,12 @@
                 </div>
             </div>
         </div>
-               <!-- View Edit Profil -->
+                       <!-- View Edit Profil -->
         <div id="view-edit-profile" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
                     <button onclick="confirmEditBack()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
-                    <h2 class="text-sm font-bold flex-1">Edit Akun</h2>
+                    <h2 class="text-sm font-bold flex-1">Edit Profil</h2>
                 </div>
             </header>
             <div class="max-w-lg mx-auto px-4 py-8 pb-32">
@@ -4075,7 +4075,7 @@
             greetingEl.classList.add('hidden');
         }
     }
-            function showEditProfile() {
+                function showEditProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
@@ -4099,26 +4099,16 @@
         const passSection = document.getElementById('password-section');
         
         if (isGoogleUser) {
-            // Jika Google User, sembunyikan form password dan tampilkan teks info
-            passSection.innerHTML = `
-                <div class="mt-6 pt-6 border-t border-dk-500/50">
-                    <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Keamanan Akun</h3>
-                    <div class="bg-dk-700 p-3 rounded-lg text-[11px] text-gray-400 flex items-center gap-2">
-                        <i class="fa-brands fa-google text-base text-pk"></i>
-                        <span>Akun Anda terhubung dengan Google. Password diatur dan dikelola melalui pengaturan keamanan akun Google Anda.</span>
-                    </div>
-                </div>
-            `;
-            
-            // Kosongkan nilai input password (jika sebelumnya sempat diketik)
-            if (document.getElementById('edit-old-password')) {
-                document.getElementById('edit-old-password').value = '';
-                document.getElementById('edit-new-password').value = '';
-                document.getElementById('edit-confirm-password').value = '';
-            }
+            // Jika Google User, sembunyikan form password
+            passSection.style.display = 'none';
         } else {
-            // Jika Email/Password User, pastikan form password normal (mengembalikan HTML jika sebelumnya diganti)
-            // Catatan: HTML form password asli harus tetap ada di file index.html
+            // Jika Email/Password User, tampilkan form password
+            passSection.style.display = 'block';
+            
+            // Kosongkan nilai input password
+            document.getElementById('edit-old-password').value = '';
+            document.getElementById('edit-new-password').value = '';
+            document.getElementById('edit-confirm-password').value = '';
         }
         
         showView('view-edit-profile');
