@@ -522,7 +522,12 @@
                     </h2>
                     <p class="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">Pasti Murah, Pasti Hemat, Pasti Puas</p>
                 </section>
+                
+                <div id="greeting-banner" class="text-center mb-8 fade-up hidden">
+                    <p id="greeting-text" class="text-base font-semibold text-gray-300 leading-relaxed"></p>
+                </div>
 
+                <section class="mb-8 fade-up fade-up-d1"> <!-- Ini adalah bagian Cara Pesan -->
                 <section class="mb-8 fade-up fade-up-d1">
                     <h3 class="section-label">Cara Pesan</h3>
                     <div class="grid grid-cols-4 gap-2">
@@ -546,32 +551,6 @@
                 </section>
                 </section> <!-- Penutup section Cara Pesan -->
 
-                <!-- Tambahan: Section Detail Akun User -->
-                <section id="user-profile-section" class="mb-8 fade-up fade-up-d1 hidden">
-                    <h3 class="section-label">PROFIL AKUN</h3>
-                    <div class="card p-4 border-pk/20">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk">
-                                    <i class="fa-solid fa-user"></i>
-                                </div>
-                                <div>
-                                    <p id="home-user-name" class="font-bold text-sm uppercase">Nama User</p>
-                                    <p id="home-user-email" class="text-[11px] text-gray-400">email@user.com</p>
-                                </div>
-                            </div>
-                            <button onclick="showEditProfile()" class="text-xs text-pk font-semibold flex items-center gap-1 active:opacity-70 transition-opacity">
-                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                            </button>
-                        </div>
-                        <div class="border-t border-dk-500/50 pt-3 text-xs space-y-1">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">No. Telepon</span>
-                                <span id="home-user-telp" class="text-white font-medium">0812xxxx</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -632,7 +611,32 @@
                         </div>
                     </button>
                 </section>
-
+                <!-- Tambahan: Section Detail Akun User -->
+                <section id="user-profile-section" class="mt-8 mb-8 fade-up fade-up-d3 hidden">
+                    <h3 class="section-label">PROFIL AKUN</h3>
+                    <div class="card p-4 border-pk/20">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <p id="home-user-name" class="font-bold text-sm uppercase">Nama User</p>
+                                    <p id="home-user-email" class="text-[11px] text-gray-400">email@user.com</p>
+                                </div>
+                            </div>
+                            <button onclick="showEditProfile()" class="text-xs text-pk font-semibold flex items-center gap-1 active:opacity-70 transition-opacity">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                        </div>
+                        <div class="border-t border-dk-500/50 pt-3 text-xs space-y-1">
+                            <div class="flex justify-between">
+                                <span class="text-gray-500">No. Telepon</span>
+                                <span id="home-user-telp" class="text-white font-medium">0812xxxx</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
                 <section class="mt-8 fade-up fade-up-d3">
                     <h3 class="section-label">Informasi Lainnya</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -808,6 +812,11 @@
                     <button onclick="handleLogin()" class="btn-pk w-full text-center mb-3">Masuk</button>
                     <p class="text-center text-xs text-gray-400">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
                 </div>
+                <footer class="max-w-lg mx-auto px-4 pt-8 pb-10 text-center border-t border-dk-600/30 mt-8">
+                <div class="footer-text">
+                    <p class="copyright">&copy; 2026 RANEL CELL. All Right Reserved</p>
+                    <p class="copyright">Member of Ranel Group</p>
+                </div>
             </div>
         </div>
 
@@ -844,6 +853,11 @@
                     </div>
                     <button onclick="handleSignup()" class="btn-pk w-full text-center mb-3">Daftar Sekarang</button>
                     <p class="text-center text-xs text-gray-400">Sudah punya akun? <button onclick="goToLogin()" class="text-pk font-semibold">Masuk di sini</button></p>
+                </div>
+                <footer class="max-w-lg mx-auto px-4 pt-8 pb-10 text-center border-t border-dk-600/30 mt-8">
+                <div class="footer-text">
+                    <p class="copyright">&copy; 2026 RANEL CELL. All Right Reserved</p>
+                    <p class="copyright">Member of Ranel Group</p>
                 </div>
             </div>
         </div>
@@ -3685,7 +3699,7 @@
     }
     // ---------------------------------------
         // --- FIREBASE AUTH LOGIC ---
-        let isUserLoggedIn = false;
+    let isUserLoggedIn = false;
     let isProcessingAuth = false; // Tambahan: Flag untuk mencegah tabrakan proses
 
                 function handleSignup() {
@@ -3812,6 +3826,7 @@
                 showView('view-home');
                 updateAuthUI();
                 renderUserProfile();
+                updateHomeGreeting();
                 isProcessingAuth = false; // Matikan flag
             })
             .catch((error) => {
@@ -3861,17 +3876,19 @@
     }
         function handleLogout() {
         showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
-            window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
-                window.currentUserTelp = ''; // Kosongkan no telp dari memori saat logout
+                window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                isProcessingAuth = false; 
+                window.currentUserTelp = ''; 
                 document.getElementById('user-profile-section').classList.add('hidden');
-                showToast('Akun Berhasil Dikeluarkan', 'info');
+                updateHomeGreeting(); // TAMBAHKAN INI (Untuk menyembunyikan teks sapaan)
+                showToast('Anda telah keluar', 'info');
                 showView('view-login');
                 updateAuthUI();
             });
         }, 'fa-solid fa-right-from-bracket');
     }
-    // --- FUNGSI PROFIL USER ---
-    function renderUserProfile() {
+        // --- FUNGSI PROFIL USER ---
+        function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
@@ -3882,7 +3899,32 @@
         document.getElementById('home-user-email').textContent = user.email || '-';
         document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
     }
+    // --- FUNGSI SAPAAN DINAMIS ---
+    function updateHomeGreeting() {
+        const greetingEl = document.getElementById('greeting-banner');
+        const textEl = document.getElementById('greeting-text');
+        if (!greetingEl || !textEl) return;
 
+        if (isUserLoggedIn) {
+            const user = window.firebaseAuth.auth.currentUser;
+            const nama = (user && user.displayName) ? user.displayName : 'Pengguna';
+            const hour = new Date().getHours();
+            
+            let salam = "Malam";
+            if (hour >= 4 && hour < 10) {
+                salam = "Pagi";
+            } else if (hour >= 10 && hour < 15) {
+                salam = "Siang";
+            } else if (hour >= 15 && hour < 18) {
+                salam = "Sore";
+            }
+            
+            textEl.innerHTML = `Selamat ${salam}, <span class="text-pk font-bold">${nama}</span> 👋<br>Selamat Berbelanja!`;
+            greetingEl.classList.remove('hidden');
+        } else {
+            greetingEl.classList.add('hidden');
+        }
+    }
         function showEditProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
@@ -4034,6 +4076,7 @@
 
                 // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
                 renderUserProfile();
+                updateHomeGreeting();
 
             } else {
                 // Jika user belum login
