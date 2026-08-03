@@ -16,12 +16,12 @@
             "type": "image/png"
         },
         {
-            "src": "./Gambar/PWA_512.png",
+            "src": "./Gambar/PWA_192.png",
             "sizes": "512x512",
             "type": "image/png"
         },
         {
-            "src": "./Gambar/PWA_512.png",
+            "src": "./Gambar/PWA_192.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
