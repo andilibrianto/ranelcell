@@ -908,7 +908,7 @@
                     </div>
 
                     <!-- Tambahan: Form Ubah Password -->
-                    <div class="mt-6 pt-6 border-t border-dk-500/50">
+                    <div id="password-section" class="mt-6 pt-6 border-t border-dk-500/50">
                         <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
                         <div class="mb-3">
                             <label class="text-[11px] text-gray-500 mb-1 block">Password Lama</label>
@@ -4075,7 +4075,7 @@
             greetingEl.classList.add('hidden');
         }
     }
-        function showEditProfile() {
+            function showEditProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
@@ -4093,6 +4093,33 @@
         saveBtn.disabled = true;
         saveBtn.style.opacity = '0.5';
         saveBtn.style.cursor = 'not-allowed';
+        
+        // CEK APAKAH USER LOGIN VIA GOOGLE
+        const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
+        const passSection = document.getElementById('password-section');
+        
+        if (isGoogleUser) {
+            // Jika Google User, sembunyikan form password dan tampilkan teks info
+            passSection.innerHTML = `
+                <div class="mt-6 pt-6 border-t border-dk-500/50">
+                    <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Keamanan Akun</h3>
+                    <div class="bg-dk-700 p-3 rounded-lg text-[11px] text-gray-400 flex items-center gap-2">
+                        <i class="fa-brands fa-google text-base text-pk"></i>
+                        <span>Akun Anda terhubung dengan Google. Password diatur dan dikelola melalui pengaturan keamanan akun Google Anda.</span>
+                    </div>
+                </div>
+            `;
+            
+            // Kosongkan nilai input password (jika sebelumnya sempat diketik)
+            if (document.getElementById('edit-old-password')) {
+                document.getElementById('edit-old-password').value = '';
+                document.getElementById('edit-new-password').value = '';
+                document.getElementById('edit-confirm-password').value = '';
+            }
+        } else {
+            // Jika Email/Password User, pastikan form password normal (mengembalikan HTML jika sebelumnya diganti)
+            // Catatan: HTML form password asli harus tetap ada di file index.html
+        }
         
         showView('view-edit-profile');
     }
