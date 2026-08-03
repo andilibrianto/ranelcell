@@ -912,15 +912,30 @@
                         <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
                         <div class="mb-3">
                             <label class="text-[11px] text-gray-500 mb-1 block">Password Lama</label>
-                            <input type="password" id="edit-old-password" class="form-input" placeholder="Kosongkan jika tidak ganti password">
+                            <div class="relative">
+                                <input type="password" id="edit-old-password" class="form-input pr-10" placeholder="Kosongkan jika tidak ganti password" oninput="checkProfileChanges()">
+                                <button type="button" onclick="togglePassword('edit-old-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                                    <i class="fa-solid fa-eye text-sm"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="text-[11px] text-gray-500 mb-1 block">Password Baru</label>
-                            <input type="password" id="edit-new-password" class="form-input" placeholder="Minimal 6 karakter">
+                            <div class="relative">
+                                <input type="password" id="edit-new-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkProfileChanges()">
+                                <button type="button" onclick="togglePassword('edit-new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                                    <i class="fa-solid fa-eye text-sm"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="mb-6">
                             <label class="text-[11px] text-gray-500 mb-1 block">Konfirmasi Password Baru</label>
-                            <input type="password" id="edit-confirm-password" class="form-input" placeholder="Ulangi password baru">
+                            <div class="relative">
+                                <input type="password" id="edit-confirm-password" class="form-input pr-10" placeholder="Ulangi password baru" oninput="checkProfileChanges()">
+                                <button type="button" onclick="togglePassword('edit-confirm-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                                    <i class="fa-solid fa-eye text-sm"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -3955,7 +3970,7 @@
         if (!email || !password) { showToast('Email dan password wajib diisi', 'error'); return; }
 
         isProcessingAuth = true; // Nyalakan flag
-        showLoading('Memproses login...');
+        showLoading('');
         
         window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password)
             .then(async (userCredential) => {
@@ -4085,20 +4100,26 @@
     let initialEditNama = '';
     let initialEditTelp = '';
 
-    // Fungsi untuk mendeteksi perubahan form
+        // Fungsi untuk mendeteksi perubahan form
     function checkProfileChanges() {
         const currentNama = document.getElementById('edit-nama').value.trim();
         const currentTelp = document.getElementById('edit-telp').value.trim();
+        const currentOldPass = document.getElementById('edit-old-password').value;
+        const currentNewPass = document.getElementById('edit-new-password').value;
+        const currentConfPass = document.getElementById('edit-confirm-password').value;
         
         const saveBtn = document.getElementById('save-profile-btn');
         
-        // Jika nama atau telepon berubah dari nilai awalnya
-        if (currentNama !== initialEditNama || currentTelp !== initialEditTelp) {
+        // Cek apakah ada perubahan pada Nama/Telp ATAU ada isian di salah satu kolom password
+        const hasProfileChanges = (currentNama !== initialEditNama || currentTelp !== initialEditTelp);
+        const hasPasswordInput = (currentOldPass || currentNewPass || currentConfPass);
+        
+        if (hasProfileChanges || hasPasswordInput) {
             saveBtn.disabled = false;
             saveBtn.style.opacity = '1';
             saveBtn.style.cursor = 'pointer';
         } else {
-            // Jika kembali sama seperti awal
+            // Jika kembali sama seperti awal dan tidak ada isian password
             saveBtn.disabled = true;
             saveBtn.style.opacity = '0.5';
             saveBtn.style.cursor = 'not-allowed';
