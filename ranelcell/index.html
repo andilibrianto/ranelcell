@@ -3783,9 +3783,9 @@
             });
     }
 
-                    async function handleGoogleLogin() {
+        async function handleGoogleLogin() {
         isProcessingAuth = true; // Nyalakan flag agar tidak bentrok
-        showLoading('Memproses login Google...');
+        showLoading('');
         
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
@@ -3799,24 +3799,42 @@
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             
             if (!docSnap.exists()) {
-                // JIKA DATA TIDAK ADA: Logout paksa, munculkan popup, dan alihkan ke halaman signup
-                await window.firebaseAuth.signOut(window.firebaseAuth.auth);
+                // JIKA DATA TIDAK ADA: Buatkan datanya di Firestore otomatis (telp kosong)
+                await window.firebaseAuth.setDoc(docRef, {
+                    nama: user.displayName || 'Pengguna Google',
+                    telp: '', 
+                    email: user.email,
+                    createdAt: new Date().toISOString()
+                });
+                window.currentUserTelp = '';
+                
                 hideLoading();
                 isProcessingAuth = false;
                 
-                showConfirmModal(
-                    "Akun Belum Terdaftar", 
-                    "Akun Google Anda belum terdaftar di sistem kami. Silakan lakukan pendaftaran terlebih dahulu.", 
-                    () => { 
-                        showView('view-signup');
-                    }, 
-                    'fa-solid fa-circle-exclamation', 
-                    'Daftar Sekarang', 
-                    '' // Sembunyikan tombol batal
-                );
+                // Arahkan ke halaman Edit Profil untuk meminta nomor telepon
+                showToast('Selamat datang! Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
+                showView('view-edit-profile');
+                
+                // Isi form edit profil secara otomatis
+                document.getElementById('edit-nama').value = user.displayName || '';
+                document.getElementById('edit-telp').value = '';
+                document.getElementById('edit-email').value = user.email || '';
             } else {
-                // JIKA DATA ADA: Ambil nomor telepon dan masuk ke aplikasi
+                // JIKA DATA ADA: Ambil nomor telepon dan masuk langsung ke aplikasi
                 window.currentUserTelp = docSnap.data().telp || '';
+                
+                // Jika user lama tapi teleponnya belum diisi, arahkan ke Edit Profil
+                if (!window.currentUserTelp) {
+                    hideLoading();
+                    isProcessingAuth = false;
+                    showToast('Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
+                    showView('view-edit-profile');
+                    document.getElementById('edit-nama').value = user.displayName || '';
+                    document.getElementById('edit-telp').value = '';
+                    document.getElementById('edit-email').value = user.email || '';
+                    return;
+                }
+                
                 hideLoading();
                 showToast('Berhasil masuk dengan Google!', 'success');
                 showView('view-home');
