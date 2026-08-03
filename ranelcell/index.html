@@ -409,7 +409,7 @@
             
             <!-- Tambahan: Tombol GPS Akurat -->
             <button onclick="getUserLocation()" class="btn-outline w-full text-xs py-2 mt-2">
-                <i class="fas fa-crosshairs mr-2"></i> Gunakan Lokasi Saya (GPS Akurat)
+                <i class="fas fa-crosshairs mr-2"></i> Gunakan Lokasi Saya
             </button>
             
             <div class="flex gap-2 mt-2">
@@ -2958,7 +2958,7 @@
             },
             {
                 enableHighAccuracy: true, // Meminta akurasi setinggi mungkin
-                timeout: 10000,           // Batas waktu 10 detik
+                timeout: 5000,           // Batas waktu 5 detik
                 maximumAge: 0              // Jangan gunakan data lokasi lama yang di-cache
             }
         );
