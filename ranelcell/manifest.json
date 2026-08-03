@@ -7,8 +7,8 @@
     "background_color": "#0A0A0A",
     "theme_color": "#FF2D78",
     "orientation": "portrait-primary",
-    "version": "4.1",
-    "version_name": "4.1 RANEL CELL",
+    "version": "4.2",
+    "version_name": "4.2 RANEL CELL",
     "icons": [
         {
             "src": "./Gambar/PWA_512C.png",
