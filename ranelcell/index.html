@@ -810,7 +810,12 @@
                         </div>
                     </div>
                     <button onclick="handleLogin()" class="btn-pk w-full text-center mb-3">Masuk</button>
-                    <p class="text-center text-xs text-gray-400">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
+                    <p class="text-center text-xs text-gray-400 mb-4">Belum punya akun? <button onclick="goToSignup()" class="text-pk font-semibold">Daftar di sini</button></p>
+                    
+                    <!-- Tambahan Tombol Install PWA -->
+                    <button id="pwa-install-btn" onclick="triggerPwaInstall()" class="btn-outline w-full text-sm py-2.5 hidden">
+                        <i class="fa-solid fa-download mr-2"></i> Install Aplikasi
+                    </button>
                 </div>
                 <footer class="max-w-lg mx-auto px-4 pt-8 pb-10 text-center border-t border-dk-600/30 mt-8">
                 <div class="footer-text">
@@ -1396,20 +1401,11 @@
         }
     }
         // Fungsi pindah halaman sambil reset field
-    function goToLogin() {
-        // Kosongkan field signup jika ada
-        document.getElementById('signup-nama').value = '';
-        document.getElementById('signup-telp').value = '';
-        document.getElementById('signup-email').value = '';
-        document.getElementById('signup-password').value = '';
+        function goToSignup() {
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
         
-        // Pindah ke halaman login
-        showView('view-login');
-        
-        // Cek apakah PWA bisa diinstall, jika ya munculkan pop-up
-        setTimeout(() => {
-            showInstallPwaModal();
-        }, 1500);
+        showView('view-signup');
     }
 
     function goToSignup() {
@@ -3637,43 +3633,51 @@
             localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
         }
     }
-        // --- DETEKSI INSTALL PWA ---
+            // --- DETEKSI INSTALL PWA ---
     window.addEventListener('beforeinstallprompt', (e) => {
-        // Cegah pop-up bawaan browser (mini-infobar)
         e.preventDefault();
-        // Simpan event agar bisa dipanggil nanti saat tombol diklik
         deferredPrompt = e;
+        
+        // Tampilkan tombol install di halaman login
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) {
+            installBtn.classList.remove('hidden');
+        }
     });
 
-    function showInstallPwaModal() {
-        // Jika browser tidak mendukung atau sudah diinstall, jangan lakukan apa-apa
-        if (!deferredPrompt) return;
-        // Jika user sudah pernah klik "Nanti" di sesi ini, jangan munculkan lagi
-        if (sessionStorage.getItem('pwa_prompt_dismissed') === 'true') return;
+    // Cek jika PWA sudah pernah diinstall, sembunyikan tombolnya
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) installBtn.classList.add('hidden');
+        showToast('Aplikasi berhasil dipasang!', 'success');
+    });
 
-        showConfirmModal(
-            "Install Aplikasi", 
-            "Pasang RANEL CELL di layar utama HP Anda untuk akses yang lebih cepat dan mudah tanpa membuka browser.", 
-            () => { 
-                // Tombol "Install" diklik
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        showToast('Terima kasih, aplikasi sedang dipasang!', 'success');
-                    } else {
-                        sessionStorage.setItem('pwa_prompt_dismissed', 'true');
-                    }
-                    deferredPrompt = null; // Hapus event agar tidak bisa dipanggil 2x
-                });
-            }, 
-            'fa-solid fa-download', // Ikon download
-            'Install', 
-            'Nanti',
-            () => { 
-                // Tombol "Nanti" diklik
-                sessionStorage.setItem('pwa_prompt_dismissed', 'true');
-            }
-        );
+    function triggerPwaInstall() {
+        if (deferredPrompt) {
+            // Jika browser mendukung pop-up install otomatis
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    showToast('Memulai pemasangan...', 'success');
+                } else {
+                    showToast('Pemasangan dibatalkan', 'info');
+                }
+                deferredPrompt = null;
+                const installBtn = document.getElementById('pwa-install-btn');
+                if (installBtn) installBtn.classList.add('hidden');
+            });
+        } else {
+            // Jika browser tidak mendukung (misal Safari iPhone atau limitasi Android), munculkan instruksi manual
+            showConfirmModal(
+                "Cara Install Aplikasi", 
+                "1. Klik ikon titik tiga (⋮) di pojok kanan atas browser.\n\n2. Pilih menu 'Add to Home screen' atau 'Tambahkan ke Layar utama'.\n\n3. Klik 'Install' atau 'Tambahkan'.", 
+                () => { }, 
+                'fa-solid fa-mobile-screen',
+                'Saya Mengerti',
+                ''
+            );
+        }
     }
     // ---------------------------------------
 
