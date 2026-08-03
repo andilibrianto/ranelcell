@@ -1401,25 +1401,20 @@
         }
     }
         // Fungsi pindah halaman sambil reset field
+        function goToLogin() {
+        document.getElementById('signup-nama').value = '';
+        document.getElementById('signup-telp').value = '';
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+        
+        showView('view-login');
+    }
+
         function goToSignup() {
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
         
         showView('view-signup');
-    }
-
-    function goToSignup() {
-        // Kosongkan field login jika ada
-        document.getElementById('login-email').value = '';
-        document.getElementById('login-password').value = '';
-        
-        // Pindah ke halaman signup
-        showView('view-signup');
-        
-        // Cek apakah PWA bisa diinstall, jika ya munculkan pop-up
-        setTimeout(() => {
-            showInstallPwaModal();
-        }, 1500);
     }
     let toastTimer;
     function showToast(msg, type='success', duration = 2500) {
@@ -3714,7 +3709,7 @@
         if ('serviceWorker' in navigator) {
             try {
                 navigator.serviceWorker.register(URL.createObjectURL(new Blob([`
-                    const CACHE_NAME = 'ranel-cell-v.0.0.1.5';
+                    const CACHE_NAME = 'ranel-cell-v.0.0.1.4';
                     self.addEventListener('install',function(e){self.skipWaiting();});
                     
                     self.addEventListener('activate',function(e){
@@ -3757,9 +3752,8 @@
     // ---------------------------------------
         // --- FIREBASE AUTH LOGIC ---
     let isUserLoggedIn = false;
-    let isProcessingAuth = false; // Tambahan: Flag untuk mencegah tabrakan proses
-    let deferredPrompt = null;
-
+    let isProcessingAuth = false;
+    let deferredPrompt = null; // Tambahan untuk menyimpan event install PWA
                 function handleSignup() {
         const nama = document.getElementById('signup-nama').value.trim();
         const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
