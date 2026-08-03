@@ -11,19 +11,19 @@
     "version_name": "3.5 RANEL CELL",
     "icons": [
         {
-            "src": "./Gambar/PWA_512.png",
+            "src": "./Gambar/PWA_512C.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "./Gambar/PWA_512.png",
+            "src": "./Gambar/PWA_512C.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "./Gambar/PWA_512.png",
+            "src": "./Gambar/PWA_512C.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
