@@ -1351,7 +1351,7 @@
 
         function showView(viewId) {
         // Daftar halaman yang diblokir jika nomor telepon kosong
-        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form'];
+        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan'];
         if (restrictedViews.includes(viewId)) {
             if (!checkTelpRequired()) return; // Blokir akses SEBELUM hapus class active
         }
