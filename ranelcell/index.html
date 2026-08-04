@@ -3789,6 +3789,60 @@
             }
         );
     }
+        // --- SISTEM PELACAK STATUS ONLINE/OFFLINE ---
+    let presenceInitialized = false;
+
+    function initPresenceSystem() {
+        if (presenceInitialized || !window.firebaseAuth || !isUserLoggedIn) return;
+        presenceInitialized = true;
+
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
+
+        const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+
+        // 1. Set user menjadi ONLINE saat aplikasi dibuka/dilihat
+        const setOnline = () => {
+            window.firebaseAuth.setDoc(userDocRef, {
+                isOnline: true,
+                lastSeen: new Date().toISOString()
+            }, { merge: true });
+        };
+
+        // 2. Set user menjadi OFFLINE saat aplikasi ditutup/ditinggal
+        const setOffline = () => {
+            window.firebaseAuth.setDoc(userDocRef, {
+                isOnline: false,
+                lastSeen: new Date().toISOString()
+            }, { merge: true });
+        };
+
+        // Panggil setOnline saat pertama kali fungsi ini berjalan
+        setOnline();
+
+        // Event 1: Saat user pindah tab atau minimize browser (di HP maupun PC)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                setOnline(); // Kembali ke aplikasi
+            } else {
+                setOffline(); // Meninggalkan aplikasi
+            }
+        });
+
+        // Event 2: Saat user menutup tab atau menutup aplikasi secara paksa
+        window.addEventListener('pagehide', () => {
+            setOffline();
+        });
+        
+        // Event 3: Saat user melakukan logout manual dari dalam aplikasi
+        // (Kita hook ke fungsi signOut yang sudah ada)
+        const originalSignOut = window.firebaseAuth.signOut;
+        window.firebaseAuth.signOut = function(auth) {
+            setOffline(); // Set offline dulu sebelum logout
+            return originalSignOut(auth);
+        };
+    }
+    // --------------------------------------------
             function setupPWA() {
         // Hanya daftarkan Service Worker jika file sw.js tersedia
         if ('serviceWorker' in navigator) {
@@ -4328,7 +4382,9 @@
                 // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
                 renderUserProfile();
                 updateHomeGreeting();
-
+                
+                // 4. Jalankan sistem pelacak status online/offline
+                initPresenceSystem();
             } else {
                 // Jika user belum login
                 isUserLoggedIn = false;
