@@ -3789,70 +3789,72 @@
             }
         );
     }
-        // --- SISTEM PELACAK STATUS ONLINE/OFFLINE (Versi Cerdas) ---
-    let currentTrackedUid = null; // Menyimpan ID user yang sedang dilacak
-    let visibilityHandler = null;
-    let pagehideHandler = null;
+        // --- SISTEM PELACAK STATUS ONLINE/OFFLINE ---
+    let presenceInitialized = false;
 
-    // Fungsi bantu untuk mengambil waktu Surabaya (WIB) saat ini
-    const getWaktuWIB = () => {
-        return new Date().toLocaleString('id-ID', {
-            timeZone: 'Asia/Jakarta',
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit',
-            hour12: false
-        });
-    };
+    function initPresenceSystem() {
+        if (presenceInitialized || !window.firebaseAuth || !isUserLoggedIn) return;
+        presenceInitialized = true;
 
-    function initPresenceSystem(user) {
-        // Jika user logout (null), set user lama menjadi offline dan berhenti melacak
-        if (!user) {
-            if (currentTrackedUid) {
-                const oldUserDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", currentTrackedUid);
-                window.firebaseAuth.setDoc(oldUserDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
-                currentTrackedUid = null;
-                if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
-                if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
-            }
-            return;
-        }
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
 
-        // Jika user yang login sama dengan yang sedang dilacak, jangan lakukan apa-apa
-        if (currentTrackedUid === user.uid) return;
-
-        // Jika ganti user (User A keluar, User B masuk tanpa refresh)
-        if (currentTrackedUid) {
-            const oldUserDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", currentTrackedUid);
-            window.firebaseAuth.setDoc(oldUserDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
-        }
-
-        // Hapus listener lama agar tidak menumpuk
-        if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
-        if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
-
-        // Mulai lacak user baru
-        currentTrackedUid = user.uid;
         const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
 
+                // Fungsi bantu untuk mengambil waktu Surabaya (WIB) saat ini
+        const getWaktuWIB = () => {
+            return new Date().toLocaleString('id-ID', {
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        };
+
+        // 1. Set user menjadi ONLINE saat aplikasi dibuka/dilihat
         const setOnline = () => {
-            window.firebaseAuth.setDoc(userDocRef, { isOnline: true, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+            window.firebaseAuth.setDoc(userDocRef, {
+                Online: true,
+                LastSeen: getWaktuWIB()
+            }, { merge: true });
         };
 
+        // 2. Set user menjadi OFFLINE saat aplikasi ditutup/ditinggal
         const setOffline = () => {
-            window.firebaseAuth.setDoc(userDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+            window.firebaseAuth.setDoc(userDocRef, {
+                Online: false,
+                LastSeen: getWaktuWIB()
+            }, { merge: true });
         };
 
+        // Panggil setOnline saat pertama kali fungsi ini berjalan
         setOnline();
 
-        visibilityHandler = () => {
-            if (document.visibilityState === 'visible') setOnline();
-            else setOffline();
-        };
-        
-        pagehideHandler = () => setOffline();
+        // Event 1: Saat user pindah tab atau minimize browser (di HP maupun PC)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                setOnline(); // Kembali ke aplikasi
+            } else {
+                setOffline(); // Meninggalkan aplikasi
+            }
+        });
 
-        document.addEventListener('visibilitychange', visibilityHandler);
-        window.addEventListener('pagehide', pagehideHandler);
+        // Event 2: Saat user menutup tab atau menutup aplikasi secara paksa
+        window.addEventListener('pagehide', () => {
+            setOffline();
+        });
+        
+        // Event 3: Saat user melakukan logout manual dari dalam aplikasi
+        // (Kita hook ke fungsi signOut yang sudah ada)
+        const originalSignOut = window.firebaseAuth.signOut;
+        window.firebaseAuth.signOut = function(auth) {
+            setOffline(); // Set offline dulu sebelum logout
+            return originalSignOut(auth);
+        };
     }
     // --------------------------------------------
             function setupPWA() {
@@ -4396,8 +4398,6 @@
                 updateHomeGreeting();
                 
                 // 4. Jalankan sistem pelacak status online/offline
-                initPresenceSystem(user);                
-                // 4. Jalankan sistem pelacak status online/offline
                 initPresenceSystem();
             } else {
                 // Jika user belum login
@@ -4406,8 +4406,10 @@
                 updateAuthUI();
                 showView('view-login');
                 
-                // Hentikan pelacak dan set user menjadi offline
-                initPresenceSystem(null);
+                // Cek apakah PWA bisa diinstall setelah halaman login muncul
+                setTimeout(() => {
+                    showInstallPwaModal();
+                }, 1500);
             }
         });
 
