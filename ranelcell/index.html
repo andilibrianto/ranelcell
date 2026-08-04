@@ -1461,7 +1461,7 @@
         }
     }
         // --- FUNGSI CEK KEKUATAN PASSWORD ---
-    function checkPasswordStrength(inputId, meterId) {
+        function checkPasswordStrength(inputId, meterId) {
         const input = document.getElementById(inputId);
         const meter = document.getElementById(meterId);
         const val = input.value;
@@ -1497,6 +1497,18 @@
             <div class="h-1.5 rounded-full transition-all duration-300" style="width:${width};background:${color};"></div>
             <p class="text-[10px] mt-1 text-right" style="color:${color};">${text}</p>
         `;
+    }
+        // Fungsi untuk mengecek apakah password lemah (merah)
+    function isPasswordWeak(val) {
+        let strength = 0;
+        if (val.length >= 6) strength++;
+        if (val.length >= 10) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[^A-Za-z0-9]/.test(val)) strength++;
+        
+        // Jika strength <= 2, berarti meter berwarna merah (Lemah)
+        return strength <= 2; 
     }
         // Fungsi pindah halaman sambil reset field
     function goToLogin() {
@@ -3911,6 +3923,7 @@
         if (!nama || !telp || !email || !password) { showToast('Semua field wajib diisi', 'error'); return; }
         if (telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
         if (password.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
+        if (isPasswordWeak(password)) { showToast('Password Anda Sangat Rentan', 'error'); return; }
 
         isProcessingAuth = true; // Nyalakan flag agar checkAuthState tidak ikut campur
         showLoading('');
@@ -4344,6 +4357,11 @@
                 if (newPass.length < 6) {
                     hideLoading();
                     showToast('Password baru minimal 6 karakter', 'error');
+                    return;
+                }
+                if (isPasswordWeak(newPass)) {
+                    hideLoading();
+                    showToast('Password Anda Sangat Rentan', 'error');
                     return;
                 }
                 if (newPass !== confPass) {
