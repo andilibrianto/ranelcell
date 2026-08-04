@@ -3809,7 +3809,7 @@
         if (!user) {
             if (currentTrackedUid) {
                 const oldUserDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", currentTrackedUid);
-                window.firebaseAuth.setDoc(oldUserDocRef, { Online: false, LastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+                window.firebaseAuth.setDoc(oldUserDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
                 currentTrackedUid = null;
                 if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
                 if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
@@ -3823,7 +3823,7 @@
         // Jika ganti user (User A keluar, User B masuk tanpa refresh)
         if (currentTrackedUid) {
             const oldUserDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", currentTrackedUid);
-            window.firebaseAuth.setDoc(oldUserDocRef, { Online: false, LastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+            window.firebaseAuth.setDoc(oldUserDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
         }
 
         // Hapus listener lama agar tidak menumpuk
@@ -3835,11 +3835,11 @@
         const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
 
         const setOnline = () => {
-            window.firebaseAuth.setDoc(userDocRef, { Online: true, LastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+            window.firebaseAuth.setDoc(userDocRef, { isOnline: true, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
         };
 
         const setOffline = () => {
-            window.firebaseAuth.setDoc(userDocRef, { Online: false, LastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
+            window.firebaseAuth.setDoc(userDocRef, { isOnline: false, lastSeen: getWaktuWIB() }, { merge: true }).catch(()=>{});
         };
 
         setOnline();
