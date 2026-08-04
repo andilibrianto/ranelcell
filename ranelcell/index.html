@@ -868,11 +868,13 @@
                     <div class="mb-6">
                         <label class="text-[11px] text-gray-500 mb-1 block">Password</label>
                         <div class="relative">
-                            <input type="password" id="signup-password" class="form-input pr-10" placeholder="Minimal 6 karakter">
+                            <input type="password" id="signup-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkPasswordStrength('signup-password', 'signup-strength-meter')">
                             <button type="button" onclick="togglePassword('signup-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </button>
                         </div>
+                        <!-- Meter Kekuatan Password -->
+                        <div id="signup-strength-meter" class="mt-2"></div>
                     </div>
                     <button onclick="handleSignup()" class="btn-pk w-full text-center mb-3">Daftar Sekarang</button>
                     <p class="text-center text-xs text-gray-400">Sudah punya akun? <button onclick="goToLogin()" class="text-pk font-semibold">Masuk di sini</button></p>
@@ -922,11 +924,13 @@
                         <div class="mb-3">
                             <label class="text-[11px] text-gray-500 mb-1 block">Password Baru</label>
                             <div class="relative">
-                                <input type="password" id="edit-new-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkProfileChanges()">
+                                <input type="password" id="edit-new-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkProfileChanges(); checkPasswordStrength('edit-new-password', 'edit-strength-meter')">
                                 <button type="button" onclick="togglePassword('edit-new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
                                     <i class="fa-solid fa-eye text-sm"></i>
                                 </button>
                             </div>
+                            <!-- Meter Kekuatan Password -->
+                            <div id="edit-strength-meter" class="mt-2"></div>
                         </div>
                         <div class="mb-6">
                             <label class="text-[11px] text-gray-500 mb-1 block">Konfirmasi Password Baru</label>
@@ -1455,6 +1459,44 @@
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         }
+    }
+        // --- FUNGSI CEK KEKUATAN PASSWORD ---
+    function checkPasswordStrength(inputId, meterId) {
+        const input = document.getElementById(inputId);
+        const meter = document.getElementById(meterId);
+        const val = input.value;
+        
+        let strength = 0;
+        if (val.length >= 6) strength++; // Min 6 karakter (syarat Firebase)
+        if (val.length >= 10) strength++; // Lebih dari 10 karakter
+        if (/[A-Z]/.test(val)) strength++; // Mengandung huruf besar
+        if (/[0-9]/.test(val)) strength++; // Mengandung angka
+        if (/[^A-Za-z0-9]/.test(val)) strength++; // Mengandung simbol
+
+        let width = '0%';
+        let color = 'transparent';
+        let text = '';
+        
+        if (val.length === 0) {
+            width = '0%';
+        } else if (strength <= 2) {
+            width = '33%';
+            color = '#dc2626'; // Merah
+            text = 'Lemah';
+        } else if (strength <= 4) {
+            width = '66%';
+            color = '#facc15'; // Kuning
+            text = 'Sedang';
+        } else {
+            width = '100%';
+            color = '#22c55e'; // Hijau
+            text = 'Kuat';
+        }
+        
+        meter.innerHTML = `
+            <div class="h-1.5 rounded-full transition-all duration-300" style="width:${width};background:${color};"></div>
+            <p class="text-[10px] mt-1 text-right" style="color:${color};">${text}</p>
+        `;
     }
         // Fungsi pindah halaman sambil reset field
     function goToLogin() {
@@ -3789,7 +3831,7 @@
             }
         );
     }
-            // --- SISTEM PELACAK STATUS ONLINE/OFFLINE ---
+    // --- SISTEM PELACAK STATUS ONLINE/OFFLINE ---
     let visibilityHandler = null;
     let pagehideHandler = null;
     let currentTrackedUserRef = null;
