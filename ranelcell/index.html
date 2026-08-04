@@ -3885,7 +3885,6 @@
         
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
-            // Minta prompt untuk select account setiap kali login
             provider.setCustomParameters({ prompt: 'select_account' });
             
             const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, provider);
@@ -3896,7 +3895,7 @@
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             
             if (!docSnap.exists()) {
-                // Jika belum ada (user baru lewat Google), buat dokumennya
+                // JIKA DATA TIDAK ADA (User baru): Buatkan datanya
                 await window.firebaseAuth.setDoc(docRef, {
                     nama: user.displayName || 'Pengguna Google',
                     telp: '', // Nomor telepon dikosongkan dulu
@@ -3905,16 +3904,38 @@
                 });
                 window.currentUserTelp = '';
             } else {
-                // Jika sudah ada, ambil nomor teleponnya
+                // JIKA DATA SUDAH ADA (User lama manual yang login via Google): 
+                // Ambil nomor telepon yang sudah tersimpan, JANGAN DITIMPA!
                 window.currentUserTelp = docSnap.data().telp || '';
             }
             
             hideLoading();
-            showToast('Selamat Berbelanja', 'success');
-            showView('view-home');
-            updateAuthUI();
-            renderUserProfile();
-            updateHomeGreeting();
+            
+            // Cek apakah nomor telepon masih kosong (baik user baru maupun lama)
+            if (!window.currentUserTelp) {
+                // Jika kosong, arahkan ke Edit Profil
+                showToast('Selamat datang! Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
+                showView('view-edit-profile');
+                
+                // Isi form edit profil secara otomatis
+                document.getElementById('edit-nama').value = user.displayName || '';
+                document.getElementById('edit-telp').value = '';
+                document.getElementById('edit-email').value = user.email || '';
+                
+                // Pastikan tombol simpan mati
+                const saveBtn = document.getElementById('save-profile-btn');
+                saveBtn.disabled = true;
+                saveBtn.style.opacity = '0.5';
+                saveBtn.style.cursor = 'not-allowed';
+            } else {
+                // Jika nomor telepon sudah ada, langsung masuk ke Home
+                showToast('Berhasil masuk dengan Google!', 'success');
+                showView('view-home');
+                updateAuthUI();
+                renderUserProfile();
+                updateHomeGreeting();
+            }
+            
             isProcessingAuth = false; // Matikan flag
         } catch (error) {
             hideLoading();
