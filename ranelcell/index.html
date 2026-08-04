@@ -3804,11 +3804,11 @@
         });
     }
 
-    function setPresenceStatus(isOnline) {
+    function setPresenceStatus(Online) {
         if (!currentTrackedUserRef) return;
         window.firebaseAuth.setDoc(currentTrackedUserRef, {
-            isOnline: isOnline,
-            lastSeen: getWaktuWIB()
+            Online: Online,
+            LastSeen: getWaktuWIB()
         }, { merge: true }).catch(()=>{});
     }
 
