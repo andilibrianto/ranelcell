@@ -3501,6 +3501,15 @@
                     price: item.price,
                     quantity: item.quantity
                 })),
+                subtotal: getCartTotal(),
+                shippingMode: d.shippingMode || null,
+                shippingCost: d.shippingCost || 0,
+                promoCode: d.promoCode || '',
+                promoDiscount: d.promoDiscount || 0,
+                total: getGrandTotal(),
+                paymentMethod: selectedPaymentMethod,
+                address: d.alamat || '-',
+                idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
                     timeZone: 'Asia/Jakarta',
                     day: '2-digit', month: '2-digit', year: 'numeric',
