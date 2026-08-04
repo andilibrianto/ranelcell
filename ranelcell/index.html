@@ -3492,8 +3492,6 @@
         
         try {
             await window.firebaseAuth.setDoc(orderRef, {
-                orderId: orderId,
-                userId: user.uid,
                 userName: d.nama,
                 items: cart.map(item => ({
                     name: item.name,
