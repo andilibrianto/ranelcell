@@ -3913,10 +3913,16 @@
             
             // Cek apakah nomor telepon masih kosong (baik user baru maupun lama)
             if (!window.currentUserTelp) {
-                // Jika kosong, arahkan ke Edit Profil
+                // Jika kosong, siapkan halaman utama di latar belakang, LALU arahkan ke Edit Profil
                 showToast('Selamat datang! Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
                 
-                // Panggil showEditProfile() agar form password otomatis disembunyikan untuk user Google
+                // 1. Update status login dan render halaman utama (agar tidak bug saat klik kembali)
+                isUserLoggedIn = true;
+                updateAuthUI();
+                renderUserProfile();
+                updateHomeGreeting();
+                
+                // 2. Buka halaman Edit Profil
                 showEditProfile();
             } else {
                 // Jika nomor telepon sudah ada, langsung masuk ke Home
