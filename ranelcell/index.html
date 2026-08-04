@@ -3915,18 +3915,9 @@
             if (!window.currentUserTelp) {
                 // Jika kosong, arahkan ke Edit Profil
                 showToast('Selamat datang! Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
-                showView('view-edit-profile');
                 
-                // Isi form edit profil secara otomatis
-                document.getElementById('edit-nama').value = user.displayName || '';
-                document.getElementById('edit-telp').value = '';
-                document.getElementById('edit-email').value = user.email || '';
-                
-                // Pastikan tombol simpan mati
-                const saveBtn = document.getElementById('save-profile-btn');
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.5';
-                saveBtn.style.cursor = 'not-allowed';
+                // Panggil showEditProfile() agar form password otomatis disembunyikan untuk user Google
+                showEditProfile();
             } else {
                 // Jika nomor telepon sudah ada, langsung masuk ke Home
                 showToast('Berhasil masuk dengan Google!', 'success');
@@ -4355,29 +4346,15 @@
             }
         }, 5000);
     }
-    // Fungsi pengecek nomor telepon sebelum akses layanan
+        // Fungsi pengecek nomor telepon sebelum akses layanan
     function checkTelpRequired() {
         if (isUserLoggedIn && !window.currentUserTelp) {
             showConfirmModal(
-                "Lengkapi Nomor Telepon", 
-                "Anda belum mengisi nomor telepon. Silahkan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
+                "Segera Lengkapi Nomor Telepon", 
+                "Anda belum mengisi nomor telepon. Silakan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
                 () => { 
-                    // Jika klik "Iya", arahkan ke halaman edit profil
-                    showView('view-edit-profile');
-                    
-                    // Isi form edit profil secara otomatis
-                    const user = window.firebaseAuth.auth.currentUser;
-                    if (user) {
-                        document.getElementById('edit-nama').value = user.displayName || '';
-                        document.getElementById('edit-telp').value = '';
-                        document.getElementById('edit-email').value = user.email || '';
-                        
-                        // Reset state tombol simpan
-                        const saveBtn = document.getElementById('save-profile-btn');
-                        saveBtn.disabled = true;
-                        saveBtn.style.opacity = '0.5';
-                        saveBtn.style.cursor = 'not-allowed';
-                    }
+                    // Panggil showEditProfile() agar form password otomatis disembunyikan jika user Google
+                    showEditProfile(); 
                 }, 
                 'fa-solid fa-phone-volume', 
                 'Iya', 
