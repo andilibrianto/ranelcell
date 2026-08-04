@@ -3926,7 +3926,7 @@
                 showEditProfile();
             } else {
                 // Jika nomor telepon sudah ada, langsung masuk ke Home
-                showToast('Berhasil masuk dengan Google!', 'success');
+                showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
                 renderUserProfile();
@@ -4259,7 +4259,7 @@
             }
 
             hideLoading();
-            showToast('Profil berhasil diperbarui', 'success');
+            showToast('Akun anda berhasil diperbarui', 'success');
             
             // Update tampilan halaman utama & kembali ke home
             renderUserProfile();
@@ -4270,7 +4270,7 @@
             if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
                 showToast('Password lama yang Anda masukkan salah', 'error');
             } else if (err.code === 'auth/requires-recent-login') {
-                showToast('Sesi telah berakhir. Silakan logout lalu login kembali untuk mengubah password.', 'error', 5000);
+                showToast('Sesi telah berakhir. Silahkan logout lalu login kembali untuk mengubah password.', 'error', 5000);
             } else {
                 showToast('Gagal memperbarui profil: ' + err.message, 'error');
             }
