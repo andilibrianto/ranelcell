@@ -645,10 +645,6 @@
                                 <span class="text-gray-500">No. Telepon</span>
                                 <span id="home-user-telp" class="text-white font-medium">0812xxxx</span>
                             </div>
-                            <div class="flex justify-between mt-1">
-                                <span class="text-gray-500">Lokasi</span>
-                                <span id="home-user-lokasi" class="text-white font-medium">Kota/Kab</span>
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -862,16 +858,8 @@
                         <input type="text" id="signup-nama" class="form-input" placeholder="Masukkan nama lengkap">
                     </div>
                     <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Provinsi</label>
-                        <select id="signup-provinsi" class="form-input" onchange="updateKotaOptions('signup')">
-                            <option value="" disabled selected>Pilih Provinsi</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Kota / Kabupaten</label>
-                        <select id="signup-kota" class="form-input" disabled>
-                            <option value="" disabled selected>Pilih Kota/Kabupaten</option>
-                        </select>
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
+                        <input type="tel" id="signup-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)">
                     </div>
                     <div class="mb-4">
                         <label class="text-[11px] text-gray-500 mb-1 block">Email</label>
@@ -911,16 +899,8 @@
                         <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap" oninput="checkProfileChanges()">
                     </div>
                     <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Provinsi</label>
-                        <select id="edit-provinsi" class="form-input" onchange="updateKotaOptions('edit'); checkProfileChanges()">
-                            <option value="" disabled selected>Pilih Provinsi</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Kota / Kabupaten</label>
-                        <select id="edit-kota" class="form-input" disabled onchange="checkProfileChanges()">
-                            <option value="" disabled selected>Pilih Kota/Kabupaten</option>
-                        </select>
+                        <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
+                        <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value); checkProfileChanges()">
                     </div>
                     <div class="mb-6">
                         <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
@@ -1052,74 +1032,7 @@
         'BELIDIRANEL': 5000,
         'BELANJASEKARANG': 10000
     };
-    // Database Provinsi & Kota/Kabupaten Seluruh Indonesia
-    const dataLokasi = {
-        "DKI Jakarta": ["Jakarta Pusat", "Jakarta Selatan", "Jakarta Barat", "Jakarta Utara", "Jakarta Timur", "Kepulauan Seribu"],
-        "Jawa Barat": ["Bandung", "Bekasi", "Bogor", "Cimahi", "Cirebon", "Depok", "Sukabumi", "Tasikmalaya", "Banjar", "Bandung Barat", "Cianjur", "Garut", "Indramayu", "Karawang", "Kuningan", "Majalengka", "Pangandaran", "Purwakarta", "Subang", "Sumedang", "Ciamis"],
-        "Jawa Tengah": ["Semarang", "Surakarta", "Tegal", "Pekalongan", "Magelang", "Salatiga", "Kudus", "Surakarta", "Boyolali", "Cilacap", "Grobogan", "Jepara", "Karanganyar", "Kebumen", "Kendal", "Klaten", "Pati", "Pemalang", "Purbalingga", "Purworejo", "Rembang", "Sragen", "Temanggung", "Wonogiri", "Wonosobo", "Batang", "Banjarnegara", "Brebes", "Demak", "Tegal"],
-        "Jawa Timur": ["Surabaya", "Batu", "Blitar", "Kediri", "Madiun", "Malang", "Mojokerto", "Pasuruan", "Probolinggo", "Sidoarjo", "Bangkalan", "Banyuwangi", "Bojonegoro", "Bondowoso", "Gresik", "Jember", "Jombang", "Lamongan", "Lumajang", "Madiun", "Magetan", "Nganjuk", "Ngawi", "Pacitan", "Pamekasan", "Ponorogo", "Sampang", "Situ Bindung", "Sumenep", "Trenggalek", "Tuban", "Tulungagung"],
-        "Aceh": ["Banda Aceh", "Sabang", "Langsa", "Lhokseumawe", "Subulussalam", "Aceh Barat", "Aceh Barat Daya", "Aceh Besar", "Aceh Jaya", "Aceh Selatan", "Aceh Singkil", "Aceh Tamiang", "Aceh Tengah", "Aceh Tenggara", "Aceh Timur", "Aceh Utara", "Bener Meriah", "Bireuen", "Gayo Lues", "Nagan Jaya", "Pidie", "Pidie Jaya", "Simeulue"],
-        "Bali": ["Denpasar", "Badung", "Bangli", "Buleleng", "Gianyar", "Jembrana", "Karangasem", "Klungkung", "Tabanan"],
-        "Banten": ["Serang", "Tangerang", "Tangerang Selatan", "Cilegon", "Pandeglang", "Lebak", "Serang"],
-        "Bengkulu": ["Bengkulu", "Bengkulu Selatan", "Bengkulu Tengah", "Bengkulu Utara", "Kaur", "Kepahiang", "Lebong", "Mukomuko", "Rejang Lebong", "Seluma", "Kepahiang"],
-        "DI Yogyakarta": ["Yogyakarta", "Sleman", "Bantul", "Kulon Progo", "Gunung Kidul"],
-        "Gorontalo": ["Gorontalo", "Gorontalo Utara", "Bone Bolango", "Boalemo", "Pohuwato"],
-        "Jambi": ["Jambi", "Batanghari", "Bungo", "Kerinci", "Merangin", "Muaro Jambi", "Sarolangun", "Tanjung Jabung Barat", "Tanjung Jabung Timur", "Tebo"],
-        "Kalimantan Barat": ["Pontianak", "Singkawang", "Bengkayang", "Kapuas Hulu", "Ketapang", "Kubu Raya", "Landak", "Melawi", "Sambas", "Sanggau", "Sekadau", "Sintang"],
-        "Kalimantan Selatan": ["Banjarmasin", "Banjarbaru", "Banjar", "Barito Kuala", "Hulu Sungai Selatan", "Hulu Sungai Tengah", "Hulu Sungai Utara", "Kotabaru", "Tabalong", "Tanah Bumbu", "Tanah Laut", "Tapin"],
-        "Kalimantan Tengah": ["Palangka Raya", "Barito Selatan", "Barito Timur", "Barito Utara", "Gunung Mas", "Kapuas", "Katingan", "Kotawaringin Barat", "Kotawaringin Timur", "Lamandau", "Murung Raya", "Pulang Pisau", "Sukamara", "Seruyan"],
-        "Kalimantan Timur": ["Samarinda", "Balikpapan", "Bontang", "Tarakan", "Berau", "Kutai Barat", "Kutai Kartanegara", "Kutai Timur", "Mahakam Ulu", "Nunukan", "Paser", "Penajam Paser Utara", "Tana Tidung"],
-        "Kalimantan Utara": ["Tanjung Selor", "Bulungan", "Malinau", "Nunukan", "Tana Tidung", "Tarakan"],
-        "Kepulauan Bangka Belitung": ["Pangkalpinang", "Bangka", "Bangka Barat", "Bangka Selatan", "Bangka Tengah", "Belitung", "Belitung Timur"],
-        "Kepulauan Riau": ["Tanjungpinang", "Batam", "Bintan", "Karimun", "Kepulauan Anambas", "Kepulauan Lingga", "Natuna"],
-        "Lampung": ["Bandar Lampung", "Metro", "Lampung Barat", "Lampung Selatan", "Lampung Tengah", "Lampung Timur", "Lampung Utara", "Mesuji", "Pesawaran", "Pesisir Barat", "Pringsewu", "Tanggamus", "Tulang Bawang", "Tulang Bawang Barat", "Way Kanan"],
-        "Maluku": ["Ambon", "Tual", "Buru", "Buru Selatan", "Kepulauan Aru", "Maluku Barat Daya", "Maluku Tengah", "Maluku Tenggara", "Maluku Tenggara Barat", "Seram Bagian Barat", "Seram Bagian Timur"],
-        "Maluku Utara": ["Sofifi", "Ternate", "Tidore Kepulauan", "Halmahera Barat", "Halmahera Selatan", "Halmahera Tengah", "Halmahera Timur", "Halmahera Utara", "Kepulauan Sula", "Pulau Morotai"],
-        "Nusa Tenggara Barat": ["Mataram", "Bima", "Lombok Barat", "Lombok Tengah", "Lombok Timur", "Lombok Utara", "Sumbawa", "Sumbawa Barat", "Dompu"],
-        "Nusa Tenggara Timur": ["Kupang", "Alor", "Belu", "Ende", "Flores Timur", "Kupang", "Lembata", "Manggarai", "Manggarai Barat", "Manggarai Timur", "Nagekeo", "Ngada", "Rote Ndao", "Sabu Raijua", "Sikka", "Sumba Barat", "Sumba Barat Daya", "Sumba Tengah", "Sumba Timur", "Timor Tengah Selatan", "Timor Tengah Utara"],
-        "Papua": ["Jayapura", "Asmat", "Biak Numfor", "Boven Digoel", "Deiyai", "Dogiyai", "Intan Jaya", "Jayapura", "Jayawijaya", "Keerom", "Lanny Jaya", "Mamberamo Raya", "Mamberamo Tengah", "Mappi", "Merauke", "Mimika", "Nabire", "Nduga", "Paniai", "Pegunungan Bintang", "Puncak", "Puncak Jaya", "Sarmi", "Supiori", "Tolikara", "Waropen", "Yalimo", "Yapen Waropen"],
-        "Papua Barat": ["Manokwari", "Fakfak", "Kaimana", "Manokwari Selatan", "Maybrat", "Pegunungan Arfak", "Raja Ampat", "Sorong", "Sorong Selatan", "Sorong", "Tambrauw"],
-        "Riau": ["Pekanbaru", "Dumai", "Bengkalis", "Indragiri Hilir", "Indragiri Hulu", "Kampar", "Kepulauan Meranti", "Kuantan Singingi", "Pelalawan", "Rokan Hilir", "Rokan Hulu", "Siak"],
-        "Sulawesi Barat": ["Mamuju", "Majene", "Mamuju Utara", "Pasangkayu", "Polewali Mandar"],
-        "Sulawesi Selatan": ["Makassar", "Palopo", "Parepare", "Bantaeng", "Barru", "Bone", "Bulukumba", "Enrekang", "Gowa", "Jeneponto", "Kepulauan Selayar", "Luwu", "Luwu Timur", "Luwu Utara", "Maros", "Pinrang", "Sidenreng Rappang", "Sinjai", "Soppeng", "Sumbawa", "Takalar", "Tana Toraja", "Toraja Utara", "Wajo", "Pangkajene dan Kepulauan", "Soppeng"],
-        "Sulawesi Tengah": ["Palu", "Banggai", "Banggai Kepulauan", "Banggai Laut", "Buol", "Donggala", "Morowali", "Morowali Utara", "Parigi Moutong", "Poso", "Sigi", "Tojo Una-Una", "Toli-Toli"],
-        "Sulawesi Tenggara": ["Kendari", "Bau-Bau", "Bombana", "Buton", "Buton Utara", "Kolaka", "Kolaka Timur", "Kolaka Utara", "Konawe", "Konawe Kepulauan", "Konawe Selatan", "Konawe Utara", "Muna", "Muna Barat", "Wakatobi"],
-        "Sulawesi Utara": ["Manado", "Bitung", "Tomohon", "Kotamobagu", "Bolaang Mongondow", "Bolaang Mongondow Selatan", "Bolaang Mongondow Timur", "Bolaang Mongondow Utara", "Kepulauan Sangihe", "Kepulauan Siau Tagulandang Biaro", "Minahasa", "Minahasa Selatan", "Minahasa Tenggara", "Minahasa Utara"],
-        "Sumatera Barat": ["Padang", "Bukittinggi", "Pariaman", "Payakumbuh", "Sawahlunto", "Solok", "Agam", "Dharmasraya", "Kepulauan Mentawai", "Lima Puluh Kota", "Padang Pariaman", "Pasaman", "Pasaman Barat", "Pesisir Selatan", "Sijunjung", "Solok", "Solok Selatan", "Tanah Datar"],
-        "Sumatera Selatan": ["Palembang", "Pagar Alam", "Prabumulih", "Lahat", "Banyuasin", "Empat Lawang", "Muara Enim", "Musi Banyuasin", "Musi Rawas", "Musi Rawas Utara", "OKU", "OKU Selatan", "OKU Timur", "Ogan Ilir", "Penukal Abab Lematang Ilir"],
-        "Sumatera Utara": ["Medan", "Binjai", "Padang Sidempuan", "Pematangsiantar", "Sibolga", "Tanjungbalai", "Tebing Tinggi", "Asahan", "Batu Bara", "Dairi", "Deli Serdang", "Humbang Hasundutan", "Karo", "Labuhanbatu", "Labuhanbatu Selatan", "Labuhanbatu Utara", "Lake Toba", "Langkat", "Mandailing Natal", "Nias", "Nias Barat", "Nias Selatan", "Nias Utara", "Padang Lawas", "Padang Lawas Utara", "Pakpak Bharat", "Samosir", "Serdang Bedagai", "Simalungun", "Tapanuli Selatan", "Tapanuli Tengah", "Tapanuli Utara", "Toba"],
-        "Jambi": ["Jambi", "Batanghari", "Bungo", "Kerinci", "Merangin", "Muaro Jambi", "Sarolangun", "Tanjung Jabung Barat", "Tanjung Jabung Timur", "Tebo"]
-    };
-        // Fungsi untuk mengisi dropdown kota berdasarkan provinsi
-    function updateKotaOptions(prefix) {
-        const provinsiSelect = document.getElementById(prefix + '-provinsi');
-        const kotaSelect = document.getElementById(prefix + '-kota');
-        const provinsi = provinsiSelect.value;
 
-        kotaSelect.innerHTML = '<option value="" disabled selected>Pilih Kota/Kabupaten</option>';
-
-        if (provinsi && dataLokasi[provinsi]) {
-            kotaSelect.disabled = false;
-            dataLokasi[provinsi].forEach(kota => {
-                kotaSelect.innerHTML += `<option value="${kota}">${kota}</option>`;
-            });
-        } else {
-            kotaSelect.disabled = true;
-        }
-    }
-
-    // Isi dropdown provinsi saat halaman pertama kali dimuat
-    function populateProvinsiOptions() {
-        const signupProv = document.getElementById('signup-provinsi');
-        const editProv = document.getElementById('edit-provinsi');
-        let options = '<option value="" disabled selected>Pilih Provinsi</option>';
-        for (let prov in dataLokasi) {
-            options += `<option value="${prov}">${prov}</option>`;
-        }
-        if (signupProv) signupProv.innerHTML = options;
-        if (editProv) editProv.innerHTML = options;
-    }
-    populateProvinsiOptions(); // Jalankan otomatis
     const paketData = [
         { provider:"TELKOMSEL / SIMPATI", durations:[
             {name:"1 Hari",items:[["4GB",9500]]},
@@ -3909,23 +3822,13 @@
 
                 window.firebaseAuth.updateProfile(user, { displayName: nama }).then(async () => {
                     try {
-                        const lokasi = document.getElementById('signup-kota').value;
-                        if (!lokasi) { 
-                            hideLoading();
-                            isProcessingAuth = false;
-                            showToast('Kota/Kabupaten wajib dipilih', 'error'); 
-                            return;
-                        }
-
                         await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
                             nama: nama,
                             telp: telp,
-                            lokasi: lokasi,
                             email: email,
                             createdAt: new Date().toISOString()
                         });
                         window.currentUserTelp = telp;
-                        window.currentUserLokasi = lokasi;
                     } catch (err) {
                         console.error("Gagal simpan ke Firestore:", err);
                         showToast("Gagal simpan data: " + err.message, "error", 5000);
@@ -4166,7 +4069,6 @@
         document.getElementById('home-user-name').textContent = user.displayName || 'User';
         document.getElementById('home-user-email').textContent = user.email || '-';
         document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
-        document.getElementById('home-user-lokasi').textContent = window.currentUserLokasi || '-';
     }
     // --- FUNGSI SAPAAN DINAMIS ---
     function updateHomeGreeting() {
@@ -4194,45 +4096,37 @@
             greetingEl.classList.add('hidden');
         }
     }
-                    function showEditProfile() {
+                function showEditProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
+        // Isi form edit dengan data saat ini
         document.getElementById('edit-nama').value = user.displayName || '';
         document.getElementById('edit-telp').value = window.currentUserTelp || '';
         document.getElementById('edit-email').value = user.email || '';
         
-        // Reset lokasi dropdown
-        document.getElementById('edit-provinsi').value = "";
-        updateKotaOptions('edit');
-        
-        // Isi lokasi jika user sudah punya data
-        if (window.currentUserLokasi) {
-            for (let prov in dataLokasi) {
-                if (dataLokasi[prov].includes(window.currentUserLokasi)) {
-                    document.getElementById('edit-provinsi').value = prov;
-                    updateKotaOptions('edit');
-                    document.getElementById('edit-kota').value = window.currentUserLokasi;
-                    break;
-                }
-            }
-        }
-        
+        // Simpan data awal untuk deteksi perubahan
         initialEditNama = user.displayName || '';
         initialEditTelp = window.currentUserTelp || '';
         
+        // Pastikan tombol simpan mati saat pertama kali buka halaman
         const saveBtn = document.getElementById('save-profile-btn');
         saveBtn.disabled = true;
         saveBtn.style.opacity = '0.5';
         saveBtn.style.cursor = 'not-allowed';
         
+        // CEK APAKAH USER LOGIN VIA GOOGLE
         const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
         const passSection = document.getElementById('password-section');
         
         if (isGoogleUser) {
+            // Jika Google User, sembunyikan form password
             passSection.style.display = 'none';
         } else {
+            // Jika Email/Password User, tampilkan form password
             passSection.style.display = 'block';
+            
+            // Kosongkan nilai input password
             document.getElementById('edit-old-password').value = '';
             document.getElementById('edit-new-password').value = '';
             document.getElementById('edit-confirm-password').value = '';
@@ -4312,22 +4206,13 @@
             await window.firebaseAuth.updateProfile(user, { displayName: nama });
             
             // 2. Update data di Firestore
-                        const lokasi = document.getElementById('edit-kota').value;
-            if (!lokasi) { 
-                hideLoading();
-                showToast('Kota/Kabupaten wajib dipilih', 'error'); 
-                return; 
-            }
-
             await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
                 nama: nama,
-                telp: telp,
-                lokasi: lokasi
+                telp: telp
             }, { merge: true });
 
-            // 3. Update variabel global di aplikasi
+            // 3. Update variabel global
             window.currentUserTelp = telp;
-            window.currentUserLokasi = lokasi;
 
             // 4. Cek jika user ingin ganti password (jika kolom password lama diisi)
             if (oldPass || newPass || confPass) {
@@ -4419,11 +4304,9 @@
                     const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
                     const docSnap = await window.firebaseAuth.getDoc(docRef);
                     if (docSnap.exists()) {
-                        window.currentUserTelp = docSnap.data().telp || ''; 
-                        window.currentUserLokasi = docSnap.data().lokasi || '';
+                        window.currentUserTelp = docSnap.data().telp; 
                     } else {
                         window.currentUserTelp = '';
-                        window.currentUserLokasi = '';
                     }
                 } catch (err) {
                     console.error("Gagal ambil data Firestore:", err);
@@ -4458,32 +4341,36 @@
         }, 5000);
     }
     // Fungsi pengecek nomor telepon sebelum akses layanan
-        function checkTelpRequired() {
-        if (isUserLoggedIn && (!window.currentUserTelp || !window.currentUserLokasi)) {
+    function checkTelpRequired() {
+        if (isUserLoggedIn && !window.currentUserTelp) {
             showConfirmModal(
-                "Segera Lengkapi Data Profil", 
-                "Anda belum mengisi Nomor Telepon atau Lokasi (Kota/Kabupaten). Silakan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
+                "Lengkapi Nomor Telepon", 
+                "Anda belum mengisi nomor telepon. Silahkan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
                 () => { 
+                    // Jika klik "Iya", arahkan ke halaman edit profil
                     showView('view-edit-profile');
+                    
+                    // Isi form edit profil secara otomatis
                     const user = window.firebaseAuth.auth.currentUser;
                     if (user) {
                         document.getElementById('edit-nama').value = user.displayName || '';
-                        document.getElementById('edit-telp').value = window.currentUserTelp || '';
+                        document.getElementById('edit-telp').value = '';
                         document.getElementById('edit-email').value = user.email || '';
                         
+                        // Reset state tombol simpan
                         const saveBtn = document.getElementById('save-profile-btn');
                         saveBtn.disabled = true;
                         saveBtn.style.opacity = '0.5';
                         saveBtn.style.cursor = 'not-allowed';
                     }
                 }, 
-                'fa-solid fa-id-card', 
+                'fa-solid fa-phone-volume', 
                 'Iya', 
                 'Tidak'
             );
-            return false;
+            return false; // Blokir akses
         }
-        return true;
+        return true; // Izinkan akses
     }
         function init() { 
         setupPWA(); 
