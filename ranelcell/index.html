@@ -3982,13 +3982,16 @@
                 
                 // 2. Buka halaman Edit Profil
                 showEditProfile();
-            } else {
+                        } else {
                 // Jika nomor telepon sudah ada, langsung masuk ke Home
                 showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
+                
+                // Jalankan pelacak status online untuk User B
+                initPresenceSystem(user);
             }
             
             isProcessingAuth = false; // Matikan flag
@@ -4088,6 +4091,10 @@
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
+                
+                // Jalankan pelacak status online untuk User B
+                initPresenceSystem(user); 
+                
                 isProcessingAuth = false; // Matikan flag
             })
             .catch((error) => {
