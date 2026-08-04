@@ -3876,8 +3876,8 @@
 
         currentTrackedUserRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
 
-        const setOnline = () => setPresenceStatus(true);
-        const setOffline = () => setPresenceStatus(false);
+        const setOnline = () => setPresenceStatus(ONLINE);
+        const setOffline = () => setPresenceStatus(OFFLINE);
 
         // Set user menjadi ONLINE saat fungsi ini berjalan
         setOnline();
@@ -3895,7 +3895,7 @@
 
     // Fungsi ini HANYA dipanggil saat user menekan tombol Logout
     function stopPresenceSystem() {
-        setPresenceStatus(false); // Set user menjadi OFFLINE
+        setPresenceStatus(OFFLINE); // Set user menjadi OFFLINE
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
