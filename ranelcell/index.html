@@ -622,14 +622,14 @@
                         </div>
                     </button>
                 </section>
-                <!-- Tambahan: Section Detail Akun User -->
+                <!-- Tambahan: Section Detail Akun User (Pindah ke sini) -->
                 <section id="user-profile-section" class="mt-8 mb-8 fade-up fade-up-d3 hidden">
                     <h3 class="section-label">PROFIL AKUN</h3>
                     <div class="card p-4 border-pk/20">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk">
-                                    <i class="fa-solid fa-user"></i>
+                                <div id="home-profile-pic" class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-sm overflow-hidden flex-shrink-0">
+                                    <i class="fa-solid fa-user"></i> <!-- Ikon default akan diganti nanti -->
                                 </div>
                                 <div>
                                     <p id="home-user-name" class="font-bold text-sm uppercase">Nama User</p>
@@ -4058,17 +4058,32 @@
             });
         }, 'fa-solid fa-right-from-bracket');
     }
-        // --- FUNGSI PROFIL USER ---
-        function renderUserProfile() {
+            // --- FUNGSI PROFIL USER ---
+    function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
         // Tampilkan section profil
         document.getElementById('user-profile-section').classList.remove('hidden');
-        // Isi data di halaman utama
+        
+        // Isi data teks di halaman utama
         document.getElementById('home-user-name').textContent = user.displayName || 'User';
         document.getElementById('home-user-email').textContent = user.email || '-';
         document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
+        
+        // Logika Foto Profil
+        const profilePicEl = document.getElementById('home-profile-pic');
+        const photoURL = user.photoURL;
+        
+        if (photoURL) {
+            // Jika ada foto (biasanya dari Google), tampilkan fotonya
+            profilePicEl.innerHTML = `<img src="${photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+        } else {
+            // Jika tidak ada foto (login manual), tampilkan inisial nama
+            const nama = user.displayName || 'U';
+            const inisial = nama.charAt(0).toUpperCase();
+            profilePicEl.innerHTML = `<span>${inisial}</span>`;
+        }
     }
     // --- FUNGSI SAPAAN DINAMIS ---
     function updateHomeGreeting() {
