@@ -3804,16 +3804,16 @@
         // 1. Set user menjadi ONLINE saat aplikasi dibuka/dilihat
         const setOnline = () => {
             window.firebaseAuth.setDoc(userDocRef, {
-                isOnline: true,
-                lastSeen: new Date().toISOString()
+                Online: true,
+                LastSeen: new Date().toISOString()
             }, { merge: true });
         };
 
         // 2. Set user menjadi OFFLINE saat aplikasi ditutup/ditinggal
         const setOffline = () => {
             window.firebaseAuth.setDoc(userDocRef, {
-                isOnline: false,
-                lastSeen: new Date().toISOString()
+                Online: false,
+                LastSeen: new Date().toISOString()
             }, { merge: true });
         };
 
