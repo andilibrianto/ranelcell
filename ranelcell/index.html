@@ -560,7 +560,6 @@
                         </div>
                     </div>
                 </section>
-                </section> <!-- Penutup section Cara Pesan -->
 
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
@@ -3477,7 +3476,51 @@
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         
+        // --- SIMPAN DATA TRANSAKSI KE FIRESTORE ---
+        saveTransactionToFirestore(d);
+        
         showThankYouOverlay();
+    }
+
+    // Fungsi untuk menyimpan data transaksi ke Firestore
+    async function saveTransactionToFirestore(d) {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return; // Pastikan user login
+
+        const orderId = user.uid + '_' + Date.now(); // ID unik transaksi
+        const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "orders", orderId);
+        
+        try {
+            await window.firebaseAuth.setDoc(orderRef, {
+                orderId: orderId,
+                userId: user.uid,
+                userName: d.nama,
+                userTelp: d.telp,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                subtotal: getCartTotal(),
+                shippingMode: d.shippingMode || null,
+                shippingCost: d.shippingCost || 0,
+                promoCode: d.promoCode || '',
+                promoDiscount: d.promoDiscount || 0,
+                total: getGrandTotal(),
+                paymentMethod: selectedPaymentMethod,
+                address: d.alamat || '-',
+                idPelanggan: d.idPelanggan || {},
+                transactionDate: new Date().toLocaleString('id-ID', { 
+                    timeZone: 'Asia/Jakarta',
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                })
+            });
+            console.log("Transaksi berhasil disimpan ke Firestore");
+        } catch (err) {
+            console.error("Gagal menyimpan transaksi ke Firestore:", err);
+        }
     }
 
     function openCekTagihanForm(jenis) {
