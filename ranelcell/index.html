@@ -4176,7 +4176,7 @@
             });
         }, 'fa-solid fa-right-from-bracket');
     }
-            // --- FUNGSI PROFIL USER ---
+        // --- FUNGSI PROFIL USER ---
     function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
@@ -4194,13 +4194,11 @@
         const photoURL = user.photoURL;
         
         if (photoURL) {
-            // Jika ada foto (biasanya dari Google), tampilkan fotonya
+            // Jika ada foto (dari Google), tampilkan fotonya
             profilePicEl.innerHTML = `<img src="${photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
         } else {
-            // Jika tidak ada foto (login manual), tampilkan inisial nama
-            const nama = user.displayName || 'U';
-            const inisial = nama.charAt(0).toUpperCase();
-            profilePicEl.innerHTML = `<span>${inisial}</span>`;
+            // Jika tidak ada foto (login manual), tampilkan foto logo lokal
+            profilePicEl.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-1">`;
         }
     }
     // --- FUNGSI SAPAAN DINAMIS ---
