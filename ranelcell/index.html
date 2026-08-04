@@ -3488,28 +3488,18 @@
         if (!user) return; // Pastikan user login
 
         const orderId = user.uid + '_' + Date.now(); // ID unik transaksi
-        const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "orders", orderId);
+        const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat Pesanan", orderId);
         
         try {
             await window.firebaseAuth.setDoc(orderRef, {
                 orderId: orderId,
                 userId: user.uid,
                 userName: d.nama,
-                userTelp: d.telp,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity
                 })),
-                subtotal: getCartTotal(),
-                shippingMode: d.shippingMode || null,
-                shippingCost: d.shippingCost || 0,
-                promoCode: d.promoCode || '',
-                promoDiscount: d.promoDiscount || 0,
-                total: getGrandTotal(),
-                paymentMethod: selectedPaymentMethod,
-                address: d.alamat || '-',
-                idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
                     timeZone: 'Asia/Jakarta',
                     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -3517,9 +3507,9 @@
                     hour12: false
                 })
             });
-            console.log("Transaksi berhasil disimpan ke Firestore");
+            console.log("Transaksi berhasil");
         } catch (err) {
-            console.error("Gagal menyimpan transaksi ke Firestore:", err);
+            console.error("Gagal menyimpan transaksi ke Database:", err);
         }
     }
 
