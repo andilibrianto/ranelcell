@@ -1270,7 +1270,7 @@
             const data = await response.json();
             const hour = parseInt(data.hour);
             
-            const isOpen = !(hour >= 21.10 || hour < 6.45);
+            const isOpen = !(hour >= 21.05 || hour < 6.45);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
@@ -3863,7 +3863,7 @@
         window.firebaseAuth.setDoc(currentTrackedUserRef, {
             Online: Online,
             LastSeen: getWaktuWIB()
-        }, { merge: ONLINE }).catch(()=>{});
+        }, { merge: true }).catch(()=>{});
     }
 
     function initPresenceSystem(user) {
@@ -3876,8 +3876,8 @@
 
         currentTrackedUserRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
 
-        const setOnline = () => setPresenceStatus(ONLINE);
-        const setOffline = () => setPresenceStatus(OFFLINE);
+        const setOnline = () => setPresenceStatus(true);
+        const setOffline = () => setPresenceStatus(false);
 
         // Set user menjadi ONLINE saat fungsi ini berjalan
         setOnline();
@@ -3895,7 +3895,7 @@
 
     // Fungsi ini HANYA dipanggil saat user menekan tombol Logout
     function stopPresenceSystem() {
-        setPresenceStatus(OFFLINE); // Set user menjadi OFFLINE
+        setPresenceStatus(false); // Set user menjadi OFFLINE
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
