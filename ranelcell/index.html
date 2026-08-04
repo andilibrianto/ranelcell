@@ -3498,6 +3498,8 @@
                     price: item.price,
                     quantity: item.quantity
                 })),
+                address: d.alamat || '-',
+                idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
                     timeZone: 'Asia/Jakarta',
                     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -3505,9 +3507,9 @@
                     hour12: false
                 })
             });
-            console.log("Transaksi berhasil disimpan ke Firestore");
+            console.log("Transaksi berhasil");
         } catch (err) {
-            console.error("Gagal menyimpan transaksi ke Firestore:", err);
+            console.error("Gagal menyimpan transaksi ke Database:", err);
         }
     }
 
