@@ -3495,6 +3495,7 @@
                 orderId: orderId,
                 userId: user.uid,
                 userName: d.nama,
+                userTelp: d.telp,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
@@ -3507,9 +3508,9 @@
                     hour12: false
                 })
             });
-            console.log("Transaksi berhasil");
+            console.log("Transaksi berhasil disimpan ke Firestore");
         } catch (err) {
-            console.error("Gagal menyimpan transaksi ke Database:", err);
+            console.error("Gagal menyimpan transaksi ke Firestore:", err);
         }
     }
 
