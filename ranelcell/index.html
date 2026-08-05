@@ -4254,7 +4254,7 @@ async function loadLastTransaction() {
     const card = document.getElementById('last-transaction-card');
     
     try {
-        // Query ke koleksi Riwayat_Pesanan (sebelumnya "orders")
+        // Query ke koleksi Riwayat_Pesanan
         const q = window.firebaseAuth.query(
             window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
             window.firebaseAuth.where("userId", "==", user.uid)
@@ -4272,31 +4272,42 @@ async function loadLastTransaction() {
             docs.push({ id: doc.id, data: doc.data() });
         });
 
-        // Urutkan berdasarkan ID transaksi (karena memakai Date.now() maka ini akurat)
+        // Urutkan berdasarkan ID transaksi secara menurun (Terbaru di atas)
         docs.sort((a, b) => b.id.localeCompare(a.id));
 
-        // Ambil transaksi paling baru
-        const lastTransaction = docs[0].data;
-
-        // Tampilkan daftar barang (Hanya Nama Barang dan Qty)
-        let itemsHtml = '';
-        lastTransaction.items.slice(0, 3).forEach(item => {
-            itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
-        });
-        if (lastTransaction.items.length > 3) {
-            itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${lastTransaction.items.length - 3} produk lainnya</p>`;
-        }
-
-        // Tampilkan ke layar (Hanya Waktu dan Nama Barang)
-        card.innerHTML = `
-            <div class="mb-2">
-                <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${lastTransaction.transactionDate || 'Tanpa Tanggal'}</p>
-            </div>
-            <div class="space-y-1">
-                ${itemsHtml}
-            </div>
-        `;
+        // Ambil maksimal 2 transaksi terakhir
+        const lastTwoTransactions = docs.slice(0, 2);
         
+        let html = '';
+
+        // Looping untuk membuat kartu tiap transaksi
+        lastTwoTransactions.forEach((transactionObj) => {
+            const transaction = transactionObj.data;
+
+            // Tampilkan daftar barang (Hanya Nama Barang dan Qty)
+            let itemsHtml = '';
+            transaction.items.slice(0, 3).forEach(item => {
+                itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
+            });
+            if (transaction.items.length > 3) {
+                itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${transaction.items.length - 3} produk lainnya</p>`;
+            }
+
+            // Kartu individual untuk tiap transaksi
+            html += `
+                <div class="bg-dk-700 p-3 rounded-lg mb-3 last:mb-0">
+                    <div class="mb-2">
+                        <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${transaction.transactionDate || 'Tanpa Tanggal'}</p>
+                    </div>
+                    <div class="space-y-1">
+                        ${itemsHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        // Tampilkan ke layar
+        card.innerHTML = html;
         section.classList.remove('hidden');
 
     } catch (error) {
