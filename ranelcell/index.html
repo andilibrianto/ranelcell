@@ -2057,7 +2057,7 @@
             el.innerHTML = aksesorisData.map((c, i) => `
                 <button onclick="selectAccessoriesCategory('${c.category}')" class="card card-hover p-4 flex items-center gap-4 w-full text-left item-stagger" style="animation-delay:${i*0.08}s">
                     <div class="w-11 h-11 rounded-xl bg-pk/10 flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid ${c.category === 'Headset' ? 'fa-headphones' : c.category === 'Kabel Charger' ? 'fa-plug' : 'fa-bolt'} text-pk"></i>
+                        <i class="fa-solid ${c.category === 'Headset' ? 'fa-headphones' : c.category === 'Kabel Charger' ? 'fa-plug' : c.category === 'Charger Kit' ? 'fa-bolt' : 'fa-gamepad'} text-pk"></i>
                     </div>
                     <div class="flex-1"><p class="font-semibold text-sm">${c.category}</p></div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
