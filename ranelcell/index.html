@@ -3501,12 +3501,22 @@
         
         try {
             await window.firebaseAuth.setDoc(orderRef, {
+                orderId: orderId,
+                userId: user.uid,
                 userName: d.nama,
+                 userTelp: d.telp,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity
                 })),
+                subtotal: getCartTotal(),
+                shippingMode: d.shippingMode || null,
+                shippingCost: d.shippingCost || 0,
+                promoCode: d.promoCode || '',
+                promoDiscount: d.promoDiscount || 0,
+                total: getGrandTotal(),
+                paymentMethod: selectedPaymentMethod,
                 address: d.alamat || '-',
                 idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
