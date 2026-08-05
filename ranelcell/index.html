@@ -3501,22 +3501,13 @@
         
         try {
             await window.firebaseAuth.setDoc(orderRef, {
-                orderId: orderId,
                 userId: user.uid,
                 userName: d.nama,
-                 userTelp: d.telp,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity
                 })),
-                subtotal: getCartTotal(),
-                shippingMode: d.shippingMode || null,
-                shippingCost: d.shippingCost || 0,
-                promoCode: d.promoCode || '',
-                promoDiscount: d.promoDiscount || 0,
-                total: getGrandTotal(),
-                paymentMethod: selectedPaymentMethod,
                 address: d.alamat || '-',
                 idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
@@ -4255,7 +4246,7 @@
         }
     }
     // --- FUNGSI RIWAYAT TRANSAKSI TERAKHIR ---
-    async function loadLastTransaction() {
+async function loadLastTransaction() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
 
@@ -4263,7 +4254,7 @@
     const card = document.getElementById('last-transaction-card');
     
     try {
-        // Buat query untuk mencari orders milik user ini
+        // Query ke koleksi Riwayat_Pesanan (sebelumnya "orders")
         const q = window.firebaseAuth.query(
             window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
             window.firebaseAuth.where("userId", "==", user.uid)
@@ -4276,47 +4267,33 @@
             return;
         }
 
-        // Karena tidak bisa orderBy karena aturan Firestore, kita ambil semua lalu urutkan manual di client
         let docs = [];
         querySnapshot.forEach((doc) => {
             docs.push({ id: doc.id, data: doc.data() });
         });
 
-        // Urutkan berdasarkan ID transaksi secara menurun (Karena ID memakai Date.now(), ini sangat akurat)
+        // Urutkan berdasarkan ID transaksi (karena memakai Date.now() maka ini akurat)
         docs.sort((a, b) => b.id.localeCompare(a.id));
 
         // Ambil transaksi paling baru
         const lastTransaction = docs[0].data;
 
-        // Format tampilan barang
+        // Tampilkan daftar barang (Hanya Nama Barang dan Qty)
         let itemsHtml = '';
-        lastTransaction.items.slice(0, 2).forEach(item => {
+        lastTransaction.items.slice(0, 3).forEach(item => {
             itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
         });
-        if (lastTransaction.items.length > 2) {
-            itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${lastTransaction.items.length - 2} produk lainnya</p>`;
+        if (lastTransaction.items.length > 3) {
+            itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${lastTransaction.items.length - 3} produk lainnya</p>`;
         }
 
-        // Warna badge status
-        let statusColor = 'bg-yellow-500/20 text-yellow-400';
-        if (lastTransaction.status === 'Lunas' || lastTransaction.status === 'Selesai') {
-            statusColor = 'bg-green-500/20 text-green-400';
-        } else if (lastTransaction.status === 'Dibatalkan' || lastTransaction.status === 'Gagal') {
-            statusColor = 'bg-red-500/20 text-red-400';
-        }
-
-        // Tampilkan ke layar
+        // Tampilkan ke layar (Hanya Waktu dan Nama Barang)
         card.innerHTML = `
-            <div class="flex justify-between items-center mb-3">
+            <div class="mb-2">
                 <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${lastTransaction.transactionDate || 'Tanpa Tanggal'}</p>
-                <span class="text-[10px] font-bold px-2 py-1 rounded-md ${statusColor}">${lastTransaction.status || 'Menunggu'}</span>
             </div>
-            <div class="space-y-1 mb-3">
+            <div class="space-y-1">
                 ${itemsHtml}
-            </div>
-            <div class="flex justify-between items-center pt-3 border-t border-dk-500/50">
-                <span class="text-xs text-gray-400">Total Pembayaran</span>
-                <span class="text-sm font-bold text-pk">${formatRp(lastTransaction.total)}</span>
             </div>
         `;
         
