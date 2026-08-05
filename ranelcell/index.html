@@ -1047,75 +1047,229 @@
 
     const paketData = [
         { provider:"TELKOMSEL / SIMPATI", durations:[
-            {name:"1 Hari",items:[["4GB",9500]]},
-            {name:"3 Hari",items:[["7GB",18000],["9GB",21000]]},
-            {name:"5 Hari",items:[["4GB",15000],["7GB",21000],["9GB",25000]]},
-            {name:"7 Hari",items:[["5GB",22000],["9GB",30000]]},
-            {name:"14 Hari",items:[["5GB",16000],["9GB",25000]]},
-            {name:"28 Hari",items:[["7GB",36000],["10GB",44500],["18GB",55000],["25GB",68000],["42GB",95000]]}
+            {name:"1 Hari",items:[
+                ["4GB",9500]
+            ]},
+            {name:"3 Hari",items:[
+                ["7GB",18000],
+                ["9GB",21000]
+            ]},
+            {name:"5 Hari",items:[
+                ["4GB",15000],
+                ["7GB",21000],
+                ["9GB",25000]
+            ]},
+            {name:"7 Hari",items:[
+                ["5GB",22000],
+                ["9GB",30000]
+            ]},
+            {name:"14 Hari",items:[
+                ["5GB",16000],
+                ["9GB",25000]
+            ]},
+            {name:"28 Hari",items:[
+                ["7GB",36000],
+                ["10GB",44500],
+                ["18GB",55000],
+                ["25GB",68000],
+                ["42GB",95000]
+            ]}
         ]},
         { provider:"INDOSAT / IM3", durations:[
-            {name:"2 Hari",items:[["6GB",12000]]},
-            {name:"3 Hari",items:[["3,5GB",14000]]},
-            {name:"5 Hari",items:[["6GB",16500],["9GB",19000]]},
-            {name:"7 Hari",items:[["9GB",25000]]},
-            {name:"28 Hari (Reguler)",items:[["3GB",30000],["7GB",34000],["16GB",47000],["24GB",56000],["30GB",65000],["65GB",92000],["100GB",116000],["150GB",140000]]},
-            {name:"28 Hari (Utama + Aplikasi)",items:[["Unli 1 + 4,5GB",39000],["Unli 2 + 8GB",60000],["Unli 3 + 17GB",87000],["Unli 7 + 28GB",105000],["Unli 10 + 35GB",117000],["Unli 90GB",153000]]}
+            {name:"2 Hari",items:[
+                ["6GB",12000]
+            ]},
+            {name:"3 Hari",items:[
+                ["3,5GB",14000]
+            ]},
+            {name:"5 Hari",items:[
+                ["6GB",16500],
+                ["9GB",19000]
+            ]},
+            {name:"7 Hari",items:[
+                ["9GB",25000]
+            ]},
+            {name:"28 Hari (Reguler)",items:[
+                ["3GB",30000],
+                ["7GB",34000],
+                ["16GB",47000],
+                ["24GB",56000],
+                ["30GB",65000],
+                ["65GB",92000],
+                ["100GB",116000],
+                ["150GB",140000]
+            ]},
+            {name:"28 Hari (Utama + Aplikasi)",items:[
+                ["Unli 1 + 4,5GB",39000],
+                ["Unli 2 + 8GB",60000],
+                ["Unli 3 + 17GB",87000],
+                ["Unli 7 + 28GB",105000],
+                ["Unli 10 + 35GB",117000],
+                ["Unli 90GB",153000]
+            ]}
         ]},
         { provider:"XL", durations:[
-            {name:"3 Hari",items:[["4GB (S)",14000],["5,5GB (M)",15500]]},
-            {name:"5 Hari",items:[["4GB (M)",19000],["7GB (L)",21000]]},
-            {name:"7 Hari",items:[["3GB (S)",20000],["5GB (M)",24000],["8GB (L)",30000],["13GB (XL)",36000]]},
-            {name:"28 Hari",items:[["7GB",34500],["13GB",48000],["19GB",57000],["26GB",66000],["34GB",75000]]}
+            {name:"3 Hari",items:[
+                ["4GB (S)",14000],
+                ["5,5GB (M)",15500]
+            ]},
+            {name:"5 Hari",items:[
+                ["4GB (M)",19000],
+                ["7GB (L)",21000]
+            ]},
+            {name:"7 Hari",items:[
+                ["3GB (S)",20000],
+                ["5GB (M)",24000],
+                ["8GB (L)",30000],
+                ["13GB (XL)",36000]
+            ]},
+            {name:"28 Hari",items:[
+                ["7GB",34500],
+                ["13GB",48000],
+                ["19GB",57000],
+                ["26GB",66000],
+                ["34GB",75000]
+            ]}
         ]},
         { provider:"AXIS", durations:[
-            {name:"1 Hari",items:[["5GB",8500]]},
-            {name:"3 Hari",items:[["5GB",13500],["12,5GB",18000]]},
-            {name:"5 Hari",items:[["6,5GB",16500],["16GB",25000]]},
-            {name:"7 Hari",items:[["10GB",26000],["17GB",31000]]},
-            {name:"14 Hari",items:[["5GB",24500],["8GB",30000],["25GB",47500]]},
-            {name:"28 Hari",items:[["7GB",34500],["10GB",39000],["16GB",47000],["26GB",62000],["35GB",90000],["150GB",145000]]}
+            {name:"1 Hari",items:[
+                ["5GB",8500]
+            ]},
+            {name:"3 Hari",items:[
+                ["5GB",13500],
+                ["12,5GB",18000]
+            ]},
+            {name:"5 Hari",items:[
+                ["6,5GB",16500],
+                ["16GB",25000]
+            ]},
+            {name:"7 Hari",items:[
+                ["10GB",26000],
+                ["17GB",31000]
+            ]},
+            {name:"14 Hari",items:[
+                ["5GB",24500],
+                ["8GB",30000],
+                ["25GB",47500]
+            ]},
+            {name:"28 Hari",items:[
+                ["7GB",34500],
+                ["10GB",39000],
+                ["16GB",47000],
+                ["26GB",62000],
+                ["35GB",90000],
+                ["150GB",145000]
+            ]}
         ]},
         { provider:"TRI (3)", durations:[
-            {name:"1 Hari",items:[["6GB",9000]]},
-            {name:"2 Hari",items:[["7GB",12000]]},
-            {name:"3 Hari",items:[["3,5GB",13500],["6GB",16000]]},
-            {name:"5 Hari",items:[["10GB",20000]]},
-            {name:"7 Hari",items:[["9GB",25000]]},
-            {name:"28 Hari",items:[["7GB",33500],["10GB",39000],["16GB",46500],["42GB",77000],["100GB",122000]]},
-            {name:"365 Hari (AON)",items:[["6GB",33500],["9GB",48500],["12GB",60000],["40GB",111000]]}
+            {name:"1 Hari",items:[
+                ["6GB",9000]
+            ]},
+            {name:"2 Hari",items:[
+                ["7GB",12000]
+            ]},
+            {name:"3 Hari",items:[
+                ["3,5GB",13500],
+                ["6GB",16000]
+            ]},
+            {name:"5 Hari",items:[
+                ["10GB",20000]
+            ]},
+            {name:"7 Hari",items:[
+                ["9GB",25000]
+            ]},
+            {name:"28 Hari",items:[
+                ["7GB",33500],
+                ["10GB",39000],
+                ["16GB",46500],
+                ["42GB",77000],
+                ["100GB",122000]
+            ]},
+            {name:"365 Hari (AON)",items:[
+                ["6GB",33500],
+                ["9GB",48500],
+                ["12GB",60000],
+                ["40GB",111000]
+            ]}
         ]},
         { provider:"SMARTFREN", durations:[
-            {name:"3 Hari",items:[["4GB",11000],["Unlimited 1GB",17500],["Unlimited 2GB",22500]]},
-            {name:"7 Hari",items:[["2GB",12000],["6GB",17000],["Unlimited 1GB",20000],["Unlimited 2GB",26000]]},
-            {name:"10 Hari",items:[["2GB",15000]]},
-            {name:"14 Hari",items:[["Unlimited 1GB",35000],["4GB",21000]]},
-            {name:"28 Hari",items:[["10GB",41000],["20GB",60000],["35GB",82000],["75GB",123000],["100GB",157000],["Unlimited 1GB",68000],["Unlimited 2GB",94000],["Unlimited 3GB",123000]]}
+            {name:"3 Hari",items:[
+                ["4GB",11000],
+                ["Unlimited 1GB",17500],
+                ["Unlimited 2GB",22500]
+            ]},
+            {name:"7 Hari",items:[
+                ["2GB",12000],
+                ["6GB",17000],
+                ["Unlimited 1GB",20000],
+                ["Unlimited 2GB",26000]
+            ]},
+            {name:"10 Hari",items:[
+                ["2GB",15000]
+            ]},
+            {name:"14 Hari",items:[
+                ["Unlimited 1GB",35000],
+                ["4GB",21000]
+            ]},
+            {name:"28 Hari",items:[
+                ["10GB",41000],
+                ["20GB",60000],
+                ["35GB",82000],
+                ["75GB",123000],
+                ["100GB",157000],
+                ["Unlimited 1GB",68000],
+                ["Unlimited 2GB",94000],
+                ["Unlimited 3GB",123000]
+            ]}
         ]}
     ];
 
     const perdanaData = [
         { provider:"AXIS", durations:[
-            {name:"30 Hari",items:[["3GB",20000],["7GB",30000],["10GB",35000]]}
+            {name:"30 Hari",items:[
+                ["3GB",20000],
+                ["7GB",30000],
+                ["10GB",35000]
+            ]}
         ]},
         { provider:"BYU", durations:[
-            {name:"30 Hari",items:[["3GB",15000],["10GB",25000]]}
+            {name:"30 Hari",items:[
+                ["3GB",15000],
+                ["10GB",25000]
+            ]}
         ]},
         { provider:"INDOSAT", durations:[
-            {name:"30 Hari",items:[["3GB",20000],["7GB",30000]]}
+            {name:"30 Hari",items:[
+                ["3GB",20000],
+                ["7GB",30000]
+            ]}
         ]},
         { provider:"SMARTFREN", durations:[
-            {name:"14 Hari",items:[["Unlimited 1GB",27000]]},
-            {name:"28 Hari",items:[["Unlimited 1GB",50000],["3GB",20000],["7GB",27000],["10GB",32000]]}
+            {name:"14 Hari",items:[
+                ["Unlimited 1GB",27000]
+            ]},
+            {name:"28 Hari",items:[
+                ["Unlimited 1GB",50000],
+                ["3GB",20000],
+                ["7GB",27000]
+            ]}
         ]},
         { provider:"TELKOMSEL", durations:[
-            {name:"30 Hari",items:[["3GB",35000]]}
+            {name:"30 Hari",items:[
+                ["3GB",35000]
+            ]}
         ]},
         { provider:"TRI", durations:[
-            {name:"30 Hari",items:[["3GB",25000]]}
+            {name:"30 Hari",items:[
+                ["3GB",25000]
+            ]}
         ]},
         { provider:"XL", durations:[
-            {name:"30 Hari",items:[["3GB",20000],["10GB",34000],["23GB",47000]]}
+            {name:"30 Hari",items:[
+                ["3GB",20000],
+                ["10GB",34000],
+                ["23GB",47000]
+            ]}
         ]}
     ];
 
@@ -1126,16 +1280,37 @@
     ];
 
     const pulsaData = [
-        [5000,7500],[10000,12500],[15000,17000],[20000,22000],[25000,27000],
-        [30000,32000],[35000,37000],[40000,42000],[45000,47000],[50000,52000],
-        [55000,57000],[60000,62000],[65000,67000],[70000,72000],[75000,77000],
-        [80000,82000],[85000,87000],[90000,92000],[95000,97000],[100000,101000],
-        [150000,151000],[200000,201000]
+        [5000,7500],
+        [10000,12500],
+        [15000,17000],
+        [20000,22000],
+        [25000,27000],
+        [30000,32000],
+        [35000,37000],
+        [40000,42000],
+        [45000,47000],
+        [50000,52000],
+        [55000,57000],
+        [60000,62000],
+        [65000,67000],
+        [70000,72000],
+        [75000,77000],
+        [80000,82000],
+        [85000,87000],
+        [90000,92000],
+        [95000,97000],
+        [100000,101000],
+        [150000,151000],
+        [200000,201000]
     ];
 
     const tokenPLNData = [
-        [20000,23000],[50000,53000],[100000,103000],[200000,203500],
-        [500000,504000],[1000000,1004500]
+        [20000,23000],
+        [50000,53000],
+        [100000,103000],
+        [200000,203500],
+        [500000,504000],
+        [1000000,1004500]
     ];
 
     const cekTagihanList = ["PLN","PDAM","GAS PGN","INDIHOME","MY REPUBLIC","FIRST MEDIA","BPJS","ADIRA FINANCE",
@@ -1146,12 +1321,12 @@
         { category: "Headset", items: [
             {name:"Makaron", price:7000},
             {name:"Jete Eazy Candy", price:10000},
-            {name:"Jete Eazy II", price:22000},
-            {name:"Jete HA1", price:25000},
             {name:"Jete Classic Series", price:35000},
             {name:"Jete Classic II", price:45000},
             {name:"Jete Classic II Lightning", price:55000},
             {name:"Jete Classic II TypeC", price:55000},
+            {name:"Jete Souls TypeC", price:100000},
+            {name:"Jete TWS CE7", price:130000},
             {name:"Jete TWS CE6", price:150000}
         ]},
         { category: "Kabel Charger", items: [
@@ -1161,6 +1336,8 @@
             {name:"Inbox Micro", price:20000},
             {name:"Veger VG18 TypeC", price:23000},
             {name:"Jete Tiny III Lightning", price:25000},
+            {name:"Jete CX11 Micro", price:35000},
+            {name:"Jete Tiny V Micro", price:35000},
             {name:"Jete CX10 C to C", price:65000},
             {name:"Jete CX13 C to Lightning", price:80000}
         ]},
@@ -1170,7 +1347,11 @@
             {name:"Veger C1 TypeC", price:40000},
             {name:"Veger R1 Pro TypeC", price:45000},
             {name:"Jete Atomic II Micro", price:50000},
-            {name:"Jete C83 C to C", price:55000},
+            {name:"Jete C83 C to C", price:55000}
+        ]},
+        { category: "Others", items: [
+            {name: "Jete FlashDisk 4GB", price: 70000},
+            {name: "Sandisk FlashDisk 16GB", price: 100000},
             {name:"Jete Powerbank C83", price:130000}
         ]}
     ];
