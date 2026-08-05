@@ -16,8 +16,8 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
         
-                // Import Firestore
-        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+        // Import Firestore
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
         // PASTE KONFIGURASI FIREBASE ANDA DI SINI
         const firebaseConfig = {
@@ -46,6 +46,10 @@
             doc, 
             setDoc, 
             getDoc, 
+            collection,
+            query, 
+            where,
+            getDocs,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
             signInWithPopup, 
@@ -538,7 +542,6 @@
                     <p id="greeting-text" class="text-base font-semibold text-gray-300 leading-relaxed"></p>
                 </div>
 
-                <section class="mb-8 fade-up fade-up-d1"> <!-- Ini adalah bagian Cara Pesan -->
                 <section class="mb-8 fade-up fade-up-d1">
                     <h3 class="section-label">Cara Pesan</h3>
                     <div class="grid grid-cols-4 gap-2">
@@ -560,7 +563,13 @@
                         </div>
                     </div>
                 </section>
-
+                    <!-- TAMBAHAN: Section Riwayat Transaksi Terakhir -->
+                <section id="last-transaction-section" class="mb-8 fade-up hidden">
+                    <h3 class="section-label">Transaksi Terakhir</h3>
+                        <div id="last-transaction-card" class="card p-4 border-pk/20">
+                            <!-- Data transaksi akan diisi oleh JavaScript di sini -->
+                        </div>
+                </section>
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -4202,6 +4211,7 @@
                 isProcessingAuth = false; 
                 window.currentUserTelp = ''; 
                 document.getElementById('user-profile-section').classList.add('hidden');
+                document.getElementById('last-transaction-section')?.classList.add('hidden');
                 updateHomeGreeting(); // TAMBAHKAN INI (Untuk menyembunyikan teks sapaan)
                 showToast('Anda telah keluar', 'info');
                 showView('view-login');
@@ -4210,7 +4220,7 @@
         }, 'fa-solid fa-right-from-bracket');
     }
         // --- FUNGSI PROFIL USER ---
-    function renderUserProfile() {
+        function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
@@ -4234,6 +4244,79 @@
             profilePicEl.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-1">`;
         }
     }
+    // --- FUNGSI RIWAYAT TRANSAKSI TERAKHIR ---
+    async function loadLastTransaction() {
+    const user = window.firebaseAuth.auth.currentUser;
+    if (!user) return;
+
+    const section = document.getElementById('last-transaction-section');
+    const card = document.getElementById('last-transaction-card');
+    
+    try {
+        // Buat query untuk mencari orders milik user ini
+        const q = window.firebaseAuth.query(
+            window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
+            window.firebaseAuth.where("userId", "==", user.uid)
+        );
+
+        const querySnapshot = await window.firebaseAuth.getDocs(q);
+        
+        if (querySnapshot.empty) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        // Karena tidak bisa orderBy karena aturan Firestore, kita ambil semua lalu urutkan manual di client
+        let docs = [];
+        querySnapshot.forEach((doc) => {
+            docs.push({ id: doc.id, data: doc.data() });
+        });
+
+        // Urutkan berdasarkan ID transaksi secara menurun (Karena ID memakai Date.now(), ini sangat akurat)
+        docs.sort((a, b) => b.id.localeCompare(a.id));
+
+        // Ambil transaksi paling baru
+        const lastTransaction = docs[0].data;
+
+        // Format tampilan barang
+        let itemsHtml = '';
+        lastTransaction.items.slice(0, 2).forEach(item => {
+            itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
+        });
+        if (lastTransaction.items.length > 2) {
+            itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${lastTransaction.items.length - 2} produk lainnya</p>`;
+        }
+
+        // Warna badge status
+        let statusColor = 'bg-yellow-500/20 text-yellow-400';
+        if (lastTransaction.status === 'Lunas' || lastTransaction.status === 'Selesai') {
+            statusColor = 'bg-green-500/20 text-green-400';
+        } else if (lastTransaction.status === 'Dibatalkan' || lastTransaction.status === 'Gagal') {
+            statusColor = 'bg-red-500/20 text-red-400';
+        }
+
+        // Tampilkan ke layar
+        card.innerHTML = `
+            <div class="flex justify-between items-center mb-3">
+                <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${lastTransaction.transactionDate || 'Tanpa Tanggal'}</p>
+                <span class="text-[10px] font-bold px-2 py-1 rounded-md ${statusColor}">${lastTransaction.status || 'Menunggu'}</span>
+            </div>
+            <div class="space-y-1 mb-3">
+                ${itemsHtml}
+            </div>
+            <div class="flex justify-between items-center pt-3 border-t border-dk-500/50">
+                <span class="text-xs text-gray-400">Total Pembayaran</span>
+                <span class="text-sm font-bold text-pk">${formatRp(lastTransaction.total)}</span>
+            </div>
+        `;
+        
+        section.classList.remove('hidden');
+
+    } catch (error) {
+        console.error("Gagal memuat transaksi terakhir:", error);
+        section.classList.add('hidden');
+    }
+}
     // --- FUNGSI SAPAAN DINAMIS ---
     function updateHomeGreeting() {
         const greetingEl = document.getElementById('greeting-banner');
@@ -4485,6 +4568,7 @@
                 // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
                 renderUserProfile();
                 updateHomeGreeting();
+                loadLastTransaction();
                 
                 // 4. Jalankan sistem pelacak status online/offline
                 initPresenceSystem(user);
