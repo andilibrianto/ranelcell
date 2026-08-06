@@ -514,16 +514,7 @@
                             <p class="text-[12px] text-dk-400 leading-tight">Jl. Granting I No. 1-3, Surabaya</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">                        
-                        <button onclick="toggleAnnouncement(event)" class="h-9 px-3 rounded-full bg-pk/10 border border-pk/30 flex items-center gap-2 text-xs font-bold text-pk active:scale-95 transition-transform" aria-label="Fitur Baru">
-                            Fitur Baru
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
-                        </button>
-                        <button onclick="checkCartBeforeView('view-order')" class="relative w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Keranjang">
-                            <i class="fa-solid fa-cart-shopping text-sm"></i>
-                            <span id="home-header-badge" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-pk text-[9px] font-bold flex items-center justify-center text-white" style="display:none;">0</span>
-                        </button>
-                    </div>
+                    <div id="home-header-actions" class="flex items-center gap-2"></div>
                 </div>
             </header>
 
@@ -563,13 +554,7 @@
                         </div>
                     </div>
                 </section>
-                    <!-- TAMBAHAN: Section Riwayat Transaksi Terakhir -->
-                <section id="last-transaction-section" class="mb-8 fade-up hidden">
-                    <h3 class="section-label">Transaksi Terakhir</h3>
-                        <div id="last-transaction-card" class="card p-4 border-pk/20">
-                            <!-- Data transaksi akan diisi oleh JavaScript di sini -->
-                        </div>
-                </section>
+                    
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -630,32 +615,7 @@
                         </div>
                     </button>
                 </section>
-                <!-- Tambahan: Section Detail Akun User (Pindah ke sini) -->
-                <section id="user-profile-section" class="mt-8 mb-8 fade-up fade-up-d3 hidden">
-                    <h3 class="section-label">PROFIL AKUN</h3>
-                    <div class="card p-4 border-pk/20">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-3">
-                                <div id="home-profile-pic" class="w-10 h-10 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-sm overflow-hidden flex-shrink-0">
-                                    <i class="fa-solid fa-user"></i> <!-- Ikon default akan diganti nanti -->
-                                </div>
-                                <div>
-                                    <p id="home-user-name" class="font-bold text-sm uppercase">Nama User</p>
-                                    <p id="home-user-email" class="text-[11px] text-gray-400">email@user.com</p>
-                                </div>
-                            </div>
-                            <button onclick="showEditProfile()" class="text-xs text-pk font-semibold flex items-center gap-1 active:opacity-70 transition-opacity">
-                                <i class="fa-solid fa-pen-to-square"></i> Edit
-                            </button>
-                        </div>
-                        <div class="border-t border-dk-500/50 pt-3 text-xs space-y-1">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">No. Telepon</span>
-                                <span id="home-user-telp" class="text-white font-medium">0812xxxx</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
+                
                 <section class="mt-8 fade-up fade-up-d3">
                     <h3 class="section-label">Informasi Lainnya</h3>
                     <div class="grid grid-cols-2 gap-3">
@@ -894,69 +854,125 @@
                 </div>
             </div>
         </div>
-                       <!-- View Edit Profil -->
-        <div id="view-edit-profile" class="view">
-            <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
-                <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-                    <button onclick="confirmEditBack()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
-                    <h2 class="text-sm font-bold flex-1">Edit Profil</h2>
+        <!-- View Edit Profil -->
+<div id="view-edit-profile" class="view">
+    <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <button onclick="confirmEditBack()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+            <h2 id="edit-profile-title" class="text-sm font-bold flex-1">Detail Akun</h2>
+        </div>
+    </header>
+    
+    <div class="max-w-lg mx-auto px-4 py-8 pb-32">
+        
+        <!-- BAGIAN 1: TAMPILAN DETAIL AKUN (Default) -->
+        <div id="profile-detail-view" class="fade-up">
+            <div class="card p-6 mb-4 border-pk/20 text-center">
+                <div id="detail-profile-pic" class="w-24 h-24 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden">
+                    <i class="fa-solid fa-user"></i>
                 </div>
-            </header>
-            <div class="max-w-lg mx-auto px-4 py-8 pb-32">
-                <div class="card p-6 fade-up">
-                    <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
-                        <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap" oninput="checkProfileChanges()">
+                <p id="detail-user-name" class="font-bold text-lg uppercase">Nama User</p>
+                <p id="detail-user-email" class="text-xs text-gray-400 mb-4">email@user.com</p>
+                <div class="border-t border-dk-500/50 pt-4 text-left space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">No. Telepon</span>
+                        <span id="detail-user-telp" class="text-white font-medium">0812xxxx</span>
                     </div>
-                    <div class="mb-4">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
-                        <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value); checkProfileChanges()">
-                    </div>
-                    <div class="mb-6">
-                        <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
-                        <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
-                    </div>
+                </div>
+            </div>
+            <button onclick="showEditForm()" class="btn-pk w-full text-center">
+                <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Profil
+            </button>
+            <button onclick="showTransactionHistory()" class="btn-outline w-full text-center mt-3">
+                <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
+            </button>
+        </div>
 
-                    <!-- Tambahan: Form Ubah Password -->
-                    <div id="password-section" class="mt-6 pt-6 border-t border-dk-500/50">
-                        <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
-                        <div class="mb-3">
-                            <label class="text-[11px] text-gray-500 mb-1 block">Password Lama</label>
-                            <div class="relative">
-                                <input type="password" id="edit-old-password" class="form-input pr-10" placeholder="Kosongkan jika tidak ganti password" oninput="checkProfileChanges()">
-                                <button type="button" onclick="togglePassword('edit-old-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
-                                    <i class="fa-solid fa-eye text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="text-[11px] text-gray-500 mb-1 block">Password Baru</label>
-                            <div class="relative">
-                                <input type="password" id="edit-new-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkProfileChanges(); checkPasswordStrength('edit-new-password', 'edit-strength-meter')">
-                                <button type="button" onclick="togglePassword('edit-new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
-                                    <i class="fa-solid fa-eye text-sm"></i>
-                                </button>
-                            </div>
-                            <!-- Meter Kekuatan Password -->
-                            <div id="edit-strength-meter" class="mt-2"></div>
-                        </div>
-                        <div class="mb-6">
-                            <label class="text-[11px] text-gray-500 mb-1 block">Konfirmasi Password Baru</label>
-                            <div class="relative">
-                                <input type="password" id="edit-confirm-password" class="form-input pr-10" placeholder="Ulangi password baru" oninput="checkProfileChanges()">
-                                <button type="button" onclick="togglePassword('edit-confirm-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
-                                    <i class="fa-solid fa-eye text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        <!-- BAGIAN 2: FORM EDIT PROFIL (Hidden by default) -->
+<div id="profile-edit-form" class="hidden">
+    <div class="card p-6 fade-up">
+        <div class="mb-4">
+            <label class="text-[11px] text-gray-500 mb-1 block">Nama Lengkap</label>
+            <input type="text" id="edit-nama" class="form-input" placeholder="Masukkan nama lengkap" oninput="checkProfileChanges()">
+        </div>
+        <div class="mb-4">
+            <label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label>
+            <input type="tel" id="edit-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value); checkProfileChanges()">
+        </div>
+        <div class="mb-6">
+            <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
+            <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
+        </div>
 
-                    <button id="save-profile-btn" onclick="saveProfile()" class="btn-pk w-full text-center" disabled style="opacity: 0.5; cursor: not-allowed;">
-                        <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
+        <!-- Form Password disembunyikan secara default -->
+        <div id="password-section" class="mt-6 pt-6 border-t border-dk-500/50 hidden">
+            <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
+            <div class="mb-3">
+                <label class="text-[11px] text-gray-500 mb-1 block">Password Lama</label>
+                <div class="relative">
+                    <input type="password" id="edit-old-password" class="form-input pr-10" placeholder="Kosongkan jika tidak ganti password" oninput="checkProfileChanges()">
+                    <button type="button" onclick="togglePassword('edit-old-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                        <i class="fa-solid fa-eye text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="text-[11px] text-gray-500 mb-1 block">Password Baru</label>
+                <div class="relative">
+                    <input type="password" id="edit-new-password" class="form-input pr-10" placeholder="Minimal 6 karakter" oninput="checkProfileChanges(); checkPasswordStrength('edit-new-password', 'edit-strength-meter')">
+                    <button type="button" onclick="togglePassword('edit-new-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                        <i class="fa-solid fa-eye text-sm"></i>
+                    </button>
+                </div>
+                <div id="edit-strength-meter" class="mt-2"></div>
+            </div>
+            <div class="mb-6">
+                <label class="text-[11px] text-gray-500 mb-1 block">Konfirmasi Password Baru</label>
+                <div class="relative">
+                    <input type="password" id="edit-confirm-password" class="form-input pr-10" placeholder="Ulangi password baru" oninput="checkProfileChanges()">
+                    <button type="button" onclick="togglePassword('edit-confirm-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pk transition-colors" aria-label="Lihat Password">
+                        <i class="fa-solid fa-eye text-sm"></i>
                     </button>
                 </div>
             </div>
         </div>
+
+        <button id="save-profile-btn" onclick="saveProfile()" class="btn-pk w-full text-center" disabled style="opacity: 0.5; cursor: not-allowed;">
+            <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
+        </button>
+        
+        <!-- Tombol Toggle Password Baru -->
+        <button id="toggle-password-btn" type="button" onclick="togglePasswordSection()" class="btn-outline w-full text-center mt-3">
+            <i class="fa-solid fa-key mr-2"></i> Ubah Password
+        </button>
+    </div>
+</div>
+
+    </div>
+</div>
+<!-- View Riwayat Transaksi -->
+<div id="view-history" class="view">
+    <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <button onclick="showEditProfile()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+            <h2 class="text-sm font-bold flex-1">Riwayat Transaksi</h2>
+            <button onclick="showView('view-home')" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Beranda"><i class="fa-solid fa-house text-sm"></i></button>
+        </div>
+    </header>
+    <div id="history-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
+</div>
+<!-- View Detail Riwayat Transaksi -->
+<div id="view-history-detail" class="view">
+    <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <button onclick="showTransactionHistory()" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+            <h2 class="text-sm font-bold flex-1">Detail Transaksi</h2>
+            <button onclick="showView('view-home')" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Beranda"><i class="fa-solid fa-house text-sm"></i></button>
+        </div>
+    </header>
+    <div id="history-detail-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
+</div>
+
         <div id="view-pricelist" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -1749,7 +1765,53 @@
     function hideLoading() {
         document.getElementById('loading-overlay').classList.add('hidden');
     }
+// --- FUNGSI KONTROL TOMBOL HEADER HOME ---
+function renderHomeHeaderActions(count) {
+    const container = document.getElementById('home-header-actions');
+    if (!container) return; // Jika bukan di halaman home, abaikan
 
+    // Ambil data user saat ini
+    const user = window.firebaseAuth.auth.currentUser;
+    
+    // Logika Foto Profil
+    let profilePicHtml = '';
+    if (user && user.photoURL) {
+        // Jika login Google (punya photoURL)
+        profilePicHtml = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover rounded-xl">`;
+    } else {
+        // Jika login Email/Password (tidak punya photoURL)
+        profilePicHtml = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-1.5">`;
+    }
+
+    // Tombol Fitur Baru
+    const btnFiturBaru = `
+        <button onclick="toggleAnnouncement(event)" class="h-9 px-3 rounded-full bg-pk/10 border border-pk/30 flex items-center gap-2 text-xs font-bold text-pk active:scale-95 transition-transform" aria-label="Fitur Baru">
+            Fitur Baru
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+        </button>`;
+
+    // Tombol Keranjang (dengan Badge)
+    const btnKeranjang = `
+        <button onclick="checkCartBeforeView('view-order')" class="relative w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Keranjang">
+            <i class="fa-solid fa-cart-shopping text-sm"></i>
+            <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-pk text-[9px] font-bold flex items-center justify-center text-white" style="display:flex;">${count}</span>
+        </button>`;
+
+    // Tombol Detail Akun (Dengan Foto Profil)
+    const btnAkun = `
+        <button onclick="showEditProfile()" class="relative w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform overflow-hidden" aria-label="Detail Akun">
+            ${profilePicHtml}
+        </button>`;
+
+    // Logika perpindahan tombol
+    if (count === 0) {
+        // Jika cart KOSONG: [Fitur Baru] [Detail Akun]
+        container.innerHTML = btnFiturBaru + btnAkun;
+    } else {
+        // Jika cart ADA ISINYA: [Detail Akun] [Keranjang]
+        container.innerHTML = btnAkun + btnKeranjang;
+    }
+}
     function updateCartUI() {
         const count = cart.reduce((s,i) => s + i.quantity, 0);
         const fab = document.getElementById('fab-cart');
@@ -1793,10 +1855,7 @@
             if (count > 0 && currentView === 'view-perdana') { perdanaHeaderBadge.style.display = 'flex'; perdanaHeaderBadge.textContent = count; }
             else { perdanaHeaderBadge.style.display = 'none'; }
         }
-        if (homeHeaderBadge) {
-            if (count > 0) { homeHeaderBadge.style.display = 'flex'; homeHeaderBadge.textContent = count; }
-            else { homeHeaderBadge.style.display = 'none'; }
-        }
+        renderHomeHeaderActions(count);
         // Logika tampil tombol floating logout
         const fabLogout = document.getElementById('fab-logout');
         if (fabLogout) {
@@ -3672,7 +3731,7 @@
         showThankYouOverlay();
     }
 
-    // Fungsi untuk menyimpan data transaksi ke Firestore
+        // Fungsi untuk menyimpan data transaksi ke Firestore
     async function saveTransactionToFirestore(d) {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return; // Pastikan user login
@@ -3682,13 +3741,22 @@
         
         try {
             await window.firebaseAuth.setDoc(orderRef, {
+                orderId: orderId,
                 userId: user.uid,
                 userName: d.nama,
+                userTelp: d.telp,
                 items: cart.map(item => ({
                     name: item.name,
                     price: item.price,
                     quantity: item.quantity
                 })),
+                subtotal: getCartTotal(),
+                shippingMode: d.shippingMode || null,
+                shippingCost: d.shippingCost || 0,
+                promoCode: d.promoCode || '',
+                promoDiscount: d.promoDiscount || 0,
+                total: getGrandTotal(),
+                paymentMethod: selectedPaymentMethod,
                 address: d.alamat || '-',
                 idPelanggan: d.idPelanggan || {},
                 transactionDate: new Date().toLocaleString('id-ID', { 
@@ -3698,9 +3766,9 @@
                     hour12: false
                 })
             });
-            console.log("Transaksi berhasil");
+            console.log("Transaksi berhasil disimpan ke Firestore");
         } catch (err) {
-            console.error("Gagal menyimpan transaksi ke Database:", err);
+            console.error("Gagal menyimpan transaksi ke Firestore:", err);
         }
     }
 
@@ -4163,7 +4231,10 @@
                             nama: nama,
                             telp: telp,
                             email: email,
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date().toISOString(),
+                            // TAMBAHKAN INI: Inisialisasi status offline & catat waktu saat akun dibuat
+                            Online: false, 
+                            LastSeen: getWaktuWIB() 
                         });
                         window.currentUserTelp = telp;
                     } catch (err) {
@@ -4259,6 +4330,9 @@
                 renderUserProfile();
                 updateHomeGreeting();
                 
+                // TAMBAHKAN INI: Jalankan pelacak status online untuk user Google baru
+                initPresenceSystem(user); 
+                
                 // 2. Buka halaman Edit Profil
                 showEditProfile();
                         } else {
@@ -4291,7 +4365,7 @@
         
         // Jika kolom email kosong, minta user mengisi dulu
         if (!email) { 
-            showToast('Masukkan email Anda di kolom di atas terlebih dahulu', 'info'); 
+            showToast('Masukkan email Anda', 'info'); 
             document.getElementById('login-email').focus();
             return; 
         }
@@ -4310,7 +4384,7 @@
                     .catch((error) => {
                         hideLoading();
                         if (error.code === 'auth/user-not-found') {
-                            showToast('Email tidak terdaftar di sistem kami', 'error');
+                            showToast('Email tidak terdaftar di sistem', 'error');
                         } else {
                             showToast('Gagal mengirim email: ' + error.message, 'error');
                         }
@@ -4370,7 +4444,6 @@
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
-                loadLastTransaction();
                 
                 // Jalankan pelacak status online untuk User B
                 initPresenceSystem(user); 
@@ -4388,115 +4461,28 @@
             });
     }
         function handleLogout() {
-            showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
-            stopPresenceSystem(); // Set user saat ini menjadi OFFLINE sebelum logout
-            window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
-                isProcessingAuth = false; 
-                window.currentUserTelp = ''; 
-                document.getElementById('user-profile-section').classList.add('hidden');
-                document.getElementById('last-transaction-section')?.classList.add('hidden');
-                updateHomeGreeting(); // TAMBAHKAN INI (Untuk menyembunyikan teks sapaan)
-                showToast('Anda telah keluar', 'info');
-                showView('view-login');
-                updateAuthUI();
-            });
-        }, 'fa-solid fa-right-from-bracket');
-    }
+    showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
+        stopPresenceSystem();
+        window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+            isProcessingAuth = false; 
+            window.currentUserTelp = ''; 
+            
+            // Hapus baris document.getElementById('user-profile-section')... karena elemennya sudah tidak ada.
+            updateHomeGreeting();
+            showToast('Anda telah keluar', 'info');
+            showView('view-login');
+            updateAuthUI();
+        });
+    }, 'fa-solid fa-right-from-bracket');
+}
         // --- FUNGSI PROFIL USER ---
         function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
 
-        // Tampilkan section profil
-        document.getElementById('user-profile-section').classList.remove('hidden');
-        
-        // Isi data teks di halaman utama
-        document.getElementById('home-user-name').textContent = user.displayName || 'User';
-        document.getElementById('home-user-email').textContent = user.email || '-';
-        document.getElementById('home-user-telp').textContent = window.currentUserTelp || '-';
-        
-        // Logika Foto Profil
-        const profilePicEl = document.getElementById('home-profile-pic');
-        const photoURL = user.photoURL;
-        
-        if (photoURL) {
-            // Jika ada foto (dari Google), tampilkan fotonya
-            profilePicEl.innerHTML = `<img src="${photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
-        } else {
-            // Jika tidak ada foto (login manual), tampilkan foto logo lokal
-            profilePicEl.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-1">`;
-        }
+        console.log("User profile data loaded for: ", user.displayName || user.email);
     }
-    // --- FUNGSI RIWAYAT TRANSAKSI TERAKHIR ---
-async function loadLastTransaction() {
-    const user = window.firebaseAuth.auth.currentUser;
-    if (!user) return;
-
-    const section = document.getElementById('last-transaction-section');
-    const card = document.getElementById('last-transaction-card');
     
-    try {
-        // Query ke koleksi Riwayat_Pesanan
-        const q = window.firebaseAuth.query(
-            window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
-            window.firebaseAuth.where("userId", "==", user.uid)
-        );
-
-        const querySnapshot = await window.firebaseAuth.getDocs(q);
-        
-        if (querySnapshot.empty) {
-            section.classList.add('hidden');
-            return;
-        }
-
-        let docs = [];
-        querySnapshot.forEach((doc) => {
-            docs.push({ id: doc.id, data: doc.data() });
-        });
-
-        // Urutkan berdasarkan ID transaksi secara menurun (Terbaru di atas)
-        docs.sort((a, b) => b.id.localeCompare(a.id));
-
-        // Ambil maksimal 2 transaksi terakhir
-        const lastTwoTransactions = docs.slice(0, 2);
-        
-        let html = '';
-
-        // Looping untuk membuat kartu tiap transaksi
-        lastTwoTransactions.forEach((transactionObj) => {
-            const transaction = transactionObj.data;
-
-            // Tampilkan daftar barang (Hanya Nama Barang dan Qty)
-            let itemsHtml = '';
-            transaction.items.slice(0, 3).forEach(item => {
-                itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
-            });
-            if (transaction.items.length > 3) {
-                itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${transaction.items.length - 3} produk lainnya</p>`;
-            }
-
-            // Kartu individual untuk tiap transaksi
-            html += `
-                <div class="bg-dk-700 p-3 rounded-lg mb-3 last:mb-0">
-                    <div class="mb-2">
-                        <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${transaction.transactionDate || 'Tanpa Tanggal'}</p>
-                    </div>
-                    <div class="space-y-1">
-                        ${itemsHtml}
-                    </div>
-                </div>
-            `;
-        });
-
-        // Tampilkan ke layar
-        card.innerHTML = html;
-        section.classList.remove('hidden');
-
-    } catch (error) {
-        console.error("Gagal memuat transaksi terakhir:", error);
-        section.classList.add('hidden');
-    }
-}
     // --- FUNGSI SAPAAN DINAMIS ---
     function updateHomeGreeting() {
         const greetingEl = document.getElementById('greeting-banner');
@@ -4523,44 +4509,86 @@ async function loadLastTransaction() {
             greetingEl.classList.add('hidden');
         }
     }
-                function showEditProfile() {
-        const user = window.firebaseAuth.auth.currentUser;
-        if (!user) return;
+        function showEditProfile() {
+    const user = window.firebaseAuth.auth.currentUser;
+    if (!user) return;
 
-        // Isi form edit dengan data saat ini
-        document.getElementById('edit-nama').value = user.displayName || '';
-        document.getElementById('edit-telp').value = window.currentUserTelp || '';
-        document.getElementById('edit-email').value = user.email || '';
-        
-        // Simpan data awal untuk deteksi perubahan
-        initialEditNama = user.displayName || '';
-        initialEditTelp = window.currentUserTelp || '';
-        
-        // Pastikan tombol simpan mati saat pertama kali buka halaman
-        const saveBtn = document.getElementById('save-profile-btn');
-        saveBtn.disabled = true;
-        saveBtn.style.opacity = '0.5';
-        saveBtn.style.cursor = 'not-allowed';
-        
-        // CEK APAKAH USER LOGIN VIA GOOGLE
-        const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
-        const passSection = document.getElementById('password-section');
-        
-        if (isGoogleUser) {
-            // Jika Google User, sembunyikan form password
-            passSection.style.display = 'none';
-        } else {
-            // Jika Email/Password User, tampilkan form password
-            passSection.style.display = 'block';
-            
-            // Kosongkan nilai input password
-            document.getElementById('edit-old-password').value = '';
-            document.getElementById('edit-new-password').value = '';
-            document.getElementById('edit-confirm-password').value = '';
-        }
-        
-        showView('view-edit-profile');
+    // Isi data di Tampilan Detail
+    document.getElementById('detail-user-name').textContent = user.displayName || 'User';
+    document.getElementById('detail-user-email').textContent = user.email || '-';
+    document.getElementById('detail-user-telp').textContent = window.currentUserTelp || '-';
+
+    // Isi Foto di Tampilan Detail
+    const detailPic = document.getElementById('detail-profile-pic');
+    if (user.photoURL) {
+        detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+    } else {
+        detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2">`;
     }
+
+    // Siapkan Form Edit di background
+    document.getElementById('edit-nama').value = user.displayName || '';
+    document.getElementById('edit-telp').value = window.currentUserTelp || '';
+    document.getElementById('edit-email').value = user.email || '';
+    document.getElementById('edit-old-password').value = '';
+    document.getElementById('edit-new-password').value = '';
+    document.getElementById('edit-confirm-password').value = '';
+
+    // Cek apakah login via Google
+    const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
+    const passSection = document.getElementById('password-section');
+    const togglePassBtn = document.getElementById('toggle-password-btn');
+    
+    if (isGoogleUser) {
+        passSection.classList.add('hidden'); // Sembunyikan form password
+        togglePassBtn.classList.add('hidden'); // Sembunyikan tombol ubah password
+    } else {
+        passSection.classList.add('hidden'); // Sembunyikan form password dulu
+        togglePassBtn.classList.remove('hidden'); // Tampilkan tombol ubah password
+        togglePassBtn.innerHTML = '<i class="fa-solid fa-key mr-2"></i> Ubah Password'; // Reset teks tombol
+    }
+
+    initialEditNama = user.displayName || '';
+    initialEditTelp = window.currentUserTelp || '';
+
+    const saveBtn = document.getElementById('save-profile-btn');
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = '0.5';
+    saveBtn.style.cursor = 'not-allowed';
+
+    // Tampilkan Tampilan Detail, Sembunyikan Form
+    document.getElementById('profile-detail-view').classList.remove('hidden');
+    document.getElementById('profile-edit-form').classList.add('hidden');
+    document.getElementById('edit-profile-title').textContent = 'Detail Akun';
+
+    showView('view-edit-profile');
+}
+function showEditForm() {
+    // Tampilkan Form, Sembunyikan Tampilan Detail
+    document.getElementById('profile-detail-view').classList.add('hidden');
+    document.getElementById('profile-edit-form').classList.remove('hidden');
+    document.getElementById('edit-profile-title').textContent = 'Edit Profil';
+}
+function togglePasswordSection() {
+    const passSection = document.getElementById('password-section');
+    const togglePassBtn = document.getElementById('toggle-password-btn');
+    
+    if (passSection.classList.contains('hidden')) {
+        // Jika form password tersembunyi, TAMPILKAN
+        passSection.classList.remove('hidden');
+        togglePassBtn.innerHTML = '<i class="fa-solid fa-eye-slash mr-2"></i> Sembunyikan Password';
+    } else {
+        // Jika form password tampil, SEMBUNYIKAN
+        passSection.classList.add('hidden');
+        togglePassBtn.innerHTML = '<i class="fa-solid fa-key mr-2"></i> Ubah Password';
+        
+        // Kosongkan isinya saat disembunyikan agar tidak tersimpan tidak sengaja
+        document.getElementById('edit-old-password').value = '';
+        document.getElementById('edit-new-password').value = '';
+        document.getElementById('edit-confirm-password').value = '';
+        checkProfileChanges(); // Update status tombol simpan
+    }
+}
     // Variabel untuk menyimpan data awal sebelum diedit
     let initialEditNama = '';
     let initialEditTelp = '';
@@ -4593,26 +4621,230 @@ async function loadLastTransaction() {
 
     // Fungsi tombol kembali dengan pengecekan perubahan
     function confirmEditBack() {
+    const isEditing = !document.getElementById('profile-edit-form').classList.contains('hidden');
+    
+    if (isEditing) {
+        // Jika sedang di Form Edit, cek apakah ada perubahan yang belum disimpan
         const currentNama = document.getElementById('edit-nama').value.trim();
         const currentTelp = document.getElementById('edit-telp').value.trim();
         
-        // Jika ada perubahan yang belum disimpan, munculkan pop-up peringatan
         if (currentNama !== initialEditNama || currentTelp !== initialEditTelp) {
             showConfirmModal(
                 "Buang Perubahan?", 
-                "Anda memiliki perubahan yang belum disimpan. Yakin ingin meninggalkan halaman ini?", 
+                "Anda memiliki perubahan yang belum disimpan. Yakin ingin membuangnya?", 
                 () => {
-                    showView('view-home');
+                    // Jika ya, kembali ke tampilan detail
+                    showEditProfile(); 
                 }, 
                 'fa-solid fa-triangle-exclamation',
                 'Ya, Buang',
                 'Batal'
             );
         } else {
-            // Jika tidak ada perubahan, langsung kembali
-            showView('view-home');
+            // Jika tidak ada perubahan, langsung kembali ke tampilan detail
+            showEditProfile();
         }
+    } else {
+        // Jika sedang di Tampilan Detail, kembali ke Home
+        showView('view-home');
     }
+}
+// --- FUNGSI RIWAYAT TRANSAKSI (15 DATA) ---
+async function showTransactionHistory() {
+    const user = window.firebaseAuth.auth.currentUser;
+    if (!user) return;
+
+    const contentEl = document.getElementById('history-content');
+    contentEl.innerHTML = `<div class="text-center py-10 text-gray-500 text-sm">Memuat riwayat...</div>`;
+    
+    showView('view-history');
+
+    try {
+        const q = window.firebaseAuth.query(
+            window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
+            window.firebaseAuth.where("userId", "==", user.uid)
+        );
+
+        const querySnapshot = await window.firebaseAuth.getDocs(q);
+        
+        if (querySnapshot.empty) {
+            contentEl.innerHTML = `
+                <div class="text-center py-20">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-dk-700 flex items-center justify-center">
+                        <i class="fa-solid fa-receipt text-3xl text-gray-600"></i>
+                    </div>
+                    <p class="text-gray-400 font-medium">Belum ada riwayat transaksi</p>
+                </div>`;
+            return;
+        }
+
+        let docs = [];
+        querySnapshot.forEach((doc) => {
+            docs.push({ id: doc.id, data: doc.data() });
+        });
+
+        // Urutkan berdasarkan ID transaksi secara menurun (Terbaru di atas)
+        docs.sort((a, b) => b.id.localeCompare(a.id));
+        
+        // Simpan ke cache global agar bisa diakses saat klik detail
+        window._historyCache = docs; 
+
+        // Ambil maksimal 15 transaksi terakhir
+        const historyTransactions = docs.slice(0, 15);
+        
+        let html = '';
+
+        historyTransactions.forEach((transactionObj) => {
+            const transaction = transactionObj.data;
+
+            let itemsHtml = '';
+            transaction.items.slice(0, 2).forEach(item => {
+                itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
+            });
+            if (transaction.items.length > 2) {
+                itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${transaction.items.length - 2} produk lainnya</p>`;
+            }
+
+                html += `
+                <div onclick="showTransactionDetail('${transactionObj.id}')" class="card p-4 mb-3 fade-up cursor-pointer active:scale-[0.98] transition-transform">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-[11px] text-gray-500"><i class="fa-regular fa-clock mr-1"></i> ${transaction.transactionDate || 'Tanpa Tanggal'}</p>
+                    </div>
+                    <div class="space-y-1 mb-3">
+                        ${itemsHtml}
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-dk-500/50">
+                        <span class="text-xs text-gray-400">Total Pembayaran</span>
+                        <span class="text-sm font-bold text-pk">${formatRp(transaction.total || 0)}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        contentEl.innerHTML = html;
+
+    } catch (error) {
+        console.error("Gagal memuat riwayat transaksi:", error);
+        contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
+    }
+}
+// --- FUNGSI DETAIL RIWAYAT TRANSAKSI ---
+function showTransactionDetail(transactionId) {
+    if (!window._historyCache) return;
+    
+    const transactionObj = window._historyCache.find(t => t.id === transactionId);
+    if (!transactionObj) return;
+
+    const d = transactionObj.data;
+    const el = document.getElementById('history-detail-content');
+
+    let itemsHtml = '';
+    d.items.forEach((item, idx) => {
+        itemsHtml += `
+            <div class="flex justify-between items-start text-xs mb-3">
+                <div class="flex-1 mr-2">
+                    <p class="font-medium text-white">${item.name}</p>
+                    <p class="text-gray-500 mt-0.5">${item.quantity} x ${formatRp(item.price)}</p>
+                </div>
+                <p class="font-semibold text-white whitespace-nowrap">${formatRp(item.price * item.quantity)}</p>
+            </div>`;
+    });
+
+    let idPelHtml = '';
+    if (d.idPelanggan && Object.keys(d.idPelanggan).length > 0) {
+        idPelHtml += `<div class="mt-4 pt-4 border-t border-dk-500/50">`;
+        idPelHtml += `<p class="text-[10px] text-gray-500 mb-2 uppercase tracking-wider">ID Pelanggan / No. Tujuan</p>`;
+        let pelNum = 1;
+        d.items.forEach((item, idx) => {
+            if (d.idPelanggan[idx]) {
+                d.idPelanggan[idx].forEach((id) => {
+                    idPelHtml += `<p class="text-xs text-white mb-1">${pelNum}. ${id} <span class="text-gray-500">(${item.name})</span></p>`;
+                    pelNum++;
+                });
+            }
+        });
+        idPelHtml += `</div>`;
+    }
+
+    let shippingHtml = '';
+    if (d.shippingMode) {
+        shippingHtml += `<div class="mt-4 pt-4 border-t border-dk-500/50">`;
+        shippingHtml += `<p class="text-[10px] text-gray-500 mb-2 uppercase tracking-wider">Pengiriman</p>`;
+        if (d.shippingMode === 'pickup') {
+            shippingHtml += `<p class="text-xs text-white">Ambil di Toko</p>`;
+        } else if (d.shippingMode === 'deliver') {
+            shippingHtml += `<p class="text-xs text-white">Kirim ke Alamat</p>`;
+            shippingHtml += `<p class="text-xs text-gray-400 mt-1 leading-relaxed uppercase">${d.address || '-'}</p>`;
+        }
+        shippingHtml += `</div>`;
+    }
+
+    let promoHtml = '';
+    if (d.promoDiscount > 0 && d.promoCode) {
+        promoHtml += `
+        <div class="flex justify-between text-xs mt-2">
+            <span class="text-gray-300">Diskon (${d.promoCode})</span>
+            <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
+        </div>`;
+    }
+
+        el.innerHTML = `
+        <div class="card p-4 mb-4 border-pk/20 fade-up">
+            <div class="flex justify-between items-center mb-3 pb-3 border-b border-dk-500/50">
+                <div>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider">Waktu Transaksi</p>
+                    <p class="text-xs text-white mt-1">${d.transactionDate || 'Tanpa Tanggal'}</p>
+                </div>
+            </div>
+
+            <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
+            <div class="text-xs space-y-2 mb-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-500">Nama</span>
+                    <span class="text-white font-medium uppercase">${d.userName || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-500">No. Telepon</span>
+                    <span class="text-white font-medium">${d.userTelp || '-'}</span>
+                </div>
+            </div>
+            ${idPelHtml}
+            ${shippingHtml}
+        </div>
+
+        <div class="card p-4 mb-4 border-pk/20 fade-up">
+            <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Detail Pesanan</h3>
+            ${itemsHtml}
+            <div class="mt-4 pt-4 border-t border-dk-500/50 flex justify-between text-xs">
+                <span class="text-gray-300">Subtotal Produk</span>
+                <span class="text-white font-semibold">${formatRp(d.subtotal || 0)}</span>
+            </div>
+            ${d.shippingMode === 'deliver' && d.shippingCost > 0 ? `
+            <div class="flex justify-between text-xs mt-2">
+                <span class="text-gray-300">Ongkos Kirim</span>
+                <span class="text-white font-semibold">${formatRp(d.shippingCost)}</span>
+            </div>` : ''}
+            ${promoHtml}
+        </div>
+
+        <div class="card p-4 mb-5 border-pk/30 bg-pk/5 fade-up">
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-300 font-medium">Total Pembayaran</span>
+                <span class="text-xl font-extrabold text-pk">${formatRp(d.total || 0)}</span>
+            </div>
+            <div class="flex justify-between items-center mt-2">
+                <span class="text-xs text-gray-400">Metode Pembayaran</span>
+                <span class="text-xs text-white font-medium">${d.paymentMethod || '-'}</span>
+            </div>
+        </div>
+
+        <button onclick="showTransactionHistory()" class="btn-outline w-full text-sm py-3">
+            <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
+        </button>
+    `;
+
+    showView('view-history-detail');
+}
         async function saveProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
@@ -4748,7 +4980,6 @@ async function loadLastTransaction() {
                 // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
                 renderUserProfile();
                 updateHomeGreeting();
-                loadLastTransaction();
                 
                 // 4. Jalankan sistem pelacak status online/offline
                 initPresenceSystem(user);
