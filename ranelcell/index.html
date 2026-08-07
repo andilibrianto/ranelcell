@@ -497,11 +497,6 @@
         <i class="fa-solid fa-arrow-up text-sm"></i>
     </button>
 
-    <!-- Tambahan: Tombol Floating Logout -->
-    <button id="fab-logout" onclick="handleLogout()" class="hidden fixed right-6 z-40 w-11 h-11 rounded-full bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Keluar Akun" style="bottom: 148px;">
-        <i class="fa-solid fa-right-from-bracket text-sm"></i>
-    </button>
-
     <div id="app" class="relative min-h-screen">
 
         <div id="view-home" class="view">
@@ -886,6 +881,9 @@
             <button onclick="showTransactionHistory()" class="btn-outline w-full text-center mt-3">
                 <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
             </button>
+            <button onclick="handleLogout()" class="w-full text-center mt-3 py-3 rounded-xl border border-red-500/30 text-red-400 font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Keluar Akun
+            </button>
         </div>
 
         <!-- BAGIAN 2: FORM EDIT PROFIL (Hidden by default) -->
@@ -1052,14 +1050,6 @@
     const storeLng = 112.75812108517019;
     const storeAddress = "Jl. Granting I No. 1-3, Semampir, Surabaya (60143)";
     const storeAddress1 = "Jl. Granting I No. 1-3, Surabaya (RANEL CELL)";
-
-    // Database Kode Promo (Variasi Diskon 1000, 2000, 5000)
-    const validPromoCodes = {
-        'PROMOWEB': 4000,
-        'PROMOWA': 3000,
-        'BELIDIRANEL': 5000,
-        'BELANJASEKARANG': 10000
-    };
 
     const paketData = [
         { provider:"TELKOMSEL / SIMPATI", durations:[
@@ -1856,15 +1846,6 @@ function renderHomeHeaderActions(count) {
             else { perdanaHeaderBadge.style.display = 'none'; }
         }
         renderHomeHeaderActions(count);
-        // Logika tampil tombol floating logout
-        const fabLogout = document.getElementById('fab-logout');
-        if (fabLogout) {
-            if (isUserLoggedIn && currentView === 'view-home') {
-                fabLogout.classList.remove('hidden');
-            } else {
-                fabLogout.classList.add('hidden');
-            }
-        }
     }
 
     function checkCartBeforeView(viewId) {
@@ -3067,27 +3048,56 @@ function renderHomeHeaderActions(count) {
         showToast('Silahkan ubah alamat Anda lalu cek ongkir kembali', 'info');
     }
 
-    function applyPromoCode() {
-        const input = document.getElementById('promo-code-input');
-        if (!input) return;
-        const code = input.value.trim().toUpperCase();
-        
-        if (!code) {
-            showToast('Masukkan kode promo terlebih dahulu', 'error');
+    async function applyPromoCode() {
+    const input = document.getElementById('promo-code-input');
+    if (!input) return;
+    const code = input.value.trim().toUpperCase();
+    
+    if (!code) {
+        showToast('Masukkan kode promo terlebih dahulu', 'error');
+        return;
+    }
+
+    // 1. Tampilkan loading karena akan menunggu respons server
+    showLoading('Cek kode promo...');
+    
+    try {
+        // 2. Cek apakah user sudah login (Keamanan tambahan)
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) {
+            hideLoading();
+            showToast('Anda harus login untuk menggunakan kode promo', 'error');
             return;
         }
-        
-        if (validPromoCodes[code]) {
+
+        // 3. Ambil data dari Firestore berdasarkan kode yang diketik
+        const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "promo_codes", code);
+        const docSnap = await window.firebaseAuth.getDoc(docRef);
+
+        // 4. Cek apakah kode ada dan aktif di server
+        if (docSnap.exists() && docSnap.data().isActive === true) {
+            const discount = docSnap.data().discount;
+            
             appliedPromoCode = code;
-            promoDiscount = validPromoCodes[code]; 
+            promoDiscount = discount; 
+            
+            hideLoading();
             showToast(`Kode promo berhasil diterapkan! Anda hemat ${formatRp(promoDiscount)}`, 'success');
+            
             saveCurrentFormData();
             renderOrderForm();
         } else {
-            showToast('Kode promo tidak valid', 'error');
+            // Jika kode tidak ditemukan atau isActive = false
+            hideLoading();
+            showToast('Kode promo tidak valid atau sudah kadaluarsa', 'error');
             input.value = ''; 
         }
+    } catch (error) {
+        console.error("Error cek promo:", error);
+        hideLoading();
+        showToast('Gagal terhubung ke server. Coba lagi.', 'error');
     }
+}
 
     function removePromoCode() {
         appliedPromoCode = '';
