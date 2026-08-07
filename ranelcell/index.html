@@ -11,69 +11,58 @@
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-        <!-- Firebase SDK -->
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        
-        // Import Firestore
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-        // PASTE KONFIGURASI FIREBASE ANDA DI SINI
-        const firebaseConfig = {
-            apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
-            authDomain: "ranel-cell.firebaseapp.com",
-            projectId: "ranel-cell",
-            storageBucket: "ranel-cell.firebasestorage.app",
-            messagingSenderId: "267696476787",
-            appId: "1:267696476787:web:5fda181cfdaeec413e5006"
-        };
-
-        // Inisialisasi Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
-        // Inisialisasi Firestore Database
-        const db = getFirestore(app);
-        
-        // Paksa Firebase untuk selalu mengingat sesi login di memori HP/Browser
-        setPersistence(auth, browserLocalPersistence);
-
-                // Eksport agar bisa dipakai di script utama
-        window.firebaseAuth = {
-            auth,
-            db, 
-            doc, 
-            setDoc, 
-            getDoc, 
-            collection,
-            query, 
-            where,
-            getDocs,
-            createUserWithEmailAndPassword,
-            signInWithEmailAndPassword,
-            signInWithPopup, 
-            GoogleAuthProvider, 
-            signOut,
-            onAuthStateChanged,
-            updateProfile,
-            sendEmailVerification,
-            sendPasswordResetEmail,
-            updatePassword, // Tambahan untuk ubah password
-            reauthenticateWithCredential, // Tambahan untuk verifikasi password lama
-            EmailAuthProvider // Tambahan untuk verifikasi password lama
-        };
-        
-        // Beri sinyal ke aplikasi utama bahwa Firebase sudah siap!
-        window.dispatchEvent(new Event('firebase-ready'));
-    </script>
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
+        authDomain: "ranel-cell.firebaseapp.com",
+        projectId: "ranel-cell",
+        storageBucket: "ranel-cell.firebasestorage.app",
+        messagingSenderId: "267696476787",
+        appId: "1:267696476787:web:5fda181cfdaeec413e5006"
+    };
+    const app = initializeApp(firebaseConfig);
+    const appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6Le6GHotAAAAANiAaJBAx3UoO3DY8EfPVush6jAs'),
+        isTokenAutoRefreshEnabled: true
+    });
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    setPersistence(auth, browserLocalPersistence);
+    
+    window.firebaseAuth = {
+        auth,
+        db, 
+        doc, 
+        setDoc, 
+        getDoc, 
+        collection,
+        query, 
+        where,
+        getDocs,
+        createUserWithEmailAndPassword,
+        signInWithEmailAndPassword,
+        signInWithPopup, 
+        GoogleAuthProvider, 
+        signOut,
+        onAuthStateChanged,
+        updateProfile,
+        sendEmailVerification,
+        sendPasswordResetEmail,
+        updatePassword,
+        reauthenticateWithCredential,
+        EmailAuthProvider
+    };
+    window.dispatchEvent(new Event('firebase-ready'));
+</script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Leaflet Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script>
     tailwind.config = {
         theme: {
@@ -188,8 +177,8 @@
 
             #scroll-top-btn {
             position: fixed; 
-            bottom: 96px; /* Posisi di atas agar tidak nabrak dengan tombol keranjang */
-            right: 24px;   /* Pindah ke sebelah kanan */
+            bottom: 96px;
+            right: 24px;
             z-index: 40;
             transform: scale(0);
             opacity: 0; pointer-events: none;
@@ -264,11 +253,11 @@
         }
         @keyframes logoPulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.15); } /* Membesar 15% */
+            50% { transform: scale(1.15); }
             100% { transform: scale(1); }
         }
         .animate-pulse-logo {
-            animation: logoPulse 1.5s ease-in-out 0.5s infinite; /* Delay 0.5s agar pop dulu */
+            animation: logoPulse 1.5s ease-in-out 0.5s infinite;
         }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(10px); }
@@ -283,7 +272,6 @@
             box-shadow: 0 10px 40px rgba(255, 45, 120, 0.15);
         }
 
-        /* Animasi Titik Loading */
         .loading-dots::after {
             content: '';
             animation: dots 1.5s steps(4, end) infinite;
@@ -352,9 +340,8 @@
             background:rgba(255,45,120,0.05); pointer-events:none;
         }
 
-        /* Styling untuk Popover Pengumuman Zoom */
         #announcement-popover.zoomed .announcement-text p {
-            font-size: 16px !important; /* Perbesar teks */
+            font-size: 16px !important;
             line-height: 1.6 !important;
             text-align: justify !important;
         }
@@ -362,13 +349,11 @@
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
         }
-        
-        /* Z-index fix untuk Leaflet Map di dalam absolute view */
+
         .leaflet-pane, .leaflet-top, .leaflet-bottom { z-index: 0 !important; }
         .leaflet-marker-icon, .leaflet-marker-shadow { z-index: 1 !important; }
-        /* Styling untuk Date Picker di Dark Mode */
         input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1); /* Mengubah warna ikon menjadi putih */
+            filter: invert(1);
             opacity: 0.6;
             cursor: pointer;
         }
@@ -381,10 +366,7 @@
     <div class="bg-blob bg-blob-1"></div>
     <div class="bg-blob bg-blob-2"></div>
     <div class="bg-blob bg-blob-3"></div>
-
     <div id="toast" class="toast"></div>
-
-    <!-- Loading Overlay Dinamis -->
     <div id="loading-overlay" class="fixed inset-0 z-[9995] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="flex flex-col items-center gap-3">
             <div class="text-2xl font-extrabold text-pk tracking-[0.2em]">LOADING<span class="loading-dots"></span></div>
@@ -392,7 +374,6 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Dinamis -->
     <div id="modal-overlay" class="hidden fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="card p-6 max-w-xs w-full text-center fade-up">
             <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center">
@@ -407,14 +388,12 @@
         </div>
     </div>
 
-    <!-- Modal Peta (Leaflet) -->
     <div id="map-modal" class="hidden fixed inset-0 z-[9996] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="card p-4 w-full max-w-md flex flex-col gap-3 max-h-[90vh]">
             <h3 class="text-sm font-bold text-pk">Pilih Lokasi di Peta</h3>
             <div class="text-[11px] text-gray-400">Ketuk pada peta untuk menentukan lokasi tujuan Anda.</div>
             <div id="map" style="height: 350px; width: 100%; border-radius: 10px; background: #111;"></div>
             
-            <!-- Tambahan: Tombol GPS Akurat -->
             <button onclick="getUserLocation()" class="btn-outline w-full text-xs py-2 mt-2">
                 <i class="fas fa-crosshairs mr-2"></i> Gunakan Lokasi Saya
             </button>
@@ -427,7 +406,6 @@
         </div>
     </div>
 
-            <!-- Modal Terima Kasih Dinamis dengan Timer -->
     <div id="thank-you-overlay" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
         <div id="thank-you-card" class="card relative p-8 max-w-xs w-full text-center overflow-hidden animate-pop-in">
             <div class="w-20 h-20 mx-auto mb-5 flex items-center justify-center animate-logo-pop">
@@ -438,15 +416,13 @@
             <button onclick="location.reload()" class="btn-pk w-full text-sm py-3 animate-fade-up-delay-3">
                 Kembali ke Home
             </button>
-            
-            <!-- Garis Lurus Countdown di Tepi Bawah Card -->
+
             <div class="absolute bottom-0 left-0 w-full h-1 bg-dk-700">
                 <div id="timer-line" class="h-full bg-pk" style="transform: scaleX(1); transform-origin: left;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal In-App Message Lokal -->
     <div id="iam-overlay" class="hidden fixed inset-0 z-[9994] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="card p-6 max-w-xs w-full text-center relative fade-up">
             <button onclick="closeInAppMessage()" class="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors" aria-label="Tutup">
@@ -466,7 +442,6 @@
         </div>
     </div>
 
-    <!-- Popover Pengumuman -->
     <div id="announcement-popover" class="hidden fixed z-[9997] bg-dk-800 border border-dk-600 rounded-xl shadow-2xl p-4 w-[90vw] max-w-sm">
         <div class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-bold text-pk">Fitur Baru</h3>
@@ -648,7 +623,6 @@
             </footer>
         </div>
 
-        <!-- View Aksesoris Gadget -->
         <div id="view-accessories" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -664,7 +638,6 @@
             <div id="accessories-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View TopUp Game -->
         <div id="view-game" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -680,7 +653,6 @@
             <div id="game-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View Kartu Perdana -->
         <div id="view-perdana" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -696,7 +668,6 @@
             <div id="perdana-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View Registrasi Biometrik -->
         <div id="view-biometrik" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -707,8 +678,7 @@
             </header>
             <div id="biometrik-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
-        
-        <!-- View Pengaduan -->
+
         <div id="view-pengaduan" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -719,8 +689,7 @@
             </header>
             <div id="pengaduan-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
-        
-        <!-- View Profil Perusahaan -->
+
         <div id="view-profil" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -731,7 +700,6 @@
             <div id="profil-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View Info Karir -->
         <div id="view-karir" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -742,7 +710,6 @@
             <div id="karir-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View Form Lamaran Kerja -->
         <div id="view-karir-form" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -753,7 +720,6 @@
             <div id="karir-form-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-                <!-- View Login -->
         <div id="view-login" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -784,14 +750,12 @@
                         </div>
                     </div>
                     <button onclick="handleLogin()" class="btn-pk w-full text-center mb-3">Masuk</button>
-                    
-                    <!-- Garis Pemisah -->
+
                     <div class="relative my-4">
                         <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-dk-500/50"></div></div>
                         <div class="relative flex justify-center"><span class="px-2 text-[10px] text-gray-500 uppercase">atau</span></div>
                     </div>
 
-                    <!-- Tombol Login Google -->
                     <button onclick="handleGoogleLogin()" class="btn-outline w-full text-center flex items-center justify-center gap-2 mb-3">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="18" height="18" alt="Google Logo"> Masuk dengan Google
                     </button>
@@ -806,7 +770,6 @@
             </div>
         </div>
 
-                <!-- View Sign Up -->
         <div id="view-signup" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -836,7 +799,6 @@
                                 <i class="fa-solid fa-eye text-sm"></i>
                             </button>
                         </div>
-                        <!-- Meter Kekuatan Password -->
                         <div id="signup-strength-meter" class="mt-2"></div>
                     </div>
                     <button onclick="handleSignup()" class="btn-pk w-full text-center mb-3">Daftar Sekarang</button>
@@ -849,7 +811,7 @@
                 </div>
             </div>
         </div>
-        <!-- View Edit Profil -->
+
 <div id="view-edit-profile" class="view">
     <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
         <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -859,8 +821,6 @@
     </header>
     
     <div class="max-w-lg mx-auto px-4 py-8 pb-32">
-        
-        <!-- BAGIAN 1: TAMPILAN DETAIL AKUN (Default) -->
         <div id="profile-detail-view" class="fade-up">
             <div class="card p-6 mb-4 border-pk/20 text-center">
                 <div id="detail-profile-pic" class="w-24 h-24 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden">
@@ -885,8 +845,6 @@
                 <i class="fa-solid fa-right-from-bracket"></i> Keluar Akun
             </button>
         </div>
-
-        <!-- BAGIAN 2: FORM EDIT PROFIL (Hidden by default) -->
 <div id="profile-edit-form" class="hidden">
     <div class="card p-6 fade-up">
         <div class="mb-4">
@@ -901,8 +859,6 @@
             <label class="text-[11px] text-gray-500 mb-1 block">Email (Tidak bisa diubah)</label>
             <input type="email" id="edit-email" class="form-input" readonly style="opacity: 0.7; cursor: not-allowed;">
         </div>
-
-        <!-- Form Password disembunyikan secara default -->
         <div id="password-section" class="mt-6 pt-6 border-t border-dk-500/50 hidden">
             <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Ubah Password</h3>
             <div class="mb-3">
@@ -938,8 +894,7 @@
         <button id="save-profile-btn" onclick="saveProfile()" class="btn-pk w-full text-center" disabled style="opacity: 0.5; cursor: not-allowed;">
             <i class="fa-solid fa-save mr-2"></i> Simpan Perubahan
         </button>
-        
-        <!-- Tombol Toggle Password Baru -->
+
         <button id="toggle-password-btn" type="button" onclick="togglePasswordSection()" class="btn-outline w-full text-center mt-3">
             <i class="fa-solid fa-key mr-2"></i> Ubah Password
         </button>
@@ -948,7 +903,6 @@
 
     </div>
 </div>
-<!-- View Riwayat Transaksi -->
 <div id="view-history" class="view">
     <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
         <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -959,7 +913,7 @@
     </header>
     <div id="history-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
 </div>
-<!-- View Detail Riwayat Transaksi -->
+
 <div id="view-history-detail" class="view">
     <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
         <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -998,7 +952,6 @@
             <div id="order-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
 
-        <!-- View Preview Pesanan -->
         <div id="view-preview" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -1043,14 +996,11 @@
 
     <script>
     const WA_NUMBER = '6281936664217';
-    let selectedPaymentMethod = ''; 
-
-    // Store Location (Optimized)
+    let selectedPaymentMethod = '';
     const storeLat = -7.236680103235302;
     const storeLng = 112.75812108517019;
     const storeAddress = "Jl. Granting I No. 1-3, Semampir, Surabaya (60143)";
     const storeAddress1 = "Jl. Granting I No. 1-3, Surabaya (RANEL CELL)";
-
     const paketData = [
         { provider:"TELKOMSEL / SIMPATI", durations:[
             {name:"1 Hari",items:[
@@ -1229,7 +1179,6 @@
             ]}
         ]}
     ];
-
     const perdanaData = [
         { provider:"AXIS", durations:[
             {name:"30 Hari",items:[
@@ -1278,13 +1227,11 @@
             ]}
         ]}
     ];
-
     const biometrikData = [
         { providers: "AXIS, SMARTFREN DAN XL", url: "https://registrasi.xlsmart.co.id" },
         { providers: "INDOSAT DAN TRI", url: "https://ioh.co.id/reg" },
         { providers: "TELKOMSEL DAN BYU", url: "https://tsel.id/registrasi" }
     ];
-
     const pulsaData = [
         [5000,7500],
         [10000,12500],
@@ -1309,7 +1256,6 @@
         [150000,151000],
         [200000,201000]
     ];
-
     const tokenPLNData = [
         [20000,23000],
         [50000,53000],
@@ -1318,11 +1264,9 @@
         [500000,504000],
         [1000000,1004500]
     ];
-
     const cekTagihanList = ["PLN","PDAM","GAS PGN","INDIHOME","MY REPUBLIC","FIRST MEDIA","BPJS","ADIRA FINANCE",
     "FIF FINANCE","OTTO FINANCE","WOM FINANCE", "PBB JATIM", "BIZNET HOME", "ICONNET PLN", "HOME CREDIT"
     ];
-    
     const aksesorisData = [
         { category: "Headset", items: [
             {name:"Makaron", price:7000},
@@ -1361,7 +1305,6 @@
             {name:"Jete Powerbank C83", price:130000}
         ]}
     ];
-
     const gameData = [
         { game:"Call off Duty Mobile (CODM)", items: [
             {name:"50 UC", price:20000},
@@ -1440,7 +1383,6 @@
     let mapMarker = null;
     let promoDiscount = 0;
     let appliedPromoCode = '';
-
     let cart = [];
     let paketMode = 'isi_ulang';
     let pricelistState = { category:null, provider:null, duration:null, cekJenis:null };
@@ -1449,13 +1391,11 @@
     let viewHistory = ['view-home'];
     let savedFormData = null;
     let shouldRestoreForm = false;
-
     let modalConfirmCallback = null;
     let modalCancelCallback = null;
     let serverTimeIsOpen = null;
 
-    // Cek Jam Operasional via Server (Tidak bisa dibohongi)
-        async function isAccessoryServiceOpen() {
+    async function isAccessoryServiceOpen() {
         try {
             const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Jakarta', {
                 cache: 'no-cache'
@@ -1464,8 +1404,7 @@
             
             const data = await response.json();
             const hour = parseInt(data.hour);
-            
-            const isOpen = !(hour >= 21 || hour < 6.45);
+            const isOpen = !(hour >= 21.30 || hour < 6);
             serverTimeIsOpen = isOpen; // Simpan statusnya di sini
             return isOpen;
         } catch (error) {
@@ -1490,29 +1429,24 @@
         }
 
         modalConfirmCallback = callback;
-        modalCancelCallback = cancelCallback; // Simpan callback batal
+        modalCancelCallback = cancelCallback;
         document.getElementById('modal-overlay').classList.remove('hidden');
     }
-
     function modalConfirm() {
         if (modalConfirmCallback) modalConfirmCallback();
         hideModal();
     }
-
-        function modalCancel() {
-        if (modalCancelCallback) modalCancelCallback(); // Jalankan aksi batal jika ada
+    function modalCancel() {
+        if (modalCancelCallback) modalCancelCallback();
         hideModal();
     }
-
     function hideModal() {
         document.getElementById('modal-overlay').classList.add('hidden');
         modalConfirmCallback = null;
-        modalCancelCallback = null; // Reset callback batal
+        modalCancelCallback = null;
     }
-
-            let thankYouTimerInterval = null;
-
-    function showThankYouOverlay(message = "Terima Kasih Sudah Memilih Layanan di Ranel Cell, Kami Tunggu Pembelian Anda Selanjutnya") {
+        let thankYouTimerInterval = null;
+        function showThankYouOverlay(message = "Terima Kasih Sudah Memilih Layanan di Ranel Cell, Kami Tunggu Pembelian Anda Selanjutnya") {
         const overlay = document.getElementById('thank-you-overlay');
         const card = document.getElementById('thank-you-card');
         const msgEl = document.getElementById('thank-you-message');
@@ -1520,22 +1454,15 @@
         
         msgEl.textContent = message;
         overlay.classList.remove('hidden');
-        
-        // Reset animasi CSS setiap kali popup muncul
         card.style.animation = 'none';
         void card.offsetWidth; 
         card.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
 
-        // Logika Timer 15 Detik (Garis Lurus)
         let timeLeft = 15;
         const totalTime = 15;
-        
-        // Set awal garis penuh (scaleX 1)
         timerLine.style.transition = 'none';
         timerLine.style.transform = 'scaleX(1)';
-        void timerLine.offsetWidth; // Trigger reflow
-        
-        // Mulai animasi menyusut (scaleX 0) selama 15 detik
+        void timerLine.offsetWidth;
         timerLine.style.transition = `transform ${totalTime}s linear`;
         timerLine.style.transform = 'scaleX(0)';
 
@@ -1559,59 +1486,49 @@
             popover.style.left = '50%';
             popover.style.transform = 'translateX(-50%)';
             popover.classList.remove('hidden');
-            popover.classList.remove('zoomed'); // Reset zoom saat dibuka
+            popover.classList.remove('zoomed');
         } else {
             popover.classList.add('hidden');
-            popover.classList.remove('zoomed'); // Reset zoom saat ditutup manual
+            popover.classList.remove('zoomed');
         }
     }
-
-    // Fungsi baru untuk memperbesar teks pengumuman
-    function toggleAnnouncementZoom(event) {
+        function toggleAnnouncementZoom(event) {
         if (event) event.stopPropagation();
         const popover = document.getElementById('announcement-popover');
         popover.classList.toggle('zoomed');
     }
-
-    document.addEventListener('click', (e) => {
+        document.addEventListener('click', (e) => {
         const popover = document.getElementById('announcement-popover');
-        if (popover.classList.contains('hidden')) return; // Abaikan jika popover tertutup
-
+        if (popover.classList.contains('hidden')) return;
         const isAnnouncementBtn = e.target.closest('[onclick*="toggleAnnouncement"]');
         const isAnnouncementText = e.target.closest('.announcement-text');
 
         if (!popover.contains(e.target) && !isAnnouncementBtn) {
-            // Klik di luar popover -> Tutup popover & reset zoom
             popover.classList.add('hidden');
             popover.classList.remove('zoomed');
         } else if (popover.contains(e.target) && !isAnnouncementText && !e.target.closest('button')) {
-            // Klik di dalam popover tapi BUKAN pada teks pengumuman -> Reset zoom saja (popover tetap terbuka)
             popover.classList.remove('zoomed');
         }
     });
 
         function showView(viewId) {
-        // Daftar halaman yang diblokir jika nomor telepon kosong
         const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan'];
         if (restrictedViews.includes(viewId)) {
-            if (!checkTelpRequired()) return; // Blokir akses SEBELUM hapus class active
+            if (!checkTelpRequired()) return;
         }
-
         const cur = document.getElementById(currentView);
         if (cur) cur.classList.remove('active');
-        
-        // Sembunyikan tombol scroll to top saat pindah halaman
         document.getElementById('scroll-top-btn').classList.remove('visible');
 
         if (viewId !== 'view-game') {
-            gameState.game = null;
+                gameState.game = null;
         }
-        if (viewId !== 'view-accessories') {
-            accessoriesState.category = null;
+            if (viewId !== 'view-accessories') {
+                accessoriesState.category = null;
         }
-        if (viewId !== 'view-perdana') {
-            perdanaState.provider = null;
-            perdanaState.duration = null;
+            if (viewId !== 'view-perdana') {
+                perdanaState.provider = null;
+                perdanaState.duration = null;
         }
         
         currentView = viewId;
@@ -1640,7 +1557,6 @@
 
     function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
     function onlyDigits(val) { return val.replace(/[^0-9]/g, ''); }
-        // Fungsi untuk melihat/sembunyikan password
     function togglePassword(inputId, btnEl) {
         const input = document.getElementById(inputId);
         const icon = btnEl.querySelector('i');
@@ -1655,18 +1571,17 @@
             icon.classList.add('fa-eye');
         }
     }
-        // --- FUNGSI CEK KEKUATAN PASSWORD ---
         function checkPasswordStrength(inputId, meterId) {
         const input = document.getElementById(inputId);
         const meter = document.getElementById(meterId);
         const val = input.value;
         
         let strength = 0;
-        if (val.length >= 6) strength++; // Min 6 karakter (syarat Firebase)
-        if (val.length >= 10) strength++; // Lebih dari 10 karakter
-        if (/[A-Z]/.test(val)) strength++; // Mengandung huruf besar
-        if (/[0-9]/.test(val)) strength++; // Mengandung angka
-        if (/[^A-Za-z0-9]/.test(val)) strength++; // Mengandung simbol
+        if (val.length >= 6) strength++;
+        if (val.length >= 10) strength++;
+        if (/[A-Z]/.test(val)) strength++;
+        if (/[0-9]/.test(val)) strength++;
+        if (/[^A-Za-z0-9]/.test(val)) strength++;
 
         let width = '0%';
         let color = 'transparent';
@@ -1676,15 +1591,15 @@
             width = '0%';
         } else if (strength <= 2) {
             width = '33%';
-            color = '#dc2626'; // Merah
+            color = '#dc2626';
             text = 'Lemah';
         } else if (strength <= 4) {
             width = '66%';
-            color = '#facc15'; // Kuning
+            color = '#facc15';
             text = 'Sedang';
         } else {
             width = '100%';
-            color = '#22c55e'; // Hijau
+            color = '#22c55e';
             text = 'Kuat';
         }
         
@@ -1693,44 +1608,33 @@
             <p class="text-[10px] mt-1 text-right" style="color:${color};">${text}</p>
         `;
     }
-        // Fungsi untuk mengecek apakah password lemah (merah)
-    function isPasswordWeak(val) {
+        function isPasswordWeak(val) {
         let strength = 0;
         if (val.length >= 6) strength++;
         if (val.length >= 10) strength++;
         if (/[A-Z]/.test(val)) strength++;
         if (/[0-9]/.test(val)) strength++;
         if (/[^A-Za-z0-9]/.test(val)) strength++;
-        
-        // Jika strength <= 2, berarti meter berwarna merah (Lemah)
+
         return strength <= 2; 
     }
-        // Fungsi pindah halaman sambil reset field
     function goToLogin() {
-        // Kosongkan field signup jika ada
         document.getElementById('signup-nama').value = '';
         document.getElementById('signup-telp').value = '';
         document.getElementById('signup-email').value = '';
         document.getElementById('signup-password').value = '';
-        
-        // Pindah ke halaman login
         showView('view-login');
-        
-        // Cek apakah PWA bisa diinstall, jika ya munculkan pop-up
+
         setTimeout(() => {
             showInstallPwaModal();
         }, 1500);
     }
 
     function goToSignup() {
-        // Kosongkan field login jika ada
         document.getElementById('login-email').value = '';
         document.getElementById('login-password').value = '';
-        
-        // Pindah ke halaman signup
         showView('view-signup');
-        
-        // Cek apakah PWA bisa diinstall, jika ya munculkan pop-up
+
         setTimeout(() => {
             showInstallPwaModal();
         }, 1500);
@@ -1746,63 +1650,48 @@
             toastTimer = setTimeout(() => t.classList.remove('show'), duration);
         });
     }
-
     function showLoading(text = "Memuat...") {
         document.getElementById('loading-text').textContent = text;
         document.getElementById('loading-overlay').classList.remove('hidden');
     }
-
     function hideLoading() {
         document.getElementById('loading-overlay').classList.add('hidden');
     }
-// --- FUNGSI KONTROL TOMBOL HEADER HOME ---
-function renderHomeHeaderActions(count) {
+    function renderHomeHeaderActions(count) {
     const container = document.getElementById('home-header-actions');
-    if (!container) return; // Jika bukan di halaman home, abaikan
+    if (!container) return;
 
-    // Ambil data user saat ini
     const user = window.firebaseAuth.auth.currentUser;
-    
-    // Logika Foto Profil
     let profilePicHtml = '';
     if (user && user.photoURL) {
-        // Jika login Google (punya photoURL)
         profilePicHtml = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover rounded-xl">`;
     } else {
-        // Jika login Email/Password (tidak punya photoURL)
         profilePicHtml = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-1.5">`;
     }
-
-    // Tombol Fitur Baru
     const btnFiturBaru = `
         <button onclick="toggleAnnouncement(event)" class="h-9 px-3 rounded-full bg-pk/10 border border-pk/30 flex items-center gap-2 text-xs font-bold text-pk active:scale-95 transition-transform" aria-label="Fitur Baru">
             Fitur Baru
             <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
         </button>`;
 
-    // Tombol Keranjang (dengan Badge)
     const btnKeranjang = `
         <button onclick="checkCartBeforeView('view-order')" class="relative w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Keranjang">
             <i class="fa-solid fa-cart-shopping text-sm"></i>
             <span class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-pk text-[9px] font-bold flex items-center justify-center text-white" style="display:flex;">${count}</span>
         </button>`;
 
-    // Tombol Detail Akun (Dengan Foto Profil)
     const btnAkun = `
         <button onclick="showEditProfile()" class="relative w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform overflow-hidden" aria-label="Detail Akun">
             ${profilePicHtml}
         </button>`;
 
-    // Logika perpindahan tombol
     if (count === 0) {
-        // Jika cart KOSONG: [Fitur Baru] [Detail Akun]
         container.innerHTML = btnFiturBaru + btnAkun;
     } else {
-        // Jika cart ADA ISINYA: [Detail Akun] [Keranjang]
         container.innerHTML = btnAkun + btnKeranjang;
     }
 }
-    function updateCartUI() {
+        function updateCartUI() {
         const count = cart.reduce((s,i) => s + i.quantity, 0);
         const fab = document.getElementById('fab-cart');
         const fabIcon = document.getElementById('fab-icon');
@@ -1828,7 +1717,6 @@ function renderHomeHeaderActions(count) {
         } else {
             fab.classList.remove('visible');
         }
-
         if (headerBadge) {
             if (count > 0 && currentView === 'view-pricelist') { headerBadge.style.display = 'flex'; headerBadge.textContent = count; }
             else { headerBadge.style.display = 'none'; }
@@ -1849,7 +1737,7 @@ function renderHomeHeaderActions(count) {
     }
 
     function checkCartBeforeView(viewId) {
-        if (!checkTelpRequired()) return; // Blokir akses
+        if (!checkTelpRequired()) return;
         if (cart.length === 0) {
             showConfirmModal(
                 "Keranjang Kosong", 
@@ -1932,14 +1820,12 @@ function renderHomeHeaderActions(count) {
         showConfirmModal("Hapus Barang?", `Apakah anda yakin ingin mengapus ${item.name}?`, () => {
             cart.splice(idx, 1);
             
-            // Cek jika barang fisik habis, hapus promo otomatis
             const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
             if (!hasPhysicalItems && promoDiscount > 0) {
                 appliedPromoCode = '';
                 promoDiscount = 0;
                 showToast('Kode promo tidak valid!!!', 'info');
             }
-
             updateCartUI(); 
             renderOrderForm();
         }, 'fa-solid fa-trash-can');
@@ -1976,7 +1862,6 @@ function renderHomeHeaderActions(count) {
         if (item.type === 'game') return true;
         return false;
     }
-
     function getIdPelPlaceholder(item) {
         if (item.type === 'paket_data') return 'Masukkan nomor HP tujuan';
         if (item.type === 'pulsa') return 'Masukkan nomor HP tujuan';
@@ -1987,7 +1872,6 @@ function renderHomeHeaderActions(count) {
         }
         return 'Masukkan nomor';
     }
-
     function getTypeBadgeClass(item) {
         if (item.type === 'paket_data') return 'type-paket';
         if (item.type === 'pulsa') return 'type-pulsa';
@@ -2004,19 +1888,15 @@ function renderHomeHeaderActions(count) {
         if (item.type === 'perdana') return 'PERDANA';
         return '';
     }
-
     function hasAksesoris() {
         return cart.some(i => i.type === 'aksesoris');
     }
-
     function hasPerdana() {
         return cart.some(i => i.type === 'perdana');
     }
-
     function hasShippingItems() {
         return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
-
     function isDigitalItem(item) {
         if (item.type === 'pulsa') return true;
         if (item.type === 'token_pln') return true;
@@ -2024,18 +1904,14 @@ function renderHomeHeaderActions(count) {
         if (item.type === 'paket_data' && paketMode === 'isi_ulang') return true;
         return false;
     }
-
     function hasDeliverableItems() {
         return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
-
     function getGrandTotal() {
         return getCartTotal() + shippingCost - promoDiscount;
     }
-
     function selectCategory(cat) {
-        if (!checkTelpRequired()) return; // Blokir jika nomor telp kosong
-        
+        if (!checkTelpRequired()) return;
         if (cat === 'cek_tagihan' && cart.length > 0) {
             showConfirmModal(
                 "Keranjang Tidak Kosong", 
@@ -2052,7 +1928,6 @@ function renderHomeHeaderActions(count) {
                     updateCartUI(); 
                     renderOrderForm();
                     showToast('Pesanan dihapus', 'info');
-                    
                     pricelistState = { category:cat, provider:null, duration:null, cekJenis:null };
                     showView('view-pricelist');
                     renderPricelist();
@@ -2067,31 +1942,26 @@ function renderHomeHeaderActions(count) {
             renderPricelist();
         }
     }
-
     function selectProvider(providerName) {
         pricelistState.provider = providerName;
         pricelistState.duration = null;
         renderPricelist();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
-
     function selectDuration(durationName) {
         pricelistState.duration = durationName;
         renderPricelist();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
-
     function pricelistBack() {
         if (pricelistState.duration) { pricelistState.duration = null; renderPricelist(); }
         else if (pricelistState.provider) { pricelistState.provider = null; renderPricelist(); }
         else if (pricelistState.category) { pricelistState.category = null; showView('view-home'); }
         else showView('view-home');
     }
-
     function renderAccessories() {
         const el = document.getElementById('accessories-content');
         const title = document.getElementById('accessories-title');
-        
         if (!accessoriesState.category) {
             title.textContent = 'Aksesoris Gadget';
             el.innerHTML = aksesorisData.map((c, i) => `
@@ -2104,7 +1974,6 @@ function renderHomeHeaderActions(count) {
                 </button>`).join('');
             return;
         }
-        
         title.textContent = accessoriesState.category;
         const cat = aksesorisData.find(c => c.category === accessoriesState.category);
         const sortedItems = [...cat.items].sort((a, b) => a.price - b.price);
@@ -2124,22 +1993,18 @@ function renderHomeHeaderActions(count) {
             </button>`;
         }).join('');
     }
-
     function selectAccessoriesCategory(catName) {
         accessoriesState.category = catName;
         renderAccessories();
         document.getElementById('view-accessories').scrollTop = 0;
     }
-
     function accessoriesBack() {
         if (accessoriesState.category) { accessoriesState.category = null; renderAccessories(); }
         else showView('view-home');
     }
-
     function renderGame() {
         const el = document.getElementById('game-content');
         const title = document.getElementById('game-title');
-        
         if (!gameState.game) {
             title.textContent = 'TopUp Game';
             el.innerHTML = gameData.map((g, i) => `
@@ -2150,7 +2015,6 @@ function renderHomeHeaderActions(count) {
                 </button>`).join('');
             return;
         }
-        
         title.textContent = gameState.game;
         const game = gameData.find(g => g.game === gameState.game);
         const sortedItems = [...game.items].sort((a, b) => a.price - b.price);
@@ -2170,24 +2034,19 @@ function renderHomeHeaderActions(count) {
             </button>`;
         }).join('');
     }
-
     function selectGame(gameName) {
         gameState.game = gameName;
         renderGame();
         document.getElementById('view-game').scrollTop = 0;
     }
-
     function gameBack() {
         if (gameState.game) { gameState.game = null; renderGame(); }
         else showView('view-home');
     }
-
-    // --- KARTU PERDANA LOGIC ---
     function renderPerdana() {
         const content = document.getElementById('perdana-content');
         const title = document.getElementById('perdana-title');
         const s = perdanaState;
-
         if (!s.provider) {
             title.textContent = 'Kartu Perdana';
             const sortedPerdanaData = [...perdanaData].sort((a, b) => a.provider.localeCompare(b.provider));
@@ -2244,31 +2103,24 @@ function renderHomeHeaderActions(count) {
             return;
         }
     }
-
     function selectPerdanaProvider(providerName) {
         perdanaState.provider = providerName;
         perdanaState.duration = null;
         renderPerdana();
         document.getElementById('view-perdana').scrollTop = 0;
     }
-
     function selectPerdanaDuration(durationName) {
         perdanaState.duration = durationName;
         renderPerdana();
         document.getElementById('view-perdana').scrollTop = 0;
     }
-
     function perdanaBack() {
         if (perdanaState.duration) { perdanaState.duration = null; renderPerdana(); }
         else if (perdanaState.provider) { perdanaState.provider = null; renderPerdana(); }
         else showView('view-home');
     }
-    // ---------------------------
-
-        // --- REGISTRASI BIOMETRIK LOGIC ---
     function renderBiometrik() {
         const content = document.getElementById('biometrik-content');
-        
         const bannerHtml = `
             <div class="card p-5 mb-6 border-pk/30 bg-pk/5 fade-up">
                 <div class="flex items-start gap-3">
@@ -2281,7 +2133,6 @@ function renderHomeHeaderActions(count) {
                 </div>
             </div>
         `;
-
         const listHtml = biometrikData.map((b, i) => `
             <a href="${b.url}" target="_blank" rel="noopener noreferrer" class="card card-hover p-4 flex items-center gap-4 w-full text-left item-stagger" style="animation-delay:${i*0.06}s">
                 <div class="w-11 h-11 rounded-xl bg-pk/10 flex items-center justify-center flex-shrink-0">
@@ -2293,12 +2144,9 @@ function renderHomeHeaderActions(count) {
                 </div>
             </a>
         `).join('');
-
         content.innerHTML = bannerHtml + listHtml;
     }
-    // ----------------------------------
-    
-        function confirmPengaduanBack() {
+    function confirmPengaduanBack() {
         const nama = document.getElementById('pengaduan-nama')?.value.trim();
         const telp = document.getElementById('pengaduan-telp')?.value.trim();
         const kategori = document.getElementById('pengaduan-kategori')?.value;
@@ -2306,20 +2154,17 @@ function renderHomeHeaderActions(count) {
         const idPel = document.getElementById('pengaduan-id')?.value.trim();
         const pesan = document.getElementById('pengaduan-pesan')?.value.trim();
 
-        // Cek apakah ada salah satu field yang sudah terisi
         if (nama || telp || kategori || tanggal || idPel || pesan) {
             showConfirmModal(
                 "Meninggalkan Halaman?", 
                 "Apakah Anda Yakin Ingin Meninggalkan Halaman Pengaduan?", 
                 () => {
-                    // Jika klik "Iya", kosongkan semua field dan kembali ke beranda
                     document.getElementById('pengaduan-nama').value = '';
                     document.getElementById('pengaduan-telp').value = '';
                     document.getElementById('pengaduan-kategori').value = '';
                     document.getElementById('pengaduan-tanggal').value = '';
                     document.getElementById('pengaduan-id').value = '';
                     document.getElementById('pengaduan-pesan').value = '';
-                    
                     showView('view-home');
                 }, 
                 'fa-solid fa-triangle-exclamation',
@@ -2327,18 +2172,14 @@ function renderHomeHeaderActions(count) {
                 'Tidak'
             );
         } else {
-            // Jika tidak ada field yang terisi, langsung kembali ke beranda
             showView('view-home');
         }
     }
-    
-            // --- PENGADUAN LOGIC ---
-        function renderPengaduan() {
+    function renderPengaduan() {
         const content = document.getElementById('pengaduan-content');
-        
         const today = new Date();
         const yyyy = today.getFullYear();
-        let mm = today.getMonth() + 1; // Bulan dimulai dari 0
+        let mm = today.getMonth() + 1;
         let dd = today.getDate();
         if (dd < 10) dd = '0' + dd;
         if (mm < 10) mm = '0' + mm;
@@ -2370,50 +2211,39 @@ function renderHomeHeaderActions(count) {
                     <option value="Masalah Teknis Lainnya">Masalah Teknis Lainnya</option>
                 </select>
             </div>
-            
             <div class="mb-4" id="wrapper-pengaduan-tanggal">
                 <label class="text-[11px] text-gray-500 mb-1 block">Tanggal Transaksi</label>
                 <input type="date" id="pengaduan-tanggal" max="${maxDate}" class="form-input">
             </div>
-            
             <div class="mb-4" id="wrapper-pengaduan-id">
                 <label class="text-[11px] text-gray-500 mb-1 block">ID Pelanggan / No. Tujuan</label>
                 <input type="tel" inputmode="numeric" id="pengaduan-id" class="form-input" placeholder="Contoh: 0812xxx / ID Game / ID PLN" oninput="this.value=onlyDigits(this.value)">
             </div>
-            
             <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Detail Pengaduan</label><textarea id="pengaduan-pesan" class="form-input" rows="4" placeholder="Jelaskan kronologi masalah Anda dengan detail" style="resize:none;"></textarea></div>
-            
             <button onclick="submitPengaduan()" class="btn-pk w-full text-center">
                 <i class="fa-brands fa-whatsapp mr-2"></i> Kirim Pengaduan via WhatsApp
             </button>
             <p class="text-[14px] text-gray-600 mt-3 text-center">Catatan: Jika ada bukti screenshot/foto, mohon lampirkan secara manual di chat WhatsApp nanti.</p>
         `;
     }
-
-        // Fungsi untuk menyembunyikan/menampilkan field dinamis
-        function togglePengaduanFields() {
+    function togglePengaduanFields() {
         const kategori = document.getElementById('pengaduan-kategori').value;
         const idWrapper = document.getElementById('wrapper-pengaduan-id');
         const tanggalWrapper = document.getElementById('wrapper-pengaduan-tanggal');
-        
-        // Sembunyikan ID Pelanggan jika kategori Bug ATAU Pembayaran
         if (kategori === 'Aksesoris Tidak Berfungsi' || kategori === 'Kritik dan Saran') {
             idWrapper.style.display = 'none';
-            document.getElementById('pengaduan-id').value = ''; // Kosongkan nilai jika disembunyikan
+            document.getElementById('pengaduan-id').value = '';
         } else {
             idWrapper.style.display = 'block';
         }
-        
-        // Sembunyikan Tanggal Transaksi HANYA jika kategori Pembayaran
         if (kategori === 'Kritik dan Saran') {
             tanggalWrapper.style.display = 'none';
-            document.getElementById('pengaduan-tanggal').value = ''; // Kosongkan nilai jika disembunyikan
+            document.getElementById('pengaduan-tanggal').value = '';
         } else {
             tanggalWrapper.style.display = 'block';
         }
     }
-
-        function submitPengaduan() {
+    function submitPengaduan() {
         const nama = document.getElementById('pengaduan-nama').value.trim();
         const telp = document.getElementById('pengaduan-telp').value.trim();
         const kategori = document.getElementById('pengaduan-kategori').value;
@@ -2428,11 +2258,9 @@ function renderHomeHeaderActions(count) {
         const isPaymentReport = (kategori === 'Kritik dan Saran');
         const isBugReport = (kategori === 'Aksesoris Tidak Berfungsi' || kategori === 'Kritik dan Saran');
 
-        // Validasi Tanggal (hanya wajib jika BUKAN laporan pembayaran)
         if (!isPaymentReport) {
             if (!tanggalRaw) { showToast('Tanggal transaksi wajib diisi','error'); return; }
-            
-            // Validasi tanggal masa depan (Perbandingan String)
+
             const today = new Date();
             const yyyy = today.getFullYear();
             let mm = today.getMonth() + 1; 
@@ -2446,8 +2274,6 @@ function renderHomeHeaderActions(count) {
                 return;
             }
         }
-
-        // Cek apakah kategori tidak membutuhkan ID Pelanggan (Bug & Pembayaran)
         const isNoIdNeeded = (isBugReport || isPaymentReport);
         
         if (!isNoIdNeeded && !idPel) { 
@@ -2460,24 +2286,17 @@ function renderHomeHeaderActions(count) {
             showToast('Detail pengaduan minimal 15 karakter','error'); 
             return; 
         }
-        // Jika tidak butuh ID dan idPel kosong, ubah jadi strip
         if (isNoIdNeeded && !idPel) idPel = '-';
-
         let tanggalFormat = "-";
         if (tanggalRaw) {
             const bulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const dateObj = new Date(tanggalRaw);
             tanggalFormat = `${dateObj.getDate()} ${bulan[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
         }
-
         const msg = `*RANEL CELL - Pengaduan Pelanggan*\n\nNama Lengkap: ${nama}\nNomor WhatsApp: ${telp}\nKategori Pengaduan: ${kategori}\nTanggal Transaksi: ${tanggalFormat}\nID Pelanggan / No. Tujuan: ${idPel}\n\n*Detail Pengaduan:*\n${pesan}\n\n_(Catatan: Jika ada bukti screenshot/foto, mohon lampirkan di chat ini)_`;
-        
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        
         showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
     }
-    // ----------------------------------
-
     function renderPricelist() {
         const content = document.getElementById('pricelist-content');
         const title = document.getElementById('pricelist-title');
@@ -2590,7 +2409,6 @@ function renderHomeHeaderActions(count) {
             return;
         }
     }
-
     async function addToCart(itemData) {
         let isRestrictedItem = (itemData.type === 'aksesoris' || itemData.type === 'perdana');
         let cartHasRestricted = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
@@ -2599,7 +2417,6 @@ function renderHomeHeaderActions(count) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
             hideLoading();
-            
             if (isOpen === false) {
                 showToast("Maaf, Layanan Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", "error", 3500);
                 return;
@@ -2608,42 +2425,33 @@ function renderHomeHeaderActions(count) {
                 return;
             }
         } else {
-            // Voucher/Digital: Cek jam di background tanpa loading, hanya untuk update UI
             isAccessoryServiceOpen();
         }
-
         const existing = cart.find(c => c.name === itemData.name);
         if (existing) existing.quantity++;
         else cart.push({ ...itemData, id: Date.now(), quantity: 1 });
         updateCartUI();
         showToast('Ditambahkan ke pesanan', 'success');
     }
-
     function updateQty(idx, delta) {
         cart[idx].quantity += delta;
         if (cart[idx].quantity <= 0) cart.splice(idx, 1);
-        
-        // Cek jika barang fisik habis, hapus promo otomatis
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         if (!hasPhysicalItems && promoDiscount > 0) {
             appliedPromoCode = '';
             promoDiscount = 0;
             showToast('Kode promo tidak valid!!!', 'info');
         }
-
         updateCartUI(); renderOrderForm();
     }
-
     function setQty(idx, val) {
         const n = parseInt(val) || 0;
         if (n <= 0) cart.splice(idx, 1); else cart[idx].quantity = n;
         updateCartUI(); renderOrderForm();
     }
-
     function getCartTotal() { return cart.reduce((s,i) => s + i.price * i.quantity, 0); }
     function getTotalItems() { return cart.reduce((s,i) => s + i.quantity, 0); }
     function hasPaketData() { return cart.some(i => i.type === 'paket_data'); }
-
     function saveCurrentFormData() {
         const namaEl = document.getElementById('cust-nama');
         if (namaEl) {
@@ -2664,10 +2472,8 @@ function renderHomeHeaderActions(count) {
             shouldRestoreForm = true;
         }
     }
-
     function renderOrderForm() {
         saveCurrentFormData();
-
         const el = document.getElementById('order-content');
         if (!cart.length) {
             savedFormData = null;
@@ -2683,7 +2489,6 @@ function renderHomeHeaderActions(count) {
                 </div>`;
             return;
         }
-
         if (!hasShippingItems()) {
             shippingMode = null;
             shippingCost = 0;
@@ -2692,16 +2497,13 @@ function renderHomeHeaderActions(count) {
         }
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
-        
         if (isVoucherOutsideHours) {
             shippingMode = null;
             shippingCost = 0;
             appliedPromoCode = '';
             promoDiscount = 0;
         }
-
         let html = '';
-
         if (hasPaketData()) {
             html += `
             <div class="mb-5">
@@ -2719,7 +2521,6 @@ function renderHomeHeaderActions(count) {
                     : '<p class="text-[11px] text-gray-500 mt-2"><i class="fa-solid fa-circle-info text-pk/60 mr-1"></i>Isi ulang langsung ke nomor yang ditentukan</p>'}
             </div>`;
         }
-
         html += `<div class="mb-5"><h3 class="section-label">Daftar Barang</h3>`;
         cart.forEach((item, idx) => {
             html += `
@@ -2781,7 +2582,6 @@ function renderHomeHeaderActions(count) {
             });
             html += `</div>`;
         }
-
         if (hasPaketData() && paketMode === 'voucher') {
             html += `
             <div class="card p-3 mb-5 border-dk-500/50">
@@ -2792,10 +2592,8 @@ function renderHomeHeaderActions(count) {
             </div>`;
         }
 
-        // Cek data login untuk auto-fill
         const loggedInUser = isUserLoggedIn ? window.firebaseAuth.auth.currentUser : null;
         const autoNama = (loggedInUser && loggedInUser.displayName) ? loggedInUser.displayName : '';
-        // Ambil no telp dari variabel global (Firestore)
         const autoTelp = (loggedInUser && window.currentUserTelp) ? window.currentUserTelp : '';
         const isReadOnly = isUserLoggedIn ? 'readonly' : '';
 
@@ -2827,7 +2625,6 @@ function renderHomeHeaderActions(count) {
         </div>`;
 
         if (hasShippingItems() && !isVoucherOutsideHours) {
-            // Jika tidak ada barang fisik, paksa metode menjadi 'Ambil di Toko'
             if (!hasDeliverableItems() && shippingMode === 'deliver') {
                 shippingMode = 'pickup';
                 shippingCost = 0;
@@ -2853,11 +2650,8 @@ function renderHomeHeaderActions(count) {
                     <i class="fas fa-route mr-2"></i> ${ongkirBtnText}
                 </button>
             </div>`;
-            
-                    // Cek apakah ada barang fisik (Aksesoris/Perdana) di keranjang
             const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
-            
-            // Tampilkan promo HANYA jika ada barang fisik di keranjang
+
             if (shippingMode === 'deliver' && shippingCost > 0 && hasPhysicalItems) {
                 const promoApplied = !!appliedPromoCode;
                 html += `
@@ -2909,7 +2703,6 @@ function renderHomeHeaderActions(count) {
         </button>`;
 
         el.innerHTML = html;
-
         if (shouldRestoreForm && savedFormData) {
             const namaEl2 = document.getElementById('cust-nama');
             const telpEl2 = document.getElementById('cust-telp');
@@ -2933,13 +2726,10 @@ function renderHomeHeaderActions(count) {
             }
         }
     }
-
-        function getShippingInfoHtml() {
+    function getShippingInfoHtml() {
         if (!shippingMode) return 'Silakan pilih metode pengiriman.';
-        
         const hasDigital = cart.some(i => isDigitalItem(i));
         const hasPhysical = hasDeliverableItems();
-        
         if (shippingMode === 'pickup') {
             let text = "Pesanan akan diambil langsung di toko Ranel Cell.";
             if (hasDigital && !hasPhysical) {
@@ -2960,48 +2750,41 @@ function renderHomeHeaderActions(count) {
             return '<i class="fas fa-truck mr-1 text-pk/60"></i> Klik tombol di bawah untuk cek ongkir.';
         }
     }
-
     async function setShippingMode(mode) {
         if (shippingMode === mode) return;
-        
-        // Jika user memilih Kirim ke Alamat
         if (mode === 'deliver') {
-            // Jika di keranjang ada barang fisik/voucher yang dibatasi jamnya
             if (hasDeliverableItems()) {
                 showLoading('');
                 const isOpen = await isAccessoryServiceOpen();
                 hideLoading();
                 
                 if (isOpen === false) {
-                    // Cek apakah ada Aksesoris atau Kartu Perdana di keranjang
                     const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
-                    
+
                     if (hasPhysicalItems) {
-                        // 1. Jika Aksesoris/Perdana: Langsung tolak dengan pop-up ini
                         showConfirmModal(
                             "Maaf, Layanan Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", 
                             "Silakan melakukan pemesanan kembali pada jam operasional toko.", 
                             () => { 
-                                // Tombol Oke diklik
+                        
                             }, 
                             'fa-solid fa-circle-exclamation',
                             'Oke',
                             '' 
                         );
-                        return; // Batalkan aksi, tetap di mode sebelumnya
+                        return;
                     } else {
-                        // 2. Jika hanya Voucher: Munculkan pop-up ini dan paksa ke Ambil di Toko
                         showConfirmModal(
                             "Maaf, Kirim ke Alamat Tidak Tersedia Pada Jam 22.00 - 07.00 WIB", 
                             "Anda hanya bisa memilih Ambil di Toko pada jam ini.", 
                             () => { 
-                                // Tombol Oke diklik
+                        
                             }, 
                             'fa-solid fa-triangle-exclamation',
                             'Oke',
                             '' 
                         );
-                        mode = 'pickup'; // Paksa kembali ke Ambil di Toko
+                        mode = 'pickup';
                     }
                 } else if (isOpen === null) {
                     showToast("Pastikan internet Anda aktif.", "error", 3500);
@@ -3033,63 +2816,47 @@ function renderHomeHeaderActions(count) {
                 promoDiscount = 0;
             }
         }
-        
         renderOrderForm();
     }
-
-        function changeShippingAddress() {
-        saveCurrentFormData(); // Simpan dulu data form yang sudah terisi
-        shippingCost = 0;     // Reset ongkir
-        appliedPromoCode = ''; // Reset kode promo
+    function changeShippingAddress() {
+        saveCurrentFormData();
+        shippingCost = 0;
+        appliedPromoCode = '';
         promoDiscount = 0;
-        destinationLat = null; // Reset titik peta
+        destinationLat = null;
         destinationLng = null;
         renderOrderForm();
         showToast('Silahkan ubah alamat Anda lalu cek ongkir kembali', 'info');
     }
-
     async function applyPromoCode() {
-    const input = document.getElementById('promo-code-input');
-    if (!input) return;
-    const code = input.value.trim().toUpperCase();
-    
-    if (!code) {
-        showToast('Masukkan kode promo terlebih dahulu', 'error');
-        return;
-    }
-
-    // 1. Tampilkan loading karena akan menunggu respons server
-    showLoading('Cek kode promo...');
-    
-    try {
-        // 2. Cek apakah user sudah login (Keamanan tambahan)
-        const user = window.firebaseAuth.auth.currentUser;
-        if (!user) {
-            hideLoading();
-            showToast('Anda harus login untuk menggunakan kode promo', 'error');
+        const input = document.getElementById('promo-code-input');
+            if (!input) return;
+        const code = input.value.trim().toUpperCase();
+            if (!code) {
+                showToast('Masukkan kode promo terlebih dahulu', 'error');
             return;
         }
-
-        // 3. Ambil data dari Firestore berdasarkan kode yang diketik
+            showLoading('Cek kode promo...');
+            try {
+        const user = window.firebaseAuth.auth.currentUser;
+            if (!user) {
+                hideLoading();
+                showToast('Anda harus login untuk menggunakan kode promo', 'error');
+            return;
+        }
         const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "promo_codes", code);
         const docSnap = await window.firebaseAuth.getDoc(docRef);
-
-        // 4. Cek apakah kode ada dan aktif di server
-        if (docSnap.exists() && docSnap.data().isActive === true) {
-            const discount = docSnap.data().discount;
-            
+            if (docSnap.exists() && docSnap.data().isActive === true) {
+        const discount = docSnap.data().discount;
             appliedPromoCode = code;
             promoDiscount = discount; 
-            
             hideLoading();
             showToast(`Kode promo berhasil diterapkan! Anda hemat ${formatRp(promoDiscount)}`, 'success');
-            
             saveCurrentFormData();
             renderOrderForm();
         } else {
-            // Jika kode tidak ditemukan atau isActive = false
             hideLoading();
-            showToast('Kode promo tidak valid atau sudah kadaluarsa', 'error');
+            showToast('Kode promo tidak valid', 'error');
             input.value = ''; 
         }
     } catch (error) {
@@ -3098,7 +2865,6 @@ function renderHomeHeaderActions(count) {
         showToast('Gagal terhubung ke server. Coba lagi.', 'error');
     }
 }
-
     function removePromoCode() {
         appliedPromoCode = '';
         promoDiscount = 0;
@@ -3106,14 +2872,12 @@ function renderHomeHeaderActions(count) {
         renderOrderForm();
         showToast('Kode promo dihapus', 'info');
     }
-
     function checkShippingCost() {
         const alamat = document.getElementById('cust-alamat').value.trim();
         if (!alamat) { 
             showToast('Isi Alamat Lengkap Dengan Benar', 'error'); 
             return;
         }
-        
         showToast('Mencari lokasi alamat...', 'info');
         const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(alamat)}`;
         
@@ -3134,29 +2898,24 @@ function renderHomeHeaderActions(count) {
                 openMapModal();
             });
     }
-
-        function calculateAndUpdateShipping() {
+    function calculateAndUpdateShipping() {
         if (destinationLat === null || destinationLng === null) {
             showToast('Lokasi tujuan belum ditentukan', 'error');
             return;
         }
         const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
-        
-        // Cek jika jarak lebih dari 10 km
+
         if (dist > 10) {
             showConfirmModal(
                 "Maaf Pesanan Anda Tidak Dapat Diproses", 
                 "Jarak lokasi tujuan melebihi batas maksimal pengiriman", 
                 () => { 
-                    // Tombol "Lanjutkan Pemesanan" diklik
-                    // Tidak terjadi apa-apa, form tetap terisi.
+                    
                 }, 
                 'fa-solid fa-triangle-exclamation',
-                'Lanjutkan Pemesanan', // Teks tombol konfirmasi
-                'Batalkan Transaksi',   // Teks tombol batal
-                () => { 
-                    // Tombol "Batalkan Transaksi" diklik
-                    // Refresh web dan mengosongkan semua state/keranjang
+                'Lanjutkan Pemesanan',
+                'Batalkan Transaksi',
+                () => {
                     location.reload(); 
                 }
             );
@@ -3164,7 +2923,6 @@ function renderHomeHeaderActions(count) {
         }
 
         shippingCost = calculateShippingCost(dist);
-        
         if (shippingCost === 0) {
             appliedPromoCode = '';
             promoDiscount = 0;
@@ -3196,23 +2954,17 @@ function renderHomeHeaderActions(count) {
         const BATAS_JARAK_DASAR = 3;
         const TARIF_PER_KM = 3000;
         const BIAYA_LAYANAN = 1000;
-
-        // 1. Pembulatan ke atas untuk Jarak (Ceil)
         let jarakDibulatkan = Math.ceil(jarakInput); 
         let totalTarif = 0;
 
-        // 2. Logika Perhitungan Jarak
         if (jarakDibulatkan <= BATAS_JARAK_DASAR) {
             totalTarif = TARIF_DASAR + BIAYA_LAYANAN;
         } else {
             let kelebihanJarak = jarakDibulatkan - BATAS_JARAK_DASAR;
             totalTarif = TARIF_DASAR + (kelebihanJarak * TARIF_PER_KM) + BIAYA_LAYANAN;
         }
-
-        // 3. Pembulatan Hasil Akhir ke Kelipatan Ratusan Rupiah Teratas
         return Math.ceil(totalTarif / 100) * 100;
     }
-
     function openMapModal() {
         document.getElementById('map-modal').classList.remove('hidden');
         
@@ -3245,16 +2997,13 @@ function renderHomeHeaderActions(count) {
             setTimeout(() => mapInstance.invalidateSize(), 100);
         }
     }
-
     function closeMapModal() {
         document.getElementById('map-modal').classList.add('hidden');
     }
-
     function confirmMapLocation() {
         closeMapModal();
         calculateAndUpdateShipping();
     }
-
     function resetMap() {
         if (mapMarker && mapInstance) {
             mapMarker.setLatLng([storeLat, storeLng]);
@@ -3264,7 +3013,6 @@ function renderHomeHeaderActions(count) {
             showToast('Peta direset ke lokasi toko', 'info');
         }
     }
-    // Fungsi untuk mengambil lokasi GPS yang sangat akurat dari perangkat
     function getUserLocation() {
         if (!navigator.geolocation) {
             showToast("Browser Anda tidak mendukung GPS", "error");
@@ -3272,23 +3020,20 @@ function renderHomeHeaderActions(count) {
         }
 
         showLoading("Mendeteksi lokasi GPS...");
-        
-        // Opsi enableHighAccuracy: true memaksa perangkat menggunakan GPS (bukan WiFi/Cell Tower)
+
         navigator.geolocation.getCurrentPosition(
             (position) => {
                 hideLoading();
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                const accuracy = position.coords.accuracy; // Tingkat akurasi dalam meter
+                const accuracy = position.coords.accuracy;
 
-                // Set koordinat tujuan
                 destinationLat = lat;
                 destinationLng = lng;
 
-                // Pindahkan marker ke lokasi GPS dan zoom peta
                 if (mapMarker && mapInstance) {
                     mapMarker.setLatLng([lat, lng]);
-                    mapInstance.setView([lat, lng], 16); // Zoom level 16 (cukup dekat untuk melihat jalan)
+                    mapInstance.setView([lat, lng], 16);
                     showToast(`Lokasi GPS ditemukan (Akurasi: ${Math.round(accuracy)} meter)`, "success");
                 }
             },
@@ -3305,24 +3050,21 @@ function renderHomeHeaderActions(count) {
                 showToast(errMsg, "error", 4000);
             },
             {
-                enableHighAccuracy: true, // Meminta akurasi setinggi mungkin
-                timeout: 10000,           // Batas waktu 5 detik
-                maximumAge: 0              // Jangan gunakan data lokasi lama yang di-cache
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
             }
         );
     }
-                function setPaketMode(mode) {
+    function setPaketMode(mode) {
         paketMode = mode;
-        
-        // Jika pilih voucher, hapus promo karena tidak berlaku
+
         if (mode === 'voucher') {
             appliedPromoCode = '';
             promoDiscount = 0;
         }
-        
         renderOrderForm();
     }
-
     async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
         const telp = document.getElementById('cust-telp').value.trim();
@@ -3335,10 +3077,8 @@ function renderHomeHeaderActions(count) {
         
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
-
         const hasShipping = hasShippingItems() && !isVoucherOutsideHours;
-        
-        // Alamat wajib hanya jika ada opsi pengiriman
+
         if (hasShipping && !alamat) errors.push('Alamat lengkap wajib diisi');
         
         document.querySelectorAll('.id-pel-input').forEach(inp => {
@@ -3358,14 +3098,10 @@ function renderHomeHeaderActions(count) {
             if (!shippingMode) errors.push('Pilih metode pengiriman terlebih dahulu');
             if (shippingMode === 'deliver' && shippingCost === 0) errors.push('Klik "Cek Ongkir" untuk menghitung ongkos kirim');
         } else {
-            // Jika tidak ada pengiriman (murni digital), pastikan variabel dikosongkan
             shippingMode = null;
             shippingCost = 0;
         }
-
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
-
-        // Validasi Jam HANYA untuk barang fisik
         if (hasPhysicalItems) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
@@ -3394,7 +3130,6 @@ function renderHomeHeaderActions(count) {
         document.querySelectorAll('.id-pel-input').forEach(inp => {
             savedFormData.idPelanggan[inp.dataset.idx + '_' + inp.dataset.num] = inp.value;
         });
-
         window._orderData = { nama, telp, alamat, keterangan };
         const idMap = {};
         document.querySelectorAll('.id-pel-input').forEach(inp => {
@@ -3402,7 +3137,6 @@ function renderHomeHeaderActions(count) {
             if (!idMap[idx]) idMap[idx] = [];
             idMap[idx].push(inp.value.trim());
         });
-        
         const namaMap = {};
         document.querySelectorAll('.nama-pelanggan-input').forEach(inp => {
             const idx = parseInt(inp.dataset.idx);
@@ -3410,7 +3144,6 @@ function renderHomeHeaderActions(count) {
             namaMap[idx].push(inp.value.trim().toUpperCase());
         });
         window._orderData.namaPelanggan = namaMap;
-        
         window._orderData.idPelanggan = idMap;
         window._orderData.shippingMode = shippingMode;
         window._orderData.shippingCost = shippingCost;
@@ -3418,12 +3151,10 @@ function renderHomeHeaderActions(count) {
         window._orderData.promoDiscount = promoDiscount;
         showView('view-preview');
     }
-
-        function renderPreview() {
+    function renderPreview() {
         const el = document.getElementById('preview-content');
         const d = window._orderData;
         if (!d) return;
-
         let itemsHtml = '';
         cart.forEach((item, idx) => {
             itemsHtml += `
@@ -3446,7 +3177,6 @@ function renderHomeHeaderActions(count) {
                 if (d.idPelanggan[idx]) {
                     d.idPelanggan[idx].forEach((id, n) => {
                         idPelHtml += `<p class="text-xs text-white mb-1">${pelNum}. ${id} <span class="text-gray-500">(${item.name})</span></p>`;
-                        // Cek jika ada nama pelanggan untuk item ini
                         if (d.namaPelanggan && d.namaPelanggan[idx] && d.namaPelanggan[idx][n]) {
                             idPelHtml += `<p class="text-xs text-gray-400 mb-2 ml-4">Nama: ${d.namaPelanggan[idx][n]}</p>`;
                         }
@@ -3481,7 +3211,6 @@ function renderHomeHeaderActions(count) {
                 <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
             </div>`;
         }
-
         el.innerHTML = `
             <div class="card p-4 mb-4 border-pk/20">
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
@@ -3498,7 +3227,6 @@ function renderHomeHeaderActions(count) {
                 ${idPelHtml}
                 ${shippingHtml}
             </div>
-
             <div class="card p-4 mb-4 border-pk/20">
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Detail Pesanan</h3>
                 ${itemsHtml}
@@ -3514,20 +3242,17 @@ function renderHomeHeaderActions(count) {
                 </div>` : ''}
                 ${promoHtml}
             </div>
-
             ${d.keterangan ? `
             <div class="card p-4 mb-4 border-pk/20">
                 <h3 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">Keterangan</h3>
                 <p class="text-xs text-gray-300 leading-relaxed uppercase">${d.keterangan}</p>
             </div>` : ''}
-
             <div class="card p-4 mb-5 border-pk/30 bg-pk/5">
                 <div class="flex justify-between items-center">
                     <span class="text-sm text-gray-300 font-medium">Total Pembayaran</span>
                     <span class="text-xl font-extrabold text-pk">${formatRp(getGrandTotal())}</span>
                 </div>
             </div>
-
             <div class="flex gap-3">
                 <button onclick="showView('view-order')" class="btn-outline flex-1 text-sm py-3">
                     <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Data
@@ -3539,12 +3264,10 @@ function renderHomeHeaderActions(count) {
             <p class="text-[10px] text-gray-600 mt-4 text-center">Pastikan data pesanan Anda sudah benar sebelum melanjutkan ke pembayaran.</p>
         `;
     }
-
     function proceedToPayment() {
         showView('view-payment');
     }
-
-        function renderPayment() {
+    function renderPayment() {
         const el = document.getElementById('payment-content');
         const total = getGrandTotal(); 
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
@@ -3579,7 +3302,6 @@ function renderHomeHeaderActions(count) {
                     </div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
                 </button>
-                
                 ${hasShippingItems() && !isVoucherOutsideHours ? `
                 <button onclick="selectPayment('cod')" class="card card-hover p-4 flex items-center gap-4 w-full text-left">
                     <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center flex-shrink-0">
@@ -3597,7 +3319,6 @@ function renderHomeHeaderActions(count) {
                 <p class="text-[11px] text-gray-500 text-center"><i class="fa-solid fa-shield-halved text-pk/50 mr-1"></i>Pembayaran aman dan terverifikasi oleh admin</p>
             </div>`;
     }
-
     function selectPayment(method) {
         if (method === 'bca') {
             selectedPaymentMethod = 'QRIS Bank BCA';
@@ -3610,7 +3331,6 @@ function renderHomeHeaderActions(count) {
             sendOrderToWhatsApp();
         }
     }
-
     function renderQRIS() {
         const el = document.getElementById('qris-content');
         const total = getGrandTotal(); 
@@ -3631,9 +3351,7 @@ function renderHomeHeaderActions(count) {
             </div>`;
         setTimeout(() => drawQRIS(document.getElementById('qris-canvas')), 50);
     }
-
     function confirmQRISPayment() { sendOrderToWhatsApp(); }
-
     function drawQRIS(canvas) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -3668,15 +3386,11 @@ function renderHomeHeaderActions(count) {
         ctx.fillStyle='#000000'; ctx.font='bold 16px Poppins,sans-serif';
         ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('QRIS',W/2,oy+qrArea+14);
     }
-
-        function sendOrderToWhatsApp() {
+    function sendOrderToWhatsApp() {
         const d = window._orderData; if (!d) return;
-        
-        // Ambil Waktu Pemesanan otomatis
         const now = new Date();
         const options = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
         const waktuPemesanan = now.toLocaleString('id-ID', options) + ' WIB';
-
         let msg = `*RANEL CELL - Pemesanan*\n\nWaktu Pemesanan: ${waktuPemesanan}\n\nNama Lengkap: ${d.nama}\nNomor Telepon: ${d.telp}\n\n*Nama Barang:*\n`;
         cart.forEach((item, idx) => { msg += `${idx+1}. ${item.name} - ${formatRp(item.price)}\n`; });
         msg += `\n*Jumlah Barang:*\n`;
@@ -3699,9 +3413,7 @@ function renderHomeHeaderActions(count) {
             });
         }
         if (hasPaketData() && paketMode === 'voucher') { msg += `\n*Jenis Paket Data: Voucher*\nKode voucher akan dikirimkan oleh admin.\n`; }
-        
         msg += `\n*Subtotal Produk:* ${formatRp(getCartTotal())}\n`;
-        
         if (hasShippingItems() && d.shippingMode === 'pickup') {
             msg += `*Pengiriman:* Ambil di Toko\n`;
         } else if (hasShippingItems() && d.shippingMode === 'deliver') {
@@ -3710,45 +3422,30 @@ function renderHomeHeaderActions(count) {
                 msg += `*Ongkos Kirim:* ${formatRp(d.shippingCost)}\n`;
             }
         }
-        
         if (d.promoDiscount > 0 && d.promoCode) {
             msg += `*Kode Promo:* ${d.promoCode}\n`;
             msg += `*Diskon Promo:* -${formatRp(d.promoDiscount)}\n\n`;
         }
-        
         msg += `*Total Harga: ${formatRp(getGrandTotal())}*\n`;
-        
         if (selectedPaymentMethod) {
             msg += `*Metode Pembayaran:* ${selectedPaymentMethod}\n\n`;
-        }
-        
+        } 
         if (d.keterangan) {
             msg += `*Keterangan:* ${d.keterangan}\n\n`;
         }
-        
         msg += `\nAlamat Lengkap: ${d.alamat}`;
-        
-        // Tambahan: Sertakan link Google Maps jika user memilih kirim ke alamat dan titik koordinatnya ada
         if (hasShippingItems() && d.shippingMode === 'deliver' && destinationLat !== null && destinationLng !== null) {
             msg += `\n\n*Lokasi Maps:* https://maps.google.com/?q=${destinationLat},${destinationLng}`;
         }
-
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        
-        // --- SIMPAN DATA TRANSAKSI KE FIRESTORE ---
         saveTransactionToFirestore(d);
-        
         showThankYouOverlay();
     }
-
-        // Fungsi untuk menyimpan data transaksi ke Firestore
     async function saveTransactionToFirestore(d) {
         const user = window.firebaseAuth.auth.currentUser;
-        if (!user) return; // Pastikan user login
-
-        const orderId = user.uid + '_' + Date.now(); // ID unik transaksi
+        if (!user) return;
+        const orderId = user.uid + '_' + Date.now();
         const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", orderId);
-        
         try {
             await window.firebaseAuth.setDoc(orderRef, {
                 orderId: orderId,
@@ -3781,7 +3478,6 @@ function renderHomeHeaderActions(count) {
             console.error("Gagal menyimpan transaksi ke Firestore:", err);
         }
     }
-
     function openCekTagihanForm(jenis) {
         pricelistState.cekJenis = jenis;
         document.getElementById('cek-form-title').textContent = `Cek Tagihan ${jenis}`;
@@ -3801,7 +3497,6 @@ function renderHomeHeaderActions(count) {
             <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label><input type="tel" id="cek-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}></div>
             <button onclick="submitCekTagihan('${jenis}')" class="btn-pk w-full text-center"><i class="fa-brands fa-whatsapp mr-2"></i> Kirim via WhatsApp</button>`;
     }
-
     function submitCekTagihan(jenis) {
         const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
         const telp = document.getElementById('cek-telp').value.trim();
@@ -3810,10 +3505,8 @@ function renderHomeHeaderActions(count) {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
-        
         showThankYouOverlay();
     }
-
     function renderProfil() {
         const el = document.getElementById('profil-content');
         el.innerHTML = `
@@ -3824,7 +3517,6 @@ function renderHomeHeaderActions(count) {
                     </div>
                     <h3 class="text-lg font-bold">RANEL CELL</h3>
                 </div>
-
                 <div>
                     <h4 class="text-sm font-bold text-pk mb-2">Tentang Kami</h4>
                     <p class="text-xs text-gray-400 leading-relaxed text-justify">
@@ -3834,7 +3526,6 @@ function renderHomeHeaderActions(count) {
                         Di era yang serba digital ini, kami memahami bahwa pulsa dan paket data telah menjadi kebutuhan pokok. Oleh karena itu, Ranel Cell hadir sebagai solusi satu atap (one-stop solution) untuk memastikan komunikasi dan aktivitas digital Anda tetap berjalan tanpa hambatan.
                     </p>
                 </div>
-
                 <div>
                     <h4 class="text-sm font-bold text-pk mb-2">Layanan & Produk Kami</h4>
                     <p class="text-xs text-gray-400 mb-2">Kami menyediakan berbagai macam layanan yang siap memenuhi kebutuhan digital harian Anda:</p>
@@ -3848,7 +3539,6 @@ function renderHomeHeaderActions(count) {
                         <li><span class="font-semibold text-gray-300">Aksesoris Gadget:</span> Menyediakan kebutuhan pendukung seperti kabel data, charger dan headset.</li>
                     </ol>
                 </div>
-
                 <div>
                     <h4 class="text-sm font-bold text-pk mb-2">Mengapa Memilih Ranel Cell?</h4>
                     <ol class="text-xs text-gray-400 space-y-1 list-decimal list-inside">
@@ -3858,7 +3548,6 @@ function renderHomeHeaderActions(count) {
                         <li><span class="font-semibold text-gray-300">Pelayanan Ramah:</span> Senyuman dan kepuasan pelanggan adalah prioritas utama kami.</li>
                     </ol>
                 </div>
-
                 <div>
                     <h4 class="text-sm font-bold text-pk mb-2">Kontak & Alamat</h4>
                     <p class="text-xs text-gray-400 mb-2">Hubungi atau kunjungi kami untuk mendapatkan penawaran dan pelayanan terbaik:</p>
@@ -3869,7 +3558,6 @@ function renderHomeHeaderActions(count) {
                         <li><i class="fa-solid fa-clock w-4 text-pk/60"></i> Operasional Toko: Setiap Hari, Pukul 07.00 - 00.00 WIB</li>
                     </ul>
                 </div>
-
                 <div class="flex justify-center gap-4 pt-2 border-t border-dk-500/50">
                     <a href="https://instagram.com" target="_blank" class="w-11 h-11 rounded-full bg-dk-700 flex items-center justify-center text-gray-300 hover:text-pk transition-colors">
                         <i class="fa-brands fa-instagram text-lg"></i>
@@ -3887,7 +3575,6 @@ function renderHomeHeaderActions(count) {
             </div>
         `;
     }
-
     function renderKarir() {
         const el = document.getElementById('karir-content');
         el.innerHTML = `
@@ -3905,7 +3592,6 @@ function renderHomeHeaderActions(count) {
             </div>
         `;
     }
-
     function renderKarirForm() {
         const el = document.getElementById('karir-form-content');
         el.innerHTML = `
@@ -3926,7 +3612,6 @@ function renderHomeHeaderActions(count) {
             </button>
         `;
     }
-
     function checkCVBeforeSend() {
         const nama = document.getElementById('karir-nama').value.trim();
         const telp = document.getElementById('karir-telp').value.trim();
@@ -3937,7 +3622,6 @@ function renderHomeHeaderActions(count) {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!email) { showToast('Email wajib diisi','error'); return; }
         if (!posisi) { showToast('Posisi yang dilamar wajib diisi','error'); return; }
-
         showConfirmModal(
             "Lampirkan CV", 
             "Apakah Anda Sudah Punya CV? Silahkan Nanti Lampirkan CV Anda Di WhatsApp.", 
@@ -3949,18 +3633,15 @@ function renderHomeHeaderActions(count) {
             'Belum'
         );
     }
-
     function submitKarirWhatsApp() {
         const nama = document.getElementById('karir-nama').value.trim();
         const telp = document.getElementById('karir-telp').value.trim();
         const email = document.getElementById('karir-email').value.trim();
         const posisi = document.getElementById('karir-posisi').value.trim();
         const pesan = document.getElementById('karir-pesan').value.trim();
-
         const msg = `*RANEL CELL - Lamaran Pekerjaan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nEmail: ${email}\nPosisi Dilamar: ${posisi}\n\n*Pesan/Pengalaman:*\n${pesan || '-'}\n\n*(Catatan: Saya akan melampirkan CV saya di chat ini)*`;
         
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        
         showThankYouOverlay("Lamaran Kamu Masih Di Tinjau, Mohon Ditunggu Kabar Baiknya");
     }
 
@@ -3969,13 +3650,11 @@ function renderHomeHeaderActions(count) {
     let touchEndX = 0;
     let touchEndY = 0;
     let isMapTouch = false; 
-
     window.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
         isMapTouch = e.target.closest('.leaflet-container') !== null;
     }, { passive: true });
-
     window.addEventListener('touchend', e => {
         if (isMapTouch) {
             isMapTouch = false; 
@@ -3985,7 +3664,6 @@ function renderHomeHeaderActions(count) {
         touchEndY = e.changedTouches[0].screenY;
         handleSwipe();
     }, { passive: true });
-
     function handleSwipe() {
         const SWIPE_THRESHOLD_X = 80;
         const SWIPE_THRESHOLD_Y = 50;
@@ -3995,7 +3673,6 @@ function renderHomeHeaderActions(count) {
         if (Math.abs(diffX) > SWIPE_THRESHOLD_X && Math.abs(diffY) < SWIPE_THRESHOLD_Y) {
             const activeView = document.querySelector('.view.active');
             if (!activeView) return;
-
             if (diffX > 0) {
                 if (activeView.id === 'view-order') {
                     confirmGoHome();
@@ -4025,8 +3702,6 @@ function renderHomeHeaderActions(count) {
             }
         }
     }
-
-    // --- SCROLL TO TOP LOGIC ---
     const homeViewEl = document.getElementById('view-home');
     const scrollTopBtnEl = document.getElementById('scroll-top-btn');
 
@@ -4034,7 +3709,6 @@ function renderHomeHeaderActions(count) {
         homeViewEl.addEventListener('scroll', () => {
             if (currentView !== 'view-home') return;
             const { scrollTop, scrollHeight, clientHeight } = homeViewEl;
-            // Munculkan tombol jika sisa scroll di bawah 600px
             if (scrollHeight - (scrollTop + clientHeight) < 700) {
                 scrollTopBtnEl.classList.add('visible');
             } else {
@@ -4042,90 +3716,66 @@ function renderHomeHeaderActions(count) {
             }
         });
     }
-
     function scrollTopHome() {
         document.getElementById('view-home').scrollTo({ top: 0, behavior: 'smooth' });
     }
-    // ----------------------------
-
-        // --- PENGATURAN IN-APP MESSAGE LOKAL ---
     const IAM_CONFIG = {
-        id: 'promo_v.0.0.1', // Ganti ID ini jika ingin pesan baru muncul lagi
+        id: 'promo_v.0.0.1',
         title: 'Beli Kartu Perdana, GRATIS ONGKIR! 🚚✨',
         message: 'Sekarang, setiap pembelian Kartu Perdana jenis apa pun langsung dapet GRATIS ONGKIR ke rumahmu!<br> Biar makin hemat, jangan lupa masukin kode promo ini ya:<br><br> 🎟️ Kode Promo: <b>PROMOWEB</b>',
-        showOnce: false, // true = tampil 1 kali per user. false = tampil terus
-        buttonText: 'Saya Mau', // Teks tombol
-        buttonAction: 'view-perdana' // ID halaman tujuan (misal: view-accessories, view-game, view-perdana)
+        showOnce: false,
+        buttonText: 'Saya Mau',
+        buttonAction: 'view-perdana'
     };
-
-        function checkInAppMessage() {
+    function checkInAppMessage() {
         const hasSeen = localStorage.getItem('iam_seen_' + IAM_CONFIG.id);
-        
-        // Jika showOnce false ATAU user belum pernah lihat pesan ini
         if (!IAM_CONFIG.showOnce || !hasSeen) {
             document.getElementById('iam-title').textContent = IAM_CONFIG.title;
             document.getElementById('iam-message').innerHTML = IAM_CONFIG.message;
-            
-            // Atur teks tombol
+
             const btn = document.getElementById('iam-button');
             btn.textContent = IAM_CONFIG.buttonText || 'Saya Mengerti';
-            
-            // Munculkan pop-up dengan delay 1.5 detik
+
             setTimeout(() => {
                 document.getElementById('iam-overlay').classList.remove('hidden');
             }, 1500);
         }
     }
-
     function actionInAppMessage() {
-        // 1. Tutup pop-upnya
         document.getElementById('iam-overlay').classList.add('hidden');
         
-        // 2. Tandai bahwa user sudah pernah melihat pesan ini
         if (IAM_CONFIG.showOnce) {
             localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
         }
-        
-        // 3. Pindah ke halaman tujuan
+
         if (IAM_CONFIG.buttonAction) {
             showView(IAM_CONFIG.buttonAction);
         }
     }
-
     function closeInAppMessage() {
         document.getElementById('iam-overlay').classList.add('hidden');
         if (IAM_CONFIG.showOnce) {
             localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
         }
     }
-
     function closeInAppMessage() {
         document.getElementById('iam-overlay').classList.add('hidden');
-        // Tandai bahwa user sudah pernah melihat pesan ini
         if (IAM_CONFIG.showOnce) {
             localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
         }
     }
-    // ---------------------------------------
-    // --- DETEKSI INSTALL PWA ---
     window.addEventListener('beforeinstallprompt', (e) => {
-        // Cegah pop-up bawaan browser (mini-infobar)
         e.preventDefault();
-        // Simpan event agar bisa dipanggil nanti saat tombol diklik
         deferredPrompt = e;
     });
-
     function showInstallPwaModal() {
-        // Jika browser tidak mendukung atau sudah diinstall, jangan lakukan apa-apa
         if (!deferredPrompt) return;
-        // Jika user sudah pernah klik "Nanti" di sesi ini, jangan munculkan lagi
         if (sessionStorage.getItem('pwa_prompt_dismissed') === 'true') return;
 
         showConfirmModal(
             "Install Aplikasi", 
             "Pasang RANEL CELL di layar utama HP Anda untuk akses yang lebih cepat dan mudah tanpa membuka browser.", 
-            () => { 
-                // Tombol "Install" diklik
+            () => {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
@@ -4133,24 +3783,20 @@ function renderHomeHeaderActions(count) {
                     } else {
                         sessionStorage.setItem('pwa_prompt_dismissed', 'true');
                     }
-                    deferredPrompt = null; // Hapus event agar tidak bisa dipanggil 2x
+                    deferredPrompt = null;
                 });
             }, 
-            'fa-solid fa-download', // Ikon download
+            'fa-solid fa-download',
             'Install', 
             'Nanti',
-            () => { 
-                // Tombol "Nanti" diklik
+            () => {
                 sessionStorage.setItem('pwa_prompt_dismissed', 'true');
             }
         );
     }
-    // --- SISTEM PELACAK STATUS ONLINE/OFFLINE ---
     let visibilityHandler = null;
     let pagehideHandler = null;
     let currentTrackedUserRef = null;
-
-    // Fungsi bantu untuk mengambil waktu Surabaya (WIB) saat ini
     function getWaktuWIB() {
         return new Date().toLocaleString('id-ID', {
             timeZone: 'Asia/Jakarta',
@@ -4159,7 +3805,6 @@ function renderHomeHeaderActions(count) {
             hour12: false
         });
     }
-
     function setPresenceStatus(Online) {
         if (!currentTrackedUserRef) return;
         window.firebaseAuth.setDoc(currentTrackedUserRef, {
@@ -4167,12 +3812,8 @@ function renderHomeHeaderActions(count) {
             LastSeen: getWaktuWIB()
         }, { merge: true }).catch(()=>{});
     }
-
     function initPresenceSystem(user) {
-        // Jika user yang login sama dengan yang sedang dilacak, jangan lakukan apa-apa
         if (currentTrackedUserRef && currentTrackedUserRef.id === user.uid) return;
-
-        // Jika ganti user, hapus listener lama dulu (mencegah bug tertukarnya data)
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
 
@@ -4180,10 +3821,7 @@ function renderHomeHeaderActions(count) {
 
         const setOnline = () => setPresenceStatus(true);
         const setOffline = () => setPresenceStatus(false);
-
-        // Set user menjadi ONLINE saat fungsi ini berjalan
         setOnline();
-
         visibilityHandler = () => {
             if (document.visibilityState === 'visible') setOnline();
             else setOffline();
@@ -4194,29 +3832,22 @@ function renderHomeHeaderActions(count) {
         document.addEventListener('visibilitychange', visibilityHandler);
         window.addEventListener('pagehide', pagehideHandler);
     }
-
-    // Fungsi ini HANYA dipanggil saat user menekan tombol Logout
     function stopPresenceSystem() {
-        setPresenceStatus(false); // Set user menjadi OFFLINE
+        setPresenceStatus(false);
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-    // --------------------------------------------
             function setupPWA() {
-        // Hanya daftarkan Service Worker jika file sw.js tersedia
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .catch((err) => console.error('SW registration failed: ', err));
         }
     }
-    // ---------------------------------------
-        // --- FIREBASE AUTH LOGIC ---
     let isUserLoggedIn = false;
-    let isProcessingAuth = false; // Tambahan: Flag untuk mencegah tabrakan proses
+    let isProcessingAuth = false;
     let deferredPrompt = null
-
-                function handleSignup() {
+    function handleSignup() {
         const nama = document.getElementById('signup-nama').value.trim();
         const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
         const email = document.getElementById('signup-email').value.trim();
@@ -4227,14 +3858,12 @@ function renderHomeHeaderActions(count) {
         if (password.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
         if (isPasswordWeak(password)) { showToast('Password Anda Sangat Rentan', 'error'); return; }
 
-        isProcessingAuth = true; // Nyalakan flag agar checkAuthState tidak ikut campur
+        isProcessingAuth = true;
         showLoading('');
-        
         window.firebaseAuth.createUserWithEmailAndPassword(window.firebaseAuth.auth, email, password)
             .then((userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
-
                 window.firebaseAuth.updateProfile(user, { displayName: nama }).then(async () => {
                     try {
                         await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
@@ -4242,7 +3871,6 @@ function renderHomeHeaderActions(count) {
                             telp: telp,
                             email: email,
                             createdAt: new Date().toISOString(),
-                            // TAMBAHKAN INI: Inisialisasi status offline & catat waktu saat akun dibuat
                             Online: false, 
                             LastSeen: getWaktuWIB() 
                         });
@@ -4259,28 +3887,25 @@ function renderHomeHeaderActions(count) {
                         document.getElementById('signup-telp').value = '';
                         document.getElementById('signup-email').value = '';
                         document.getElementById('signup-password').value = '';
-                        
-                        // 3. Logout paksa agar user tidak bisa masuk sebelum verifikasi
+
                         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
-                            isProcessingAuth = false; // Matikan flag karena proses sudah selesai
+                            isProcessingAuth = false;
                             window.currentUserTelp = ''; 
                             updateAuthUI();
                             showView('view-login');
                             
-                            // 4. Salin email ke halaman login & langsung fokus ke kolom password
                             document.getElementById('login-email').value = registeredEmail;
                             document.getElementById('login-password').focus();
                             
-                            // 5. Munculkan pop-up pemberitahuan cek SPAM/PROMOSI
                             showConfirmModal(
                                 "Cek Email Anda!", 
                                 "Kami telah mengirim link verifikasi ke email Anda.\n\nSilakan cek folder SPAM atau PROMOSI pada email Anda.", 
                                 () => { 
-                                    // Tombol "Saya Mengerti" diklik (Tidak ada aksi khusus, hanya tutup modal)
+                            
                                 }, 
-                                'fa-solid fa-envelope-circle-check', // Ikon amplop centang
+                                'fa-solid fa-envelope-circle-check',
                                 'Saya Mengerti', 
-                                '' // Sembunyikan tombol batal
+                                ''
                             );
                         });
                     }).catch((err) => {
@@ -4291,80 +3916,64 @@ function renderHomeHeaderActions(count) {
             })
             .catch((error) => {
                 hideLoading();
-                isProcessingAuth = false; // Matikan flag jika ada error
+                isProcessingAuth = false;
                 if (error.code === 'auth/email-already-in-use') showToast('Email sudah terdaftar', 'error');
                 else showToast('Gagal daftar: ' + error.message, 'error');
             });
     }
-
-        async function handleGoogleLogin() {
-        isProcessingAuth = true; // Nyalakan flag agar tidak bentrok
+    async function handleGoogleLogin() {
+        isProcessingAuth = true;
         showLoading('');
-        
         try {
             const provider = new window.firebaseAuth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
-            
             const result = await window.firebaseAuth.signInWithPopup(window.firebaseAuth.auth, provider);
             const user = result.user;
-            
-            // Cek apakah user Google ini sudah punya data di Firestore
             const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             
             if (!docSnap.exists()) {
-                // JIKA DATA TIDAK ADA (User baru): Buatkan datanya
                 await window.firebaseAuth.setDoc(docRef, {
                     nama: user.displayName || 'Pengguna Google',
-                    telp: '', // Nomor telepon dikosongkan dulu
+                    telp: '',
                     email: user.email,
                     createdAt: new Date().toISOString()
                 });
                 window.currentUserTelp = '';
             } else {
-                // JIKA DATA SUDAH ADA (User lama manual yang login via Google): 
-                // Ambil nomor telepon yang sudah tersimpan, JANGAN DITIMPA!
                 window.currentUserTelp = docSnap.data().telp || '';
             }
             
             hideLoading();
-            
-            // Cek apakah nomor telepon masih kosong (baik user baru maupun lama)
+
             if (!window.currentUserTelp) {
-                // Jika kosong, siapkan halaman utama di latar belakang, LALU arahkan ke Edit Profil
                 showToast('Selamat datang! Silakan lengkapi Nomor Telepon Anda', 'info', 4000);
                 
-                // 1. Update status login dan render halaman utama (agar tidak bug saat klik kembali)
                 isUserLoggedIn = true;
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
                 
-                // TAMBAHKAN INI: Jalankan pelacak status online untuk user Google baru
                 initPresenceSystem(user); 
                 
-                // 2. Buka halaman Edit Profil
                 showEditProfile();
-                        } else {
-                // Jika nomor telepon sudah ada, langsung masuk ke Home
+            } else {
                 showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
-                
-                // Jalankan pelacak status online untuk User B
                 initPresenceSystem(user);
             }
             
-            isProcessingAuth = false; // Matikan flag
+            isProcessingAuth = false;
         } catch (error) {
             hideLoading();
-            isProcessingAuth = false; // Matikan flag
+            isProcessingAuth = false;
             if (error.code === 'auth/popup-closed-by-user') {
                 showToast('Login Google dibatalkan', 'info');
             } else if (error.code === 'auth/cancelled-popup-request') {
-                // Abaikan jika user klik tombol Google berkali-kali
+
             } else {
                 showToast('Gagal masuk dengan Google: ' + error.message, 'error');
             }
@@ -4372,15 +3981,12 @@ function renderHomeHeaderActions(count) {
     }
     function handleForgotPassword() {
         const email = document.getElementById('login-email').value.trim();
-        
-        // Jika kolom email kosong, minta user mengisi dulu
+
         if (!email) { 
             showToast('Masukkan email Anda', 'info'); 
             document.getElementById('login-email').focus();
             return; 
         }
-
-        // Munculkan pop-up konfirmasi
         showConfirmModal(
             "Reset Password", 
             `Kami akan mengirimkan link reset password ke email:\n${email}\n\nLanjutkan?`, 
@@ -4405,27 +4011,24 @@ function renderHomeHeaderActions(count) {
             'Batal'
         );
     }
-        async function handleLogin() {
+    async function handleLogin() {
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value.trim();
 
         if (!email || !password) { showToast('Email dan password wajib diisi', 'error'); return; }
 
-        isProcessingAuth = true; // Nyalakan flag
+        isProcessingAuth = true;
         showLoading('');
-        
         window.firebaseAuth.signInWithEmailAndPassword(window.firebaseAuth.auth, email, password)
             .then(async (userCredential) => {
                 hideLoading();
                 const user = userCredential.user;
-
-                // CEK APAKAH EMAIL SUDAH DIVERIFIKASI
                 if (!user.emailVerified) {
                     showToast('Email belum diverifikasi. Silahkan cek email Anda difolder SPAM ', 'error', 4000);
                     window.firebaseAuth.sendEmailVerification(user);
                     
                     window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
-                        isProcessingAuth = false; // Matikan flag
+                        isProcessingAuth = false;
                         updateAuthUI();
                         if (currentView !== 'view-login') showView('view-login');
                     });
@@ -4434,8 +4037,6 @@ function renderHomeHeaderActions(count) {
 
                 document.getElementById('login-email').value = '';
                 document.getElementById('login-password').value = '';
-
-                // Ambil data user dari Firestore
                 try {
                     const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
                     const docSnap = await window.firebaseAuth.getDoc(docRef);
@@ -4448,21 +4049,18 @@ function renderHomeHeaderActions(count) {
                     console.error("Gagal ambil data Firestore:", err);
                     window.currentUserTelp = '';
                 }
-
                 showToast('Selamat Berbelanja', 'success');
                 showView('view-home');
                 updateAuthUI();
                 renderUserProfile();
                 updateHomeGreeting();
-                
-                // Jalankan pelacak status online untuk User B
                 initPresenceSystem(user); 
                 
-                isProcessingAuth = false; // Matikan flag
+                isProcessingAuth = false;
             })
             .catch((error) => {
                 hideLoading();
-                isProcessingAuth = false; // Matikan flag
+                isProcessingAuth = false;
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
                     showToast('Email atau password salah', 'error');
                 } else {
@@ -4470,14 +4068,13 @@ function renderHomeHeaderActions(count) {
                 }
             });
     }
-        function handleLogout() {
-    showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
+    function handleLogout() {
+        showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
         stopPresenceSystem();
         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
             isProcessingAuth = false; 
             window.currentUserTelp = ''; 
-            
-            // Hapus baris document.getElementById('user-profile-section')... karena elemennya sudah tidak ada.
+
             updateHomeGreeting();
             showToast('Anda telah keluar', 'info');
             showView('view-login');
@@ -4485,20 +4082,15 @@ function renderHomeHeaderActions(count) {
         });
     }, 'fa-solid fa-right-from-bracket');
 }
-        // --- FUNGSI PROFIL USER ---
-        function renderUserProfile() {
+    function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
-
         console.log("User profile data loaded for: ", user.displayName || user.email);
     }
-    
-    // --- FUNGSI SAPAAN DINAMIS ---
     function updateHomeGreeting() {
         const greetingEl = document.getElementById('greeting-banner');
         const textEl = document.getElementById('greeting-text');
         if (!greetingEl || !textEl) return;
-
         if (isUserLoggedIn) {
             const user = window.firebaseAuth.auth.currentUser;
             const nama = (user && user.displayName) ? user.displayName : 'Pengguna';
@@ -4512,23 +4104,19 @@ function renderHomeHeaderActions(count) {
             } else if (hour >= 15 && hour < 18) {
                 salam = "Sore";
             }
-            
             textEl.innerHTML = `Selamat ${salam}, <span class="text-pk font-bold">${nama}</span> 👋<br>Selamat Berbelanja!`;
             greetingEl.classList.remove('hidden');
         } else {
             greetingEl.classList.add('hidden');
         }
     }
-        function showEditProfile() {
+    function showEditProfile() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
 
-    // Isi data di Tampilan Detail
     document.getElementById('detail-user-name').textContent = user.displayName || 'User';
     document.getElementById('detail-user-email').textContent = user.email || '-';
     document.getElementById('detail-user-telp').textContent = window.currentUserTelp || '-';
-
-    // Isi Foto di Tampilan Detail
     const detailPic = document.getElementById('detail-profile-pic');
     if (user.photoURL) {
         detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
@@ -4536,26 +4124,23 @@ function renderHomeHeaderActions(count) {
         detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2">`;
     }
 
-    // Siapkan Form Edit di background
     document.getElementById('edit-nama').value = user.displayName || '';
     document.getElementById('edit-telp').value = window.currentUserTelp || '';
     document.getElementById('edit-email').value = user.email || '';
     document.getElementById('edit-old-password').value = '';
     document.getElementById('edit-new-password').value = '';
     document.getElementById('edit-confirm-password').value = '';
-
-    // Cek apakah login via Google
     const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
     const passSection = document.getElementById('password-section');
     const togglePassBtn = document.getElementById('toggle-password-btn');
     
     if (isGoogleUser) {
-        passSection.classList.add('hidden'); // Sembunyikan form password
-        togglePassBtn.classList.add('hidden'); // Sembunyikan tombol ubah password
+        passSection.classList.add('hidden');
+        togglePassBtn.classList.add('hidden');
     } else {
-        passSection.classList.add('hidden'); // Sembunyikan form password dulu
-        togglePassBtn.classList.remove('hidden'); // Tampilkan tombol ubah password
-        togglePassBtn.innerHTML = '<i class="fa-solid fa-key mr-2"></i> Ubah Password'; // Reset teks tombol
+        passSection.classList.add('hidden');
+        togglePassBtn.classList.remove('hidden');
+        togglePassBtn.innerHTML = '<i class="fa-solid fa-key mr-2"></i> Ubah Password';
     }
 
     initialEditNama = user.displayName || '';
@@ -4565,8 +4150,6 @@ function renderHomeHeaderActions(count) {
     saveBtn.disabled = true;
     saveBtn.style.opacity = '0.5';
     saveBtn.style.cursor = 'not-allowed';
-
-    // Tampilkan Tampilan Detail, Sembunyikan Form
     document.getElementById('profile-detail-view').classList.remove('hidden');
     document.getElementById('profile-edit-form').classList.add('hidden');
     document.getElementById('edit-profile-title').textContent = 'Detail Akun';
@@ -4574,7 +4157,6 @@ function renderHomeHeaderActions(count) {
     showView('view-edit-profile');
 }
 function showEditForm() {
-    // Tampilkan Form, Sembunyikan Tampilan Detail
     document.getElementById('profile-detail-view').classList.add('hidden');
     document.getElementById('profile-edit-form').classList.remove('hidden');
     document.getElementById('edit-profile-title').textContent = 'Edit Profil';
@@ -4584,36 +4166,26 @@ function togglePasswordSection() {
     const togglePassBtn = document.getElementById('toggle-password-btn');
     
     if (passSection.classList.contains('hidden')) {
-        // Jika form password tersembunyi, TAMPILKAN
         passSection.classList.remove('hidden');
         togglePassBtn.innerHTML = '<i class="fa-solid fa-eye-slash mr-2"></i> Sembunyikan Password';
     } else {
-        // Jika form password tampil, SEMBUNYIKAN
         passSection.classList.add('hidden');
         togglePassBtn.innerHTML = '<i class="fa-solid fa-key mr-2"></i> Ubah Password';
-        
-        // Kosongkan isinya saat disembunyikan agar tidak tersimpan tidak sengaja
         document.getElementById('edit-old-password').value = '';
         document.getElementById('edit-new-password').value = '';
         document.getElementById('edit-confirm-password').value = '';
-        checkProfileChanges(); // Update status tombol simpan
+        checkProfileChanges();
     }
 }
-    // Variabel untuk menyimpan data awal sebelum diedit
     let initialEditNama = '';
     let initialEditTelp = '';
-
-        // Fungsi untuk mendeteksi perubahan form
     function checkProfileChanges() {
         const currentNama = document.getElementById('edit-nama').value.trim();
         const currentTelp = document.getElementById('edit-telp').value.trim();
         const currentOldPass = document.getElementById('edit-old-password').value;
         const currentNewPass = document.getElementById('edit-new-password').value;
         const currentConfPass = document.getElementById('edit-confirm-password').value;
-        
         const saveBtn = document.getElementById('save-profile-btn');
-        
-        // Cek apakah ada perubahan pada Nama/Telp ATAU ada isian di salah satu kolom password
         const hasProfileChanges = (currentNama !== initialEditNama || currentTelp !== initialEditTelp);
         const hasPasswordInput = (currentOldPass || currentNewPass || currentConfPass);
         
@@ -4622,19 +4194,15 @@ function togglePasswordSection() {
             saveBtn.style.opacity = '1';
             saveBtn.style.cursor = 'pointer';
         } else {
-            // Jika kembali sama seperti awal dan tidak ada isian password
             saveBtn.disabled = true;
             saveBtn.style.opacity = '0.5';
             saveBtn.style.cursor = 'not-allowed';
         }
     }
-
-    // Fungsi tombol kembali dengan pengecekan perubahan
     function confirmEditBack() {
     const isEditing = !document.getElementById('profile-edit-form').classList.contains('hidden');
     
     if (isEditing) {
-        // Jika sedang di Form Edit, cek apakah ada perubahan yang belum disimpan
         const currentNama = document.getElementById('edit-nama').value.trim();
         const currentTelp = document.getElementById('edit-telp').value.trim();
         
@@ -4643,7 +4211,6 @@ function togglePasswordSection() {
                 "Buang Perubahan?", 
                 "Anda memiliki perubahan yang belum disimpan. Yakin ingin membuangnya?", 
                 () => {
-                    // Jika ya, kembali ke tampilan detail
                     showEditProfile(); 
                 }, 
                 'fa-solid fa-triangle-exclamation',
@@ -4651,15 +4218,12 @@ function togglePasswordSection() {
                 'Batal'
             );
         } else {
-            // Jika tidak ada perubahan, langsung kembali ke tampilan detail
             showEditProfile();
         }
     } else {
-        // Jika sedang di Tampilan Detail, kembali ke Home
         showView('view-home');
     }
 }
-// --- FUNGSI RIWAYAT TRANSAKSI (15 DATA) ---
 async function showTransactionHistory() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
@@ -4692,21 +4256,12 @@ async function showTransactionHistory() {
         querySnapshot.forEach((doc) => {
             docs.push({ id: doc.id, data: doc.data() });
         });
-
-        // Urutkan berdasarkan ID transaksi secara menurun (Terbaru di atas)
         docs.sort((a, b) => b.id.localeCompare(a.id));
-        
-        // Simpan ke cache global agar bisa diakses saat klik detail
-        window._historyCache = docs; 
-
-        // Ambil maksimal 15 transaksi terakhir
+        window._historyCache = docs;
         const historyTransactions = docs.slice(0, 15);
-        
         let html = '';
-
         historyTransactions.forEach((transactionObj) => {
             const transaction = transactionObj.data;
-
             let itemsHtml = '';
             transaction.items.slice(0, 2).forEach(item => {
                 itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
@@ -4730,15 +4285,12 @@ async function showTransactionHistory() {
                 </div>
             `;
         });
-
         contentEl.innerHTML = html;
-
     } catch (error) {
         console.error("Gagal memuat riwayat transaksi:", error);
         contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
     }
 }
-// --- FUNGSI DETAIL RIWAYAT TRANSAKSI ---
 function showTransactionDetail(transactionId) {
     if (!window._historyCache) return;
     
@@ -4797,7 +4349,6 @@ function showTransactionDetail(transactionId) {
             <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
         </div>`;
     }
-
         el.innerHTML = `
         <div class="card p-4 mb-4 border-pk/20 fade-up">
             <div class="flex justify-between items-center mb-3 pb-3 border-b border-dk-500/50">
@@ -4806,7 +4357,6 @@ function showTransactionDetail(transactionId) {
                     <p class="text-xs text-white mt-1">${d.transactionDate || 'Tanpa Tanggal'}</p>
                 </div>
             </div>
-
             <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
             <div class="text-xs space-y-2 mb-3">
                 <div class="flex justify-between">
@@ -4821,7 +4371,6 @@ function showTransactionDetail(transactionId) {
             ${idPelHtml}
             ${shippingHtml}
         </div>
-
         <div class="card p-4 mb-4 border-pk/20 fade-up">
             <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Detail Pesanan</h3>
             ${itemsHtml}
@@ -4836,7 +4385,6 @@ function showTransactionDetail(transactionId) {
             </div>` : ''}
             ${promoHtml}
         </div>
-
         <div class="card p-4 mb-5 border-pk/30 bg-pk/5 fade-up">
             <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-300 font-medium">Total Pembayaran</span>
@@ -4852,38 +4400,29 @@ function showTransactionDetail(transactionId) {
             <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
         </button>
     `;
-
     showView('view-history-detail');
 }
         async function saveProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
-
         const nama = document.getElementById('edit-nama').value.trim().toUpperCase();
         const telp = document.getElementById('edit-telp').value.trim();
         const oldPass = document.getElementById('edit-old-password').value;
         const newPass = document.getElementById('edit-new-password').value;
         const confPass = document.getElementById('edit-confirm-password').value;
-
-        // Validasi dasar
         if (!nama) { showToast('Nama lengkap wajib diisi', 'error'); return; }
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid', 'error'); return; }
 
         showLoading('');
         try {
-            // 1. Update nama di Firebase Auth
             await window.firebaseAuth.updateProfile(user, { displayName: nama });
-            
-            // 2. Update data di Firestore
             await window.firebaseAuth.setDoc(window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid), {
                 nama: nama,
                 telp: telp
             }, { merge: true });
 
-            // 3. Update variabel global
             window.currentUserTelp = telp;
 
-            // 4. Cek jika user ingin ganti password (jika kolom password lama diisi)
             if (oldPass || newPass || confPass) {
                 if (!oldPass || !newPass || !confPass) {
                     hideLoading();
@@ -4905,25 +4444,16 @@ function showTransactionDetail(transactionId) {
                     showToast('Konfirmasi password tidak cocok', 'error');
                     return;
                 }
-
-                // Proses Re-authentication (Verifikasi password lama)
                 const credential = window.firebaseAuth.EmailAuthProvider.credential(user.email, oldPass);
                 await window.firebaseAuth.reauthenticateWithCredential(user, credential);
-                
-                // Jika lolos verifikasi, update password baru
                 await window.firebaseAuth.updatePassword(user, newPass);
-                
-                // Kosongkan kolom password setelah berhasil
                 document.getElementById('edit-old-password').value = '';
                 document.getElementById('edit-new-password').value = '';
                 document.getElementById('edit-confirm-password').value = '';
                 showToast('Password berhasil diubah', 'success');
             }
-
             hideLoading();
             showToast('Akun anda berhasil diperbarui', 'success');
-            
-            // Update tampilan halaman utama & kembali ke home
             renderUserProfile();
             showView('view-home');
         } catch (err) {
@@ -4938,27 +4468,21 @@ function showTransactionDetail(transactionId) {
             }
         }
     }
-        function updateAuthUI() {
+    function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
         isUserLoggedIn = !!user;
 
         updateCartUI();
     }
-    // Cek status login saat aplikasi pertama kali dibuka atau refresh
     function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
-            // 1. Langsung sembunyikan layar loading
             hideLoading();
 
-            // Abaikan jika user sedang dalam proses manual login/signup
             if (isProcessingAuth) return;
 
             if (user) {
-                // CEK VERIFIKASI EMAIL SAAT REFRESH
-                // Kecuali jika user login via Google (isGoogleUser), karena Google sudah pasti terverifikasi
                 const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
                 if (!user.emailVerified && !isGoogleUser) {
-                    // Jika belum verifikasi, logout paksa
                     showToast('Silakan verifikasi email Anda terlebih dahulu.', 'info', 3000);
                     window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
                         isUserLoggedIn = false;
@@ -4967,13 +4491,10 @@ function showTransactionDetail(transactionId) {
                     });
                     return;
                 }
-
                 isUserLoggedIn = true;
                 updateAuthUI();
                 showView('view-home');
                 checkInAppMessage();
-
-                // 2. Ambil data user dari Firestore di BACKGROUD
                 try {
                     const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
                     const docSnap = await window.firebaseAuth.getDoc(docRef);
@@ -4986,28 +4507,20 @@ function showTransactionDetail(transactionId) {
                     console.error("Gagal ambil data Firestore:", err);
                     window.currentUserTelp = '';
                 }
-
-                // 3. PINDAHKAN renderUserProfile() KE SINI (Agar nomor telp sudah terisi saat ditampilkan)
                 renderUserProfile();
                 updateHomeGreeting();
-                
-                // 4. Jalankan sistem pelacak status online/offline
                 initPresenceSystem(user);
             } else {
-                // Jika user belum login
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
                 updateAuthUI();
                 showView('view-login');
-                
-                // Cek apakah PWA bisa diinstall setelah halaman login muncul
+
                 setTimeout(() => {
                     showInstallPwaModal();
                 }, 1500);
             }
         });
-
-        // Batas waktu (Timeout) 5 detik
         setTimeout(() => {
             const loadingEl = document.getElementById('loading-overlay');
             if (loadingEl && !loadingEl.classList.contains('hidden')) {
@@ -5016,39 +4529,32 @@ function showTransactionDetail(transactionId) {
             }
         }, 5000);
     }
-        // Fungsi pengecek nomor telepon sebelum akses layanan
     function checkTelpRequired() {
         if (isUserLoggedIn && !window.currentUserTelp) {
             showConfirmModal(
                 "Segera Lengkapi Nomor Telepon", 
                 "Anda belum mengisi nomor telepon. Silakan lengkapi data profil Anda terlebih dahulu untuk dapat mengakses layanan pembelian.", 
-                () => { 
-                    // Panggil showEditProfile() agar form password otomatis disembunyikan jika user Google
+                () => {
                     showEditProfile(); 
                 }, 
                 'fa-solid fa-phone-volume', 
                 'Iya', 
                 'Tidak'
             );
-            return false; // Blokir akses
+            return false;
         }
-        return true; // Izinkan akses
+        return true;
     }
         function init() { 
         setupPWA(); 
-        updateCartUI(); 
-        
-        // Pastikan Firebase sudah siap sebelum cek status login
+        updateCartUI();
         const checkFirebaseReady = setInterval(() => {
             if (window.firebaseAuth) {
                 clearInterval(checkFirebaseReady);
                 checkAuthState();
             }
-        }, 50); // Cek setiap 50 milidetik
+        }, 50);
     }
-
-    // DENGARKAN SINYAL DARI FIREBASE!
-    // Saat Firebase sudah siap, langsung jalankan checkAuthState()
     window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
