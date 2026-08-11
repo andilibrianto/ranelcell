@@ -1680,22 +1680,33 @@ function pushHistory() {
 
         isPopstateNavigating = false;
     });
+    let serverTimeOffset = 0;
     async function isAccessoryServiceOpen() {
         try {
-            const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Jakarta', {
-                cache: 'no-cache'
+            const response = await fetch(`https://timeapi.io/api/Time/current/zone?timeZone=Asia/Jakarta&_=${Date.now()}`, {
+                cache: 'no-store'
             });
+            
             if (!response.ok) throw new Error('Gagal mengambil waktu server');
             
             const data = await response.json();
             const hour = parseInt(data.hour);
-            const isOpen = !(hour >= 21.30 || hour < 6);
+            const minute = parseInt(data.minute);
+            const serverDate = new Date();
+            serverDate.setHours(hour, minute, 0);
+            serverTimeOffset = serverDate.getTime() - Date.now();
+            const currentTime = hour + (minute / 60);            
+            const isOpen = currentTime >= 7 && currentTime < 22; 
             serverTimeIsOpen = isOpen;
             return isOpen;
+
         } catch (error) {
-            console.error("Gagal verifikasi waktu:", error);
-            serverTimeIsOpen = null;
-            return null;
+            const adjustedNow = new Date(Date.now() + serverTimeOffset);
+            const localHour = adjustedNow.getHours();
+            const localMinute = adjustedNow.getMinutes();
+            const localTime = localHour + (localMinute / 60);
+            serverTimeIsOpen = (localTime >= 7 && localTime < 22);
+            return serverTimeIsOpen;
         }
     }
 
