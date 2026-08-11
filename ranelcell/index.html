@@ -3813,41 +3813,6 @@ function pushHistory() {
         showThankYouOverlay("Lamaran Kamu Masih Di Tinjau, Mohon Ditunggu Kabar Baiknya");
     }
 
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    let isMapTouch = false; 
-    window.addEventListener('touchstart', e => {
-        touchStartX = e.changedTouches[0].screenX;
-        touchStartY = e.changedTouches[0].screenY;
-        isMapTouch = e.target.closest('.leaflet-container') !== null;
-    }, { passive: true });
-    window.addEventListener('touchend', e => {
-        if (isMapTouch) {
-            isMapTouch = false; 
-            return; 
-        }
-        touchEndX = e.changedTouches[0].screenX;
-        touchEndY = e.changedTouches[0].screenY;
-        handleSwipe();
-    }, { passive: true });
-    function handleSwipe() {
-        const SWIPE_THRESHOLD_X = 80;
-        const SWIPE_THRESHOLD_Y = 50;
-        const diffX = touchEndX - touchStartX;
-        const diffY = touchEndY - touchStartY;
-
-        if (Math.abs(diffX) > SWIPE_THRESHOLD_X && Math.abs(diffY) < SWIPE_THRESHOLD_Y) {
-            const activeView = document.querySelector('.view.active');
-            if (!activeView) return;
-            if (diffX < 0) {
-                if ((activeView.id === 'view-home' || activeView.id === 'view-pricelist' || activeView.id === 'view-game' || activeView.id === 'view-accessories' || activeView.id === 'view-perdana' || activeView.id === 'view-biometrik') && cart.length > 0) {
-                    showView('view-order');
-                }
-            }
-        }
-    }
     const homeViewEl = document.getElementById('view-home');
     const scrollTopBtnEl = document.getElementById('scroll-top-btn');
 
