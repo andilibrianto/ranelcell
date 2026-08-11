@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-v.0.0.0.9.2';
+const CACHE_NAME = 'ranel-cell-v.0.0.0.9.3';
 self.addEventListener('install', function(e) {
     self.skipWaiting();
 });
@@ -20,7 +20,6 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-    // Jangan cache API waktu, peta, dan script Firebase
     if (e.request.url.includes('timeapi.io') || 
         e.request.url.includes('nominatim.openstreetmap.org') || 
         e.request.url.includes('gstatic.com') || 
