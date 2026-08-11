@@ -4227,6 +4227,7 @@
 }
     function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
+        pushHistory();
         if (!user) return;
         console.log("User profile data loaded for: ", user.displayName || user.email);
     }
@@ -4370,6 +4371,7 @@ function togglePasswordSection() {
 }
 async function showTransactionHistory() {
     const user = window.firebaseAuth.auth.currentUser;
+    pushHistory();
     if (!user) return;
 
     const contentEl = document.getElementById('history-content');
