@@ -5146,7 +5146,7 @@ function submitServiceGadget() {
 
     let finalIssue = issue === 'Lainnya' ? customIssue : issue;
     let finalPrice = document.getElementById('svc-total-price').innerText;
-    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*RANEL CELL - ServisinAja!*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
+    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
     
     if (isActiveAntar) {
         msg += `Alamat: ${alamat}\nJadwal: ${date} (${time})\nOngkir: ${formatRp(serviceShippingCost)}\n`;
