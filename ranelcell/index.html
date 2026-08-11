@@ -1637,15 +1637,45 @@
 
     window.history.pushState({ app: 'ranel-cell' }, '');
     window.addEventListener('popstate', (event) => {
-    window.history.pushState({ app: 'ranel-cell' }, '');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const mapModal = document.getElementById('map-modal');
+        const iamOverlay = document.getElementById('iam-overlay');
+        const announcementPopover = document.getElementById('announcement-popover');
+        
+        if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
+            window.history.pushState({ app: 'ranel-cell' }, '');
+            modalCancel();
+            return;
+        }
+        if (mapModal && !mapModal.classList.contains('hidden')) {
+            window.history.pushState({ app: 'ranel-cell' }, '');
+            closeMapModal();
+            return;
+        }
+        if (iamOverlay && !iamOverlay.classList.contains('hidden')) {
+            window.history.pushState({ app: 'ranel-cell' }, '');
+            closeInAppMessage();
+            return;
+        }
+        if (announcementPopover && !announcementPopover.classList.contains('hidden')) {
+            window.history.pushState({ app: 'ranel-cell' }, '');
+            toggleAnnouncement();
+            return;
+        }
 
         const activeView = document.querySelector('.view.active');
         if (activeView) {
+            if (activeView.id === 'view-home') {
+                window.history.back();
+                return;
+            }
+
+            window.history.pushState({ app: 'ranel-cell' }, '');
+
             const backBtn = activeView.querySelector('header button[aria-label="Kembali"], header button[aria-label="Beranda"]');
-            
             if (backBtn) {
                 backBtn.click();
-            } else if (activeView.id !== 'view-home') {
+            } else {
                 showView('view-home');
             }
         }
