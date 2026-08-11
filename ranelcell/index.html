@@ -1635,7 +1635,7 @@
     let modalCancelCallback = null;
     let serverTimeIsOpen = null;
 
-    window.history.pushState({ app: 'ranel-cell' }, '');
+    pushHistory();
 
     window.addEventListener('popstate', (event) => {
         const modalOverlay = document.getElementById('modal-overlay');
@@ -1643,33 +1643,14 @@
         const iamOverlay = document.getElementById('iam-overlay');
         const announcementPopover = document.getElementById('announcement-popover');
         
-        if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
-            window.history.pushState({ app: 'ranel-cell' }, '');
-            modalCancel(); 
-            return;
-        }
-        if (mapModal && !mapModal.classList.contains('hidden')) {
-            window.history.pushState({ app: 'ranel-cell' }, '');
-            closeMapModal(); 
-            return;
-        }
-        if (iamOverlay && !iamOverlay.classList.contains('hidden')) {
-            window.history.pushState({ app: 'ranel-cell' }, '');
-            closeInAppMessage(); 
-            return;
-        }
-        if (announcementPopover && !announcementPopover.classList.contains('hidden')) {
-            window.history.pushState({ app: 'ranel-cell' }, '');
-            toggleAnnouncement(); 
-            return;
-        }
+        if (modalOverlay && !modalOverlay.classList.contains('hidden')) { modalCancel(); return; }
+        if (mapModal && !mapModal.classList.contains('hidden')) { closeMapModal(); return; }
+        if (iamOverlay && !iamOverlay.classList.contains('hidden')) { closeInAppMessage(); return; }
+        if (announcementPopover && !announcementPopover.classList.contains('hidden')) { toggleAnnouncement(); return; }
 
         if (currentView === 'view-home' || currentView === 'view-login') {
-            window.history.back();
-            return;
+            return; 
         }
-
-        window.history.pushState({ app: 'ranel-cell' }, '');
 
         switch (currentView) {
             case 'view-pricelist': pricelistBack(); break;
@@ -1806,8 +1787,10 @@
             popover.classList.remove('zoomed');
         }
     });
-
-        function showView(viewId) {
+    function pushHistory() {
+        window.history.pushState({ app: 'ranel-cell' }, '');
+    }
+    function showView(viewId) {
         const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan'];
         if (restrictedViews.includes(viewId)) {
             if (!checkTelpRequired()) return;
@@ -1815,6 +1798,8 @@
         const cur = document.getElementById(currentView);
         if (cur) cur.classList.remove('active');
         document.getElementById('scroll-top-btn').classList.remove('visible');
+        
+        pushHistory(); 
 
         if (viewId !== 'view-game') {
                 gameState.game = null;
@@ -2243,11 +2228,13 @@
         pricelistState.provider = providerName;
         pricelistState.duration = null;
         renderPricelist();
+        pushHistory();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
     function selectDuration(durationName) {
         pricelistState.duration = durationName;
         renderPricelist();
+        pushHistory();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
     function pricelistBack() {
@@ -2293,6 +2280,7 @@
     function selectAccessoriesCategory(catName) {
         accessoriesState.category = catName;
         renderAccessories();
+        pushHistory();
         document.getElementById('view-accessories').scrollTop = 0;
     }
     function accessoriesBack() {
@@ -2334,6 +2322,7 @@
     function selectGame(gameName) {
         gameState.game = gameName;
         renderGame();
+        pushHistory();
         document.getElementById('view-game').scrollTop = 0;
     }
     function gameBack() {
@@ -2404,11 +2393,13 @@
         perdanaState.provider = providerName;
         perdanaState.duration = null;
         renderPerdana();
+        pushHistory();
         document.getElementById('view-perdana').scrollTop = 0;
     }
     function selectPerdanaDuration(durationName) {
         perdanaState.duration = durationName;
         renderPerdana();
+        pushHistory();
         document.getElementById('view-perdana').scrollTop = 0;
     }
     function perdanaBack() {
@@ -4312,6 +4303,7 @@ function showEditForm() {
     document.getElementById('profile-detail-view').classList.add('hidden');
     document.getElementById('profile-edit-form').classList.remove('hidden');
     document.getElementById('edit-profile-title').textContent = 'Edit Profil';
+    pushHistory();
 }
 function togglePasswordSection() {
     const passSection = document.getElementById('password-section');
