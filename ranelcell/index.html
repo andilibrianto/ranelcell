@@ -1636,6 +1636,7 @@
     let serverTimeIsOpen = null;
 
     window.history.pushState({ app: 'ranel-cell' }, '');
+
     window.addEventListener('popstate', (event) => {
         const modalOverlay = document.getElementById('modal-overlay');
         const mapModal = document.getElementById('map-modal');
@@ -1669,34 +1670,25 @@
         }
 
         window.history.pushState({ app: 'ranel-cell' }, '');
-        if (currentView === 'view-preview') {
-            showView('view-order');
-        } 
-        else if (currentView === 'view-history-detail') {
-            showTransactionHistory();
-        }
-        else if (currentView === 'view-complaint') {
-            showTransactionDetail(window._currentComplaintId);
-        }
-        else if (currentView === 'view-history') {
-            showEditProfile();
-        }
-        else if (currentView === 'view-edit-profile') {
-            confirmEditBack();
-        }
-        else if (currentView === 'view-service-gadget') {
-            serviceGadgetBack();
-        }
-        else {
-            const activeEl = document.getElementById(currentView);
-            if (activeEl) {
-                const backBtn = activeEl.querySelector('header button[aria-label="Kembali"], header button[aria-label="Beranda"]');
-                if (backBtn) {
-                    backBtn.click();
-                } else {
-                    showView('view-home');
-                }
-            }
+
+        switch (currentView) {
+            case 'view-pricelist': pricelistBack(); break;
+            case 'view-cek-form': pricelistBack(); break;
+            case 'view-accessories': accessoriesBack(); break;
+            case 'view-game': gameBack(); break;
+            case 'view-perdana': perdanaBack(); break;
+            case 'view-order': confirmGoHome(); break;
+            case 'view-preview': showView('view-order'); break;
+            case 'view-payment': confirmPaymentBack(); break;
+            case 'view-qris': confirmQRISBack(); break;
+            case 'view-history': showEditProfile(); break;
+            case 'view-history-detail': showTransactionHistory(); break;
+            case 'view-complaint': showTransactionDetail(window._currentComplaintId); break;
+            case 'view-edit-profile': confirmEditBack(); break;
+            case 'view-service-gadget': serviceGadgetBack(); break;
+            case 'view-pengaduan': confirmPengaduanBack(); break;
+            case 'view-karir-form': confirmKarirFormBack(); break;
+            default: showView('view-home'); break;
         }
     });
     async function isAccessoryServiceOpen() {
@@ -3855,31 +3847,7 @@
         if (Math.abs(diffX) > SWIPE_THRESHOLD_X && Math.abs(diffY) < SWIPE_THRESHOLD_Y) {
             const activeView = document.querySelector('.view.active');
             if (!activeView) return;
-            if (diffX > 0) {
-                if (activeView.id === 'view-order') {
-                    confirmGoHome();
-                } else if (activeView.id === 'view-payment') {
-                    confirmPaymentBack();
-                } else if (activeView.id === 'view-qris') {
-                    confirmQRISBack();
-                } else if (activeView.id === 'view-karir-form') {
-                    confirmKarirFormBack();
-                } else if (activeView.id === 'view-game') {
-                    gameBack();
-                } else if (activeView.id === 'view-accessories') {
-                    accessoriesBack();
-                } else if (activeView.id === 'view-perdana') {
-                    perdanaBack();
-                } else if (activeView.id === 'view-service-gadget') {
-                    serviceGadgetBack();
-                } else if (activeView.id === 'view-pengaduan') {
-                    showView('view-home');
-                } else if (activeView.id === 'view-preview') {
-                } else if (activeView.id !== 'view-home') {
-                    const backBtn = activeView.querySelector('header button[aria-label="Kembali"]');
-                    if (backBtn) backBtn.click();
-                }
-            } else {
+            if (diffX < 0) {
                 if ((activeView.id === 'view-home' || activeView.id === 'view-pricelist' || activeView.id === 'view-game' || activeView.id === 'view-accessories' || activeView.id === 'view-perdana' || activeView.id === 'view-biometrik') && cart.length > 0) {
                     showView('view-order');
                 }
