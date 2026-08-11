@@ -1644,39 +1644,58 @@
         
         if (modalOverlay && !modalOverlay.classList.contains('hidden')) {
             window.history.pushState({ app: 'ranel-cell' }, '');
-            modalCancel();
+            modalCancel(); 
             return;
         }
         if (mapModal && !mapModal.classList.contains('hidden')) {
             window.history.pushState({ app: 'ranel-cell' }, '');
-            closeMapModal();
+            closeMapModal(); 
             return;
         }
         if (iamOverlay && !iamOverlay.classList.contains('hidden')) {
             window.history.pushState({ app: 'ranel-cell' }, '');
-            closeInAppMessage();
+            closeInAppMessage(); 
             return;
         }
         if (announcementPopover && !announcementPopover.classList.contains('hidden')) {
             window.history.pushState({ app: 'ranel-cell' }, '');
-            toggleAnnouncement();
+            toggleAnnouncement(); 
             return;
         }
 
-        const activeView = document.querySelector('.view.active');
-        if (activeView) {
-            if (activeView.id === 'view-home') {
-                window.history.back();
-                return;
-            }
+        if (currentView === 'view-home' || currentView === 'view-login') {
+            window.history.back();
+            return;
+        }
 
-            window.history.pushState({ app: 'ranel-cell' }, '');
-
-            const backBtn = activeView.querySelector('header button[aria-label="Kembali"], header button[aria-label="Beranda"]');
-            if (backBtn) {
-                backBtn.click();
-            } else {
-                showView('view-home');
+        window.history.pushState({ app: 'ranel-cell' }, '');
+        if (currentView === 'view-preview') {
+            showView('view-order');
+        } 
+        else if (currentView === 'view-history-detail') {
+            showTransactionHistory();
+        }
+        else if (currentView === 'view-complaint') {
+            showTransactionDetail(window._currentComplaintId);
+        }
+        else if (currentView === 'view-history') {
+            showEditProfile();
+        }
+        else if (currentView === 'view-edit-profile') {
+            confirmEditBack();
+        }
+        else if (currentView === 'view-service-gadget') {
+            serviceGadgetBack();
+        }
+        else {
+            const activeEl = document.getElementById(currentView);
+            if (activeEl) {
+                const backBtn = activeEl.querySelector('header button[aria-label="Kembali"], header button[aria-label="Beranda"]');
+                if (backBtn) {
+                    backBtn.click();
+                } else {
+                    showView('view-home');
+                }
             }
         }
     });
