@@ -1629,12 +1629,16 @@
     let perdanaState = { provider:null, duration:null };
     let currentView = 'view-home';
     let viewHistory = ['view-home'];
+    let isPopstateNavigating = false;
     let savedFormData = null;
     let shouldRestoreForm = false;
     let modalConfirmCallback = null;
     let modalCancelCallback = null;
     let serverTimeIsOpen = null;
 
+function pushHistory() {
+        window.history.pushState({ app: 'ranel-cell' }, '');
+    }
     pushHistory();
 
     window.addEventListener('popstate', (event) => {
@@ -1651,6 +1655,8 @@
         if (currentView === 'view-home' || currentView === 'view-login') {
             return; 
         }
+
+        isPopstateNavigating = true;
 
         switch (currentView) {
             case 'view-pricelist': pricelistBack(); break;
@@ -1671,6 +1677,8 @@
             case 'view-karir-form': confirmKarirFormBack(); break;
             default: showView('view-home'); break;
         }
+
+        isPopstateNavigating = false;
     });
     async function isAccessoryServiceOpen() {
         try {
@@ -1790,7 +1798,7 @@
     function pushHistory() {
         window.history.pushState({ app: 'ranel-cell' }, '');
     }
-    function showView(viewId) {
+        function showView(viewId) {
         const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan'];
         if (restrictedViews.includes(viewId)) {
             if (!checkTelpRequired()) return;
@@ -1798,25 +1806,21 @@
         const cur = document.getElementById(currentView);
         if (cur) cur.classList.remove('active');
         document.getElementById('scroll-top-btn').classList.remove('visible');
-        
-        pushHistory(); 
 
-        if (viewId !== 'view-game') {
-                gameState.game = null;
+        if (viewId !== 'view-game') { gameState.game = null; }
+        if (viewId !== 'view-accessories') { accessoriesState.category = null; }
+        if (viewId !== 'view-perdana') { perdanaState.provider = null; perdanaState.duration = null; }
+        if (viewId === 'view-service-gadget') initServiceGadget();
+
+        if (currentView !== viewId && !isPopstateNavigating) {
+            pushHistory(); 
         }
-            if (viewId !== 'view-accessories') {
-                accessoriesState.category = null;
-        }
-            if (viewId !== 'view-perdana') {
-                perdanaState.provider = null;
-                perdanaState.duration = null;
-        }
-            if (viewId === 'view-service-gadget') initServiceGadget();
-        
+
         currentView = viewId;
         viewHistory.push(viewId);
         const next = document.getElementById(viewId);
         if (next) { next.classList.add('active'); next.scrollTop = 0; }
+        
         if (viewId === 'view-order') {
             shouldRestoreForm = true;
             renderOrderForm(); 
@@ -1836,7 +1840,6 @@
         if (viewId === 'view-preview') renderPreview();
         updateCartUI();
     }
-
     function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
     function onlyDigits(val) { return val.replace(/[^0-9]/g, ''); }
     function togglePassword(inputId, btnEl) {
@@ -2228,13 +2231,13 @@
         pricelistState.provider = providerName;
         pricelistState.duration = null;
         renderPricelist();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
     function selectDuration(durationName) {
         pricelistState.duration = durationName;
         renderPricelist();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-pricelist').scrollTop = 0;
     }
     function pricelistBack() {
@@ -2280,7 +2283,7 @@
     function selectAccessoriesCategory(catName) {
         accessoriesState.category = catName;
         renderAccessories();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-accessories').scrollTop = 0;
     }
     function accessoriesBack() {
@@ -2322,7 +2325,7 @@
     function selectGame(gameName) {
         gameState.game = gameName;
         renderGame();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-game').scrollTop = 0;
     }
     function gameBack() {
@@ -2393,13 +2396,13 @@
         perdanaState.provider = providerName;
         perdanaState.duration = null;
         renderPerdana();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-perdana').scrollTop = 0;
     }
     function selectPerdanaDuration(durationName) {
         perdanaState.duration = durationName;
         renderPerdana();
-        pushHistory();
+        if (!isPopstateNavigating) pushHistory();
         document.getElementById('view-perdana').scrollTop = 0;
     }
     function perdanaBack() {
@@ -4227,7 +4230,6 @@
 }
     function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
-        pushHistory();
         if (!user) return;
         console.log("User profile data loaded for: ", user.displayName || user.email);
     }
@@ -4304,7 +4306,7 @@ function showEditForm() {
     document.getElementById('profile-detail-view').classList.add('hidden');
     document.getElementById('profile-edit-form').classList.remove('hidden');
     document.getElementById('edit-profile-title').textContent = 'Edit Profil';
-    pushHistory();
+    if (!isPopstateNavigating) pushHistory();
 }
 function togglePasswordSection() {
     const passSection = document.getElementById('password-section');
@@ -4371,7 +4373,6 @@ function togglePasswordSection() {
 }
 async function showTransactionHistory() {
     const user = window.firebaseAuth.auth.currentUser;
-    pushHistory();
     if (!user) return;
 
     const contentEl = document.getElementById('history-content');
