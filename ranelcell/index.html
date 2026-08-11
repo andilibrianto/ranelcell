@@ -5192,7 +5192,7 @@ async function saveServiceGadgetToFirestore(orderId, d) {
             promoCode: d.isActiveAntar ? serviceAppliedPromoCode : '',
             promoDiscount: d.isActiveAntar ? servicePromoDiscount : 0,
             total: d.isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
-            paymentMethod: 'Proses Cek Unit',
+            paymentMethod: 'Pending',
             address: d.isActiveAntar ? d.alamat : 'Datang ke Toko',
             status: defaultStatus,
             transactionDate: new Date().toLocaleString('id-ID', { 
