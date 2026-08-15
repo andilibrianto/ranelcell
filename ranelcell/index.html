@@ -3652,6 +3652,17 @@ function pushHistory() {
                     hour12: false
                 })
             });
+            // --- PANGGIL API VERCEL UNTUK KIRIM NOTIF KE ADMIN ---
+            fetch('https://ranel-backend.vercel.app', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: orderId,
+                userName: d.nama,
+                total: getGrandTotal(),
+                items: cart.map(item => ({ name: item.name, quantity: item.quantity }))
+            })
+        }).catch(err => console.error("Gagal kirim notif ke admin:", err));
             console.log("Transaksi berhasil disimpan ke Firestore");
         } catch (err) {
             console.error("Gagal menyimpan transaksi ke Firestore:", err);
