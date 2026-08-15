@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-v.0.0.1.1.0';
+const CACHE_NAME = 'ranel-cell-v.0.0.1.1.1';
 const urlsToCache = [
     './index.html',
     './manifest.json',
