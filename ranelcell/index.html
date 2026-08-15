@@ -3653,7 +3653,7 @@ function pushHistory() {
                 })
             });
             // --- PANGGIL API VERCEL UNTUK KIRIM NOTIF KE ADMIN ---
-            fetch('https://ranel-backend.vercel.app/api/send-notif', {
+            fetch('https://adminranel.vercel.app/api/send-notif', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
