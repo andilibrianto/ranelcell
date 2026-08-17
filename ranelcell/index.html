@@ -1022,7 +1022,7 @@
 
             <div id="svc-datetime-wrapper" class="mb-4 hidden">
                 <label class="text-[11px] text-gray-500 mb-1 block">Jadwal Penjemputan</label>
-                <input type="date" id="svc-date" class="form-input mb-2">
+                <input type="date" id="svc-date" class="form-input mb-2" onchange="validateServiceDate(this)">
                 <select id="svc-time" class="form-input">
                     <option value="09:00 - 12:00">Pagi (07:00 - 12:00)</option>
                     <option value="13:00 - 16:00">Siang (13:00 - 16:00)</option>
@@ -4903,6 +4903,26 @@ async function submitComplaint() {
             return false;
         }
         return true;
+    }
+    function validateServiceDate(input) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set jam ke 00:00 agar hanya membandingkan tanggalnya saja
+        
+        const selectedDate = new Date(input.value);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        // Jika tanggal yang dipilih lebih kecil dari hari ini (masa lalu)
+        if (selectedDate < today) {
+            showToast('Tanggal invalid, silakan pilih tanggal yang sesuai!', 'error');
+            
+            // Paksa kembalikan ke tanggal hari ini
+            const yyyy = today.getFullYear();
+            let mm = today.getMonth() + 1; 
+            let dd = today.getDate();
+            if (dd < 10) dd = '0' + dd; 
+            if (mm < 10) mm = '0' + mm;
+            input.value = `${yyyy}-${mm}-${dd}`;
+        }
     }
 function initServiceGadget() {
     const user = window.firebaseAuth.auth.currentUser;
