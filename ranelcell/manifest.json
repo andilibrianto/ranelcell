@@ -1,0 +1,32 @@
+{
+    "name": "RANEL CELL",
+    "short_name": "RANEL CELL",
+    "description": "Pasti Murah, Pasti Hemat, Pasti Puas",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0A0A0A",
+    "theme_color": "#FF2D78",
+    "orientation": "portrait-primary",
+    "version": "9.0",
+    "version_name": "9.0 RANEL CELL",
+    "icons": [
+        {
+            "src": "./Gambar/PWA_512C.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./Gambar/PWA_512C.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./Gambar/PWA_512C.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
