@@ -4786,13 +4786,31 @@ async function submitComplaint() {
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     try {
+        let updatedItems = JSON.parse(JSON.stringify(d.items || []));
+        let updatedIdPelanggan = JSON.parse(JSON.stringify(d.idPelanggan || {}));
+
+        selectedTargets.forEach(sel => {
+            if (sel.type === 'item') {
+                if (updatedItems[sel.idx] && !updatedItems[sel.idx].name.includes(' - Komplain')) {
+                    updatedItems[sel.idx].name += ' - Komplain';
+                }
+            } else if (sel.type === 'idpel') {
+                if (updatedIdPelanggan[sel.idx] && updatedIdPelanggan[sel.idx][sel.idIdx] && !updatedIdPelanggan[sel.idx][sel.idIdx].includes(' - Komplain')) {
+                    updatedIdPelanggan[sel.idx][sel.idIdx] += ' - Komplain';
+                }
+            }
+        });
+
         const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", currentComplaintId);
         await window.firebaseAuth.setDoc(orderRef, {
-            status: "Sedang Ditinjau"
+            status: "Sedang Ditinjau",
+            items: updatedItems, 
+            idPelanggan: updatedIdPelanggan 
         }, { merge: true });
-        console.log("Status Sedang Ditinjau");
+        
+        console.log("Komplain berhasil");
     } catch (err) {
-        console.error("Gagal memperbarui status transaksi:", err);
+        console.error("Gagal memperbarui data komplain:", err);
     }
 
     // --- PANGGIL API VERCEL UNTUK KIRIM NOTIF KE ADMIN ---
