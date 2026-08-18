@@ -1696,42 +1696,101 @@
             ]
         }
     };
-        // Database Penjelasan Kendala Service
     const serviceIssuesDb = {
-        "Ganti LCD": {
-            kerusakan: "Ganti LCD",
-            gejala: "Layar pecah, bergaris, bayang, atau tidak bisa disentuh.",
-            penjelasan: "Penggantian satu set modul layar baru agar tampilan kembali normal dan responsif."
+        "Ganti Layar (LCD / OLED)": {
+            kerusakan: "Replacement Display Assembly (LCD/OLED + Touchscreen)",
+            gejala: "Layar pecah, retak, bergaris, ada bercak hitam, atau tidak bisa disentuh sama sekali.",
+            penjelasan: "Penggantian satu set layar baru agar tampilan gambar dan sentuhan kembali normal."
         },
         "Ganti Baterai": {
-            kerusakan: "Ganti Baterai",
-            gejala: "Baterai cepat habis, kembung, atau HP mati total.",
-            penjelasan: "Penggantian sel baterai baru agar daya tahan kembali optimal dan aman."
+            kerusakan: "Battery Replacement (Penanganan Degraded Cell / Baterai Kembung)",
+            gejala: "Baterai cepat habis, HP sering mati mendadak, atau bodi terangkat (baterai kembung).",
+            penjelasan: "Penggantian baterai lama dengan baterai baru yang aman dan tahan lama."
         },
-        "Port Charger Rusak": {
-            kerusakan: "Port Charger Rusak",
-            gejala: "HP tidak bisa diisi daya, kabel charger harus dipegat/ dibengkokkan.",
-            penjelasan: "Penyolderan ulang atau penggantian port charger agar koneksi daya kembali lancar."
+        "Service HP Kemasukan Air": {
+            kerusakan: "Water Damage Handling (Pembersihan Korosi & Short Circuit Diagnostic)",
+            gejala: "HP jatuh ke air, terkena hujan, atau lembap hingga tidak bisa menyala normal.",
+            penjelasan: "Pembersihan korosi akibat cairan dan pengecekan komponen mesin yang konslet."
         },
-        "Service Blower IC Power": {
-            kerusakan: "Service Blower IC Power",
-            gejala: "HP mati total, panas berlebih, atau konslet.",
-            penjelasan: "Penanganan IC Power yang mengalami konsleting dengan teknik blower khusus."
+        "Ganti Port / Konektor Charger": {
+            kerusakan: "Replacement Port Charging / Board Con Charger",
+            gejala: "HP susah di isi daya, lubang colokan longgar, atau baterai tidak bertambah saat di cas.",
+            penjelasan: "Penggantian port charger agar arus listrik masuk kembali dengan lancar."
         },
-        "Flashing / Instal Ulang OS (Fix Bootloop)": {
-            kerusakan: "Flashing / Instal Ulang OS",
-            gejala: "Bootloop, restart sendiri, atau hang di logo.",
-            penjelasan: "Instal ulang sistem operasi HP untuk mengembalikan performa tanpa menghapus data hardware."
+        "Buka Pola & Kunci Layar": {
+            kerusakan: "Bypass Lockscreen / Hard Reset / Flashing Firmware",
+            gejala: "Lupa PIN, pola, atau kata sandi hingga tidak bisa masuk ke menu HP.",
+            penjelasan: "Pembukaan kunci layar aman agar smartphone Anda dapat digunakan kembali."
         },
-        "Servis IC Charger / IC Sinyal": {
-            kerusakan: "Servis IC Charger / IC Sinyal",
-            gejala: "Tidak terdeteksi jaringan, sinyal hilang, atau kasus charging macet.",
-            penjelasan: "Perbaikan jalur IC pada motherboard untuk mengatasi masalah hardware."
+        "Perbaikan Sinyal & Kartu SIM": {
+            kerusakan: "Repair IC Baseband / RF Module / Sim Card Reader Check",
+            gejala: "Kartu SIM tidak terbaca, muncul "Panggilan Darurat", atau sinyal tiba-tiba hilang total.",
+            penjelasan: "Perbaikan slot SIM atau komponen pengolah sinyal (IC Baseband) pada mesin."
         },
-        "Penanganan HP Terkena Air (Water Damage Cleaning)": {
-            kerusakan: "Water Damage Cleaning",
-            gejala: "HP terkena air, layar bergaris, atau korosi.",
-            penjelasan: "Pembersihan korosi air pada mesin HP menggunakan cairan khusus ultrasonic."
+        "Perbaikan HP Mentok Logo": {
+            kerusakan: "Fix Bootloop / Software Brick / Repair IC eMMC / UFS",
+            gejala: "HP hanya menyala sampai tampilan logo merek lalu mati atau restart terus-menerus.",
+            penjelasan: "Pemulihan sistem software atau perbaikan pada cip memori internal yang bermasalah."
+        },
+        "Ganti Tombol & Sensor Sidik Jari": {
+            kerusakan: "Replacement Flex Button & Biometric Sensor",
+            gejala: "Tombol Power/Volume keras, macet, atau pemindai sidik jari (fingerprint) tidak merespons.",
+            penjelasan: "Penggantian kabel fleksibel tombol dan sensor sidik jari yang rusak/aus."
+        },
+        "Perbaikan Sensor Wajah (Face ID)": {
+            kerusakan: "Repair / Recalibration Face ID Module (TrueDepth / Dot Projector)",
+            gejala: "Fitur Face ID mati, gagal memindai wajah, atau muncul pesan error.",
+            penjelasan: "Perbaikan dan kalibrasi ulang modul sensor kamera pemindai wajah (TrueDepth)."
+        },
+        "Perbaikan IMEI & Restorasi Sinyal": {
+            kerusakan: "Write / Repair IMEI & NVRAM / NVDATA Restore",
+            gejala: "Nomor IMEI hilang/null atau sinyal hilang total setelah reset/update sistem.",
+            penjelasan: "Pemulihan data jaringan dan penataan ulang nomor IMEI resmi perangkat."
+        },
+        "Install Ulang Sistem (Flash HP)": {
+            kerusakan: "Flashing / Reinstall Stock Firmware",
+            gejala: "HP terasa sangat lambat, sering error, aplikasi keluar sendiri, atau gagal update.",
+            penjelasan: "Pembersihan total dan pemasangan ulang sistem operasi resmi dari pabrikan."
+        },
+        "Buka Akun Terkunci (FRP / Akun Merek)": {
+            kerusakan: "Bypass FRP / Brand Account Unlock",
+            gejala: "HP terkunci Akun Google, Mi Account, atau iCloud setelah di-reset ke pengaturan pabrik.",
+            penjelasan: "Pembukaan blokir akun lama agar HP bisa diatur ulang seperti baru."
+        },
+        "Ganti Komponen Penerima Sinyal": {
+            kerusakan: "Replacement IC RF / Baseband & Antenna Board",
+            gejala: "Sinyal Wi-Fi, Bluetooth, atau sinyal seluler sangat lemah meskipun dekat pemancar.",
+            penjelasan: "Penggantian modul antena atau IC RF penguat sinyal pada mesin."
+        },
+        "Perbaikan Memori Internal": {
+            kerusakan: "Repair / Reprogram / Replace IC eMMC / UFS / NAND",
+            gejala: "HP sering mati mendadak, memori penuh terus padahal kosong, atau rusak total.",
+            penjelasan: "Perbaikan, pemrograman ulang, atau penggantian cip memori penyimpanan HP."
+        },
+        "Service Mesin / HP Mati Total": {
+            kerusakan: "Motherboard Hardware Repair / Component Level Diagnostic (Short Circuit)",
+            gejala: "HP mati total akibat konslet, bodi mesin terasa sangat panas, atau terkena lonjakan arus.",
+            penjelasan: "Pelacakan komponen mikro mesin yang konslet dan penggantian sparepart titik kerusakan."
+        },
+        "Service & Ganti Kamera": {
+            kerusakan: "Camera Module Replacement / Cleaning / OIS (Optical Image Stabilization) Repair",
+            gejala: "Hasil foto buram, kamera bergetar, tidak bisa fokus, atau kaca kamera kotor/pecah.",
+            penjelasan: "Penggantian modul kamera, pembersihan lensa, atau perbaikan fitur penstabil gambar (OIS)."
+        },
+        "Ganti Speaker Telepon (Earpiece)": {
+            kerusakan: "Replacement Earpiece / Receiver Speaker",
+            gejala: "Suara lawan bicara saat panggilan telepon terdengar kecil, pecah, atau hilang sama sekali.",
+            penjelasan: "Penggantian komponen speaker bagian atas yang khusus digunakan untuk mendengar saat menelepon."
+        },
+        "Ganti Speaker Utama & IC Audio": {
+            kerusakan: "Replacement Main Buzzer / Loudspeaker Unit / Audio IC RepairNada dering/musik tidak berbunyi, mikrofon mati saat telepon, atau suara pecah.",
+            gejala: "Nada dering/musik tidak berbunyi, mikrofon mati saat telepon, atau suara pecah.",
+            penjelasan: "Penggantian speaker utama (loudspeaker) atau perbaikan pemroses suara (IC Audio) di mesin."
+        },
+        "Ganti Lampu Flash Kamera": {
+            kerusakan: "Flash LED Module Replacement / Flash Driver IC Repair",
+            gejala: "Lampu kilat kamera atau fitur senter di HP tidak mau menyala.",
+            penjelasan: "Penggantian modul lampu LED atau komponen pemicu (driver) lampu pada mesin."
         },
         "Lainnya": null 
     };
@@ -5263,7 +5322,7 @@ function initServiceGadget() {
                 detailInput.innerHTML = `
                     <p style="text-align: justify;"><strong class="text-white">Jenis Kerusakan:</strong> <span class="text-gray-300">${data.kerusakan}</span></p>
                     <p style="text-align: justify;"><strong class="text-white">Masalah / Gejala:</strong> <span class="text-gray-300">${data.gejala}</span></p>
-                    <p style="text-align: justify;"><strong class="text-white">Penjelasan Singkat:</strong> <span class="text-gray-300">${data.penjelasan}</span></p>
+                    <p style="text-align: justify;"><strong class="text-white">Apa Yang Diservice?</strong> <span class="text-gray-300">${data.penjelasan}</span></p>
                 `;
             } else {
                 // Jika kembali ke kosong
