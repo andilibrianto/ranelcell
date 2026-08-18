@@ -5105,27 +5105,41 @@ function initServiceGadget() {
             }
             updateServicePrice();
         }
-        function updateServiceIssues() {
+        function handleModelInput(val) {
             const os = document.getElementById('svc-os').value;
             const brand = document.getElementById('svc-brand').value;
-            const model = document.getElementById('svc-model').value.trim(); 
-            const issueSelect = document.getElementById('svc-issue');
-            issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
-            issueSelect.disabled = true;
-
-            document.getElementById('autocomplete-model-list').classList.remove('active');
-            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
-            document.getElementById('svc-detail-wrapper').classList.add('hidden');
-            document.getElementById('svc-custom-issue').value = '';
-            document.getElementById('svc-detail').value = '';
-
-            if (os && brand && model) {
-                Object.keys(serviceIssuesDb).forEach(issue => {
-                    issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
-                });
-                issueSelect.disabled = false;
+            const listEl = document.getElementById('autocomplete-model-list');
+            
+            listEl.innerHTML = '';
+            
+            if (!val || !os || !brand || !gadgetDb[os][brand]) {
+                listEl.classList.remove('active');
+                return;
             }
-            updateServicePrice();
+
+            const models = gadgetDb[os][brand];
+            const filteredModels = models.filter(model => 
+                model.toLowerCase().includes(val.toLowerCase())
+            );
+
+            if (filteredModels.length > 0) {
+                filteredModels.forEach(model => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.innerText = model;
+                    item.onmousedown = (e) => {
+                        e.preventDefault();
+                        document.getElementById('svc-model').value = model;
+                        listEl.innerHTML = '';
+                        listEl.classList.remove('active');
+                        updateServiceIssues();
+                    };
+                    listEl.appendChild(item);
+                });
+                listEl.classList.add('active');
+            } else {
+                listEl.classList.remove('active');
+            }
         }
 function handleIssueChange() {
     const issue = document.getElementById('svc-issue').value;
