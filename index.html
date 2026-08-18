@@ -1697,21 +1697,7 @@
         }
     };
     const serviceIssuesDb = {
-        "Replacement Display Assembly (LCD/OLED + Touchscreen)": "Ganti satu set layar baru karena pecah, bergaris, bayang, atau tidak bisa disentuh.",
-        "Battery Replacement (Penanganan Degraded Cell / Baterai Kembung)": "Ganti baterai baru karena boros, kembung, atau HP sering mati sendiri.",
-        "Replacement Port Charging / Board Con Charger": "Ganti colokan charger yang longgar, patah, atau tidak bisa mengisi daya.",
-        "Bypass Lockscreen / Hard Reset / Flashing Firmware": "Buka kuncian HP yang lupa pola atau kata sandi agar HP bisa digunakan kembali.",
-        "Fix Bootloop / Software Brick / Repair IC eMMC/UFS": "Perbaikan HP yang macet di logo saat dinyalakan, baik lewat program ulang atau servis mesin.",
-        "Repair IC Baseband / RF Module / Sim Card Reader Check": "Perbaikan komponen sinyal di mesin HP agar kartu SIM terbaca dan muncul sinyal.",
-        "Water Damage Handling (Pembersihan Korosi & Short Circuit Diagnostic)": "Pembersihan mesin dari bekas air dan perbaikan komponen yang korslet.",
-        "Replacement Flex Button & Biometric Sensor": "Penggantian kabel fleksibel tombol samping atau sensor sidik jari yang macet, keras, atau tidak merespon.",
-        "Repair / Recalibration Face ID Module (TrueDepth / Dot Projector)": "Perbaikan sensor pemindahan wajah yang tidak aktif atau gagal membaca wajah.",
-        "Write / Repair IMEI & NVRAM/NVDATA Restore": "Mengembalikan nomor IMEI yang hilang (null) agar HP bisa membaca kartu SIM dan menangkap sinyal kembali.",
-        "Flashing / Reinstall Stock Firmware": "Instal ulang sistem operasi HP dari awal untuk mengembalikan kinerja HP yang lambat, error, atau terkena virus.",
-        "Bypass FRP / Brand Account Unlock": "Membuka HP yang terkunci akun Mi Cloud, Google (FRP), atau akun merek lainnya karena lupa kata sandi setelah di-reset.",
-        "Replacement IC RF / Baseband & Antenna Board": "Penggantian chip sinyal atau komponen antena di dalam mesin agar penerimaan sinyal HP kembali normal.",
-        "Repair / Reprogram / Replace IC eMMC / UFS / NAND": "Perbaikan atau penggantian chip penyimpanan internal yang rusak, corrupt, atau membuat HP tidak bisa menyimpan data.",
-        "Motherboard Hardware Repair / Component Level Diagnostic (Short Circuit)": "Perbaikan mesin utama HP yang mati total, korslet, atau bermasalah pada jalur komponen vital (seperti IC Power).",
+        "Ganti Layar (LCD / OLED)": "Replacement Display Assembly (LCD/OLED + Touchscreen), Layar pecah, retak, bergaris, ada bercak hitam, atau tidak bisa disentuh sama sekali. Penggantian satu set layar baru agar tampilan gambar dan sentuhan kembali normal.",
         "Lainnya": ""
     };
 
@@ -5212,33 +5198,42 @@ function initServiceGadget() {
                 issueSelect.disabled = true;
             }
         }
-function handleIssueChange() {
-    const issue = document.getElementById('svc-issue').value;
-    const customWrapper = document.getElementById('svc-custom-issue-wrapper');
-    const detailWrapper = document.getElementById('svc-detail-wrapper');
-    const detailInput = document.getElementById('svc-detail');
-    const customInput = document.getElementById('svc-custom-issue');
+        // Fungsi agar Textarea memanjang otomatis mengikuti jumlah teks
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto'; // Reset tinggi dulu
+            el.style.height = (el.scrollHeight) + 'px'; // Sesuaikan dengan tinggi teks asli
+        }
+        // Fungsi baru untuk menangani perubahan pilihan kendala
+        function handleIssueChange() {
+            const issue = document.getElementById('svc-issue').value;
+            const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+            const detailWrapper = document.getElementById('svc-detail-wrapper');
+            const detailInput = document.getElementById('svc-detail');
+            const customInput = document.getElementById('svc-custom-issue');
 
-    customInput.value = ''; // Kosongkan field manual saat ganti pilihan
+            customInput.value = ''; // Kosongkan field manual saat ganti pilihan
 
-    if (issue === 'Lainnya') {
-        // Jika pilih Lainnya, sembunyikan detail otomatis, tampilkan field manual
-        detailWrapper.classList.add('hidden');
-        customWrapper.classList.remove('hidden');
-        detailInput.value = '';
-    } else if (issue !== '') {
-        // Jika pilih kendala spesifik, tampilkan detail otomatis, sembunyikan field manual
-        customWrapper.classList.add('hidden');
-        detailWrapper.classList.remove('hidden');
-        detailInput.value = serviceIssuesDb[issue] || '';
-    } else {
-        // Jika kembali ke kosong
-        customWrapper.classList.add('hidden');
-        detailWrapper.classList.add('hidden');
-    }
+            if (issue === 'Lainnya') {
+                // Jika pilih Lainnya, sembunyikan detail otomatis, tampilkan field manual
+                detailWrapper.classList.add('hidden');
+                customWrapper.classList.remove('hidden');
+                detailInput.value = '';
+            } else if (issue !== '') {
+                // Jika pilih kendala spesifik, tampilkan detail otomatis, sembunyikan field manual
+                customWrapper.classList.add('hidden');
+                detailWrapper.classList.remove('hidden');
+                detailInput.value = serviceIssuesDb[issue] || '';
+                
+                // PANGGIL FUNGSI AUTO-RESIZE DI SINI
+                autoResizeTextarea(detailInput);
+            } else {
+                // Jika kembali ke kosong
+                customWrapper.classList.add('hidden');
+                detailWrapper.classList.add('hidden');
+            }
 
-    updateServicePrice();
-}
+            updateServicePrice();
+        }
 
 function updateServicePrice() {
     const issue = document.getElementById('svc-issue').value;
