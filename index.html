@@ -1709,6 +1709,12 @@
             penjelasan: "Penggantian baterai lama dengan baterai baru yang aman dan tahan lama.",
             os: "Universal"
         },
+        "Service & Ganti Engsel HP Lipat (Hinge Repair)": {
+            kerusakan: "Hinge Mechanism Repair & Replacement / Chassis Realignment / Hinge Debris Cleaning",
+            gejala: "HP lipat tidak bisa dibuka lurus (180°), terasa tersangkut/kasar saat dilipat, engsel berbunyi, longgar, atau bodi miring.",
+            penjelasan: "Pembersihan debu/kotoran penyumbat di dalam engsel, pelurusan presisi bodi (chassis realignment), serta perbaikan atau penggantian unit engsel (hinge) baru.",
+            os: "Universal"
+        },
         "Sinyal Hilang / Blokir IMEI (iPhone)": {
             kerusakan: "Temporary Signal Unblock",
             gejala: "iPhone ex-inter terblokir sinyal dan membutuhkan akses jaringan dalam jangka waktu pendek.",
@@ -5373,7 +5379,7 @@ function initServiceGadget() {
                 
                 // Susun format HTML dengan rata kanan-kiri (justify)
                 detailInput.innerHTML = `
-                    <p style="text-align: justify;"><strong class="text-white">Jenis Kerusakan:</strong> <span class="text-gray-300">${data.kerusakan}</span></p>
+                    <p style="text-align: justify;"><strong class="text-white">Jenis Perbaikkan:</strong> <span class="text-gray-300">${data.kerusakan}</span></p>
                     <p style="text-align: justify;"><strong class="text-white">Masalah / Gejala:</strong> <span class="text-gray-300">${data.gejala}</span></p>
                     <p style="text-align: justify;"><strong class="text-white">Apa Yang Diservice?</strong> <span class="text-gray-300">${data.penjelasan}</span></p>
                 `;
