@@ -983,10 +983,16 @@
             </div>
             <div class="mb-4">
                 <label class="text-[11px] text-gray-500 mb-1 block">Kendala Handphone</label>
-                <select id="svc-issue" class="form-input" onchange="updateServicePrice()" disabled>
+                <select id="svc-issue" class="form-input" onchange="handleIssueChange()" disabled>
                     <option value="">Pilih Tipe dahulu</option>
                 </select>
             </div>
+            
+            <div id="svc-detail-wrapper" class="mb-4 hidden">
+                <label class="text-[11px] text-gray-500 mb-1 block">Informasi Service</label>
+                <textarea id="svc-detail" class="form-input" rows="2" style="resize:none; opacity: 0.8;" readonly></textarea>
+            </div>
+
             <div id="svc-custom-issue-wrapper" class="mb-4 hidden">
                 <label class="text-[11px] text-gray-500 mb-1 block">Kendala Lainnya</label>
                 <textarea id="svc-custom-issue" class="form-input" rows="2" placeholder="Contoh: Speaker suara pelan" style="resize:none;"></textarea>
@@ -1689,6 +1695,24 @@
                 "iPhone 17", "iPhone 17 Air", "iPhone 17 Pro", "iPhone 17 Pro Max"
             ]
         }
+    };
+    const serviceIssuesDb = {
+        "Replacement Display Assembly (LCD/OLED + Touchscreen)": "Ganti satu set layar baru karena pecah, bergaris, bayang, atau tidak bisa disentuh.",
+        "Battery Replacement (Penanganan Degraded Cell / Baterai Kembung)": "Ganti baterai baru karena boros, kembung, atau HP sering mati sendiri.",
+        "Replacement Port Charging / Board Con Charger": "Ganti colokan charger yang longgar, patah, atau tidak bisa mengisi daya.",
+        "Bypass Lockscreen / Hard Reset / Flashing Firmware": "Buka kuncian HP yang lupa pola atau kata sandi agar HP bisa digunakan kembali.",
+        "Fix Bootloop / Software Brick / Repair IC eMMC/UFS": "Perbaikan HP yang macet di logo saat dinyalakan, baik lewat program ulang atau servis mesin.",
+        "Repair IC Baseband / RF Module / Sim Card Reader Check": "Perbaikan komponen sinyal di mesin HP agar kartu SIM terbaca dan muncul sinyal.",
+        "Water Damage Handling (Pembersihan Korosi & Short Circuit Diagnostic)": "Pembersihan mesin dari bekas air dan perbaikan komponen yang korslet.",
+        "Replacement Flex Button & Biometric Sensor": "Penggantian kabel fleksibel tombol samping atau sensor sidik jari yang macet, keras, atau tidak merespon.",
+        "Repair / Recalibration Face ID Module (TrueDepth / Dot Projector)": "Perbaikan sensor pemindaan wajah yang tidak aktif atau gagal membaca wajah.",
+        "Write / Repair IMEI & NVRAM/NVDATA Restore": "Mengembalikan nomor IMEI yang hilang (null) agar HP bisa membaca kartu SIM dan menangkap sinyal kembali.",
+        "Flashing / Reinstall Stock Firmware": "Instal ulang sistem operasi HP dari awal untuk mengembalikan kinerja HP yang lambat, error, atau terkena virus.",
+        "Bypass FRP / Brand Account Unlock": "Membuka HP yang terkunci akun Mi Cloud, Google (FRP), atau akun merek lainnya karena lupa kata sandi setelah di-reset.",
+        "Replacement IC RF / Baseband & Antenna Board": "Penggantian chip sinyal atau komponen antena di dalam mesin agar penerimaan sinyal HP kembali normal.",
+        "Repair / Reprogram / Replace IC eMMC / UFS / NAND": "Perbaikan atau penggantian chip penyimpanan internal yang rusak, corrupt, atau membuat HP tidak bisa menyimpan data.",
+        "Motherboard Hardware Repair / Component Level Diagnostic (Short Circuit)": "Perbaikan mesin utama HP yang mati total, korslet, atau bermasalah pada jalur komponen vital (seperti IC Power).",
+        "Lainnya": ""
     };
 
     let serviceShippingCost = 0;
@@ -5109,23 +5133,53 @@ function updateServiceIssues() {
     const issueSelect = document.getElementById('svc-issue');
     issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
     issueSelect.disabled = true;
-    document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
-
+    
+    // Sembunyikan semua field bantuan
     document.getElementById('autocomplete-model-list').classList.remove('active');
+    document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+    document.getElementById('svc-detail-wrapper').classList.add('hidden');
+    document.getElementById('svc-custom-issue').value = '';
+    document.getElementById('svc-detail').value = '';
 
     if (os && brand && model) {
-        issueSelect.innerHTML += `<option value="Ganti LCD">Ganti LCD</option>`;
-        issueSelect.innerHTML += `<option value="Ganti Baterai">Ganti Baterai</option>`;
-        issueSelect.innerHTML += `<option value="Port Charger Rusak">Port Charger Rusak</option>`;
-        issueSelect.innerHTML += `<option value="Service Blower IC Power">Service Blower IC Power</option>`;
-        issueSelect.innerHTML += `<option value="Flashing / Instal Ulang OS (Fix Bootloop)">Flashing / Instal Ulang OS (Fix Bootloop)</option>`;
-        issueSelect.innerHTML += `<option value="Servis IC Charger / IC Sinyal">Servis IC Charger / IC Sinyal</option>`;
-        issueSelect.innerHTML += `<option value="Penanganan HP Terkena Air (Water Damage Cleaning)">Penanganan HP Terkena Air (Water Damage Cleaning)</option>`;
-        issueSelect.innerHTML += `<option value="Lainnya">Kendala Lainnya</option>`;
+        // Isi dropdown dengan database serviceIssuesDb
+        Object.keys(serviceIssuesDb).forEach(issue => {
+            issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
+        });
         issueSelect.disabled = false;
     }
     updateServicePrice();
 }
+
+// Fungsi baru untuk menangani perubahan pilihan kendala
+function handleIssueChange() {
+    const issue = document.getElementById('svc-issue').value;
+    const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+    const detailWrapper = document.getElementById('svc-detail-wrapper');
+    const detailInput = document.getElementById('svc-detail');
+    const customInput = document.getElementById('svc-custom-issue');
+
+    customInput.value = ''; // Kosongkan field manual saat ganti pilihan
+
+    if (issue === 'Lainnya') {
+        // Jika pilih Lainnya, sembunyikan detail otomatis, tampilkan field manual
+        detailWrapper.classList.add('hidden');
+        customWrapper.classList.remove('hidden');
+        detailInput.value = '';
+    } else if (issue !== '') {
+        // Jika pilih kendala spesifik, tampilkan detail otomatis, sembunyikan field manual
+        customWrapper.classList.add('hidden');
+        detailWrapper.classList.remove('hidden');
+        detailInput.value = serviceIssuesDb[issue] || '';
+    } else {
+        // Jika kembali ke kosong
+        customWrapper.classList.add('hidden');
+        detailWrapper.classList.add('hidden');
+    }
+
+    updateServicePrice();
+}
+
 function updateServicePrice() {
     const issue = document.getElementById('svc-issue').value;
     const customWrapper = document.getElementById('svc-custom-issue-wrapper');
@@ -5133,8 +5187,10 @@ function updateServicePrice() {
 
     if (issue === 'Lainnya') {
         customWrapper.classList.remove('hidden');
+        priceNote.innerText = '*Harga ditentukan setelah pengecekan unit di toko.';
     } else {
         customWrapper.classList.add('hidden');
+        priceNote.innerText = '*Harga service/part ditentukan setelah pengecekan unit';
     }
 
     const priceCard = document.getElementById('svc-price-card');
@@ -5164,7 +5220,7 @@ function updateServicePrice() {
     }
 
     let totalPrice = serviceShippingCost - servicePromoDiscount;
-    if (totalPrice < 0) totalPrice = 0; // Hindari nilai minus
+    if (totalPrice < 0) totalPrice = 0;
     document.getElementById('svc-total-price').innerText = formatRp(totalPrice);
 }
 function setServiceType(type) {
@@ -5286,10 +5342,17 @@ function submitServiceGadget() {
     const rand1 = Math.floor(100 + Math.random() * 900);
     const rand2 = Math.floor(10 + Math.random() * 90);
     const orderId = `${rand1}7777${rand2}`;
-
     let finalIssue = issue === 'Lainnya' ? customIssue : issue;
     let finalPrice = document.getElementById('svc-total-price').innerText;
-    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
+    const detailService = document.getElementById('svc-detail').value.trim();
+    
+    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
+    
+    if (detailService) {
+        msg += `Detail: ${detailService}\n`;
+    }
+    
+    msg += `\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
     
     if (isActiveAntar) {
         msg += `Alamat: ${alamat}\nJadwal: ${date} (${time})\nOngkir: ${formatRp(serviceShippingCost)}\n`;
