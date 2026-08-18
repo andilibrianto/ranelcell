@@ -987,10 +987,10 @@
                     <option value="">Pilih Tipe dahulu</option>
                 </select>
             </div>
-            
+
             <div id="svc-detail-wrapper" class="mb-4 hidden">
                 <label class="text-[11px] text-gray-500 mb-1 block">Informasi Service</label>
-                <textarea id="svc-detail" class="form-input" rows="2" style="resize:none; opacity: 0.8;" readonly></textarea>
+                <div id="svc-detail" class="form-input text-xs space-y-1" style="white-space: normal;"></div>
             </div>
 
             <div id="svc-custom-issue-wrapper" class="mb-4 hidden">
@@ -1696,11 +1696,45 @@
             ]
         }
     };
+        // Database Penjelasan Kendala Service
     const serviceIssuesDb = {
-        "Ganti Layar (LCD / OLED)": "Replacement Display Assembly (LCD/OLED + Touchscreen), Layar pecah, retak, bergaris, ada bercak hitam, atau tidak bisa disentuh sama sekali. Penggantian satu set layar baru agar tampilan gambar dan sentuhan kembali normal.",
-        "Lainnya": ""
+        "Ganti LCD": {
+            kerusakan: "Ganti LCD",
+            gejala: "Layar pecah, bergaris, bayang, atau tidak bisa disentuh.",
+            penjelasan: "Penggantian satu set modul layar baru agar tampilan kembali normal dan responsif."
+        },
+        "Ganti Baterai": {
+            kerusakan: "Ganti Baterai",
+            gejala: "Baterai cepat habis, kembung, atau HP mati total.",
+            penjelasan: "Penggantian sel baterai baru agar daya tahan kembali optimal dan aman."
+        },
+        "Port Charger Rusak": {
+            kerusakan: "Port Charger Rusak",
+            gejala: "HP tidak bisa diisi daya, kabel charger harus dipegat/ dibengkokkan.",
+            penjelasan: "Penyolderan ulang atau penggantian port charger agar koneksi daya kembali lancar."
+        },
+        "Service Blower IC Power": {
+            kerusakan: "Service Blower IC Power",
+            gejala: "HP mati total, panas berlebih, atau konslet.",
+            penjelasan: "Penanganan IC Power yang mengalami konsleting dengan teknik blower khusus."
+        },
+        "Flashing / Instal Ulang OS (Fix Bootloop)": {
+            kerusakan: "Flashing / Instal Ulang OS",
+            gejala: "Bootloop, restart sendiri, atau hang di logo.",
+            penjelasan: "Instal ulang sistem operasi HP untuk mengembalikan performa tanpa menghapus data hardware."
+        },
+        "Servis IC Charger / IC Sinyal": {
+            kerusakan: "Servis IC Charger / IC Sinyal",
+            gejala: "Tidak terdeteksi jaringan, sinyal hilang, atau kasus charging macet.",
+            penjelasan: "Perbaikan jalur IC pada motherboard untuk mengatasi masalah hardware."
+        },
+        "Penanganan HP Terkena Air (Water Damage Cleaning)": {
+            kerusakan: "Water Damage Cleaning",
+            gejala: "HP terkena air, layar bergaris, atau korosi.",
+            penjelasan: "Pembersihan korosi air pada mesin HP menggunakan cairan khusus ultrasonic."
+        },
+        "Lainnya": null 
     };
-
     let serviceShippingCost = 0;
     let servicePromoDiscount = 0;
     let serviceAppliedPromoCode = '';
@@ -5203,7 +5237,7 @@ function initServiceGadget() {
             el.style.height = 'auto'; // Reset tinggi dulu
             el.style.height = (el.scrollHeight) + 'px'; // Sesuaikan dengan tinggi teks asli
         }
-        // Fungsi baru untuk menangani perubahan pilihan kendala
+                // Fungsi untuk menangani perubahan pilihan kendala
         function handleIssueChange() {
             const issue = document.getElementById('svc-issue').value;
             const customWrapper = document.getElementById('svc-custom-issue-wrapper');
@@ -5214,18 +5248,23 @@ function initServiceGadget() {
             customInput.value = ''; // Kosongkan field manual saat ganti pilihan
 
             if (issue === 'Lainnya') {
-                // Jika pilih Lainnya, sembunyikan detail otomatis, tampilkan field manual
+                // Jika pilih Lainnya, sembunyikan informasi service, tampilkan field manual
                 detailWrapper.classList.add('hidden');
                 customWrapper.classList.remove('hidden');
-                detailInput.value = '';
-            } else if (issue !== '') {
-                // Jika pilih kendala spesifik, tampilkan detail otomatis, sembunyikan field manual
+                detailInput.innerHTML = '';
+            } else if (issue !== '' && serviceIssuesDb[issue]) {
+                // Jika pilih kendala spesifik, tampilkan informasi service
                 customWrapper.classList.add('hidden');
                 detailWrapper.classList.remove('hidden');
-                detailInput.value = serviceIssuesDb[issue] || '';
                 
-                // PANGGIL FUNGSI AUTO-RESIZE DI SINI
-                autoResizeTextarea(detailInput);
+                const data = serviceIssuesDb[issue];
+                
+                // Susun format HTML dengan rata kanan-kiri (justify)
+                detailInput.innerHTML = `
+                    <p style="text-align: justify;"><strong class="text-white">Jenis Kerusakan:</strong> <span class="text-gray-300">${data.kerusakan}</span></p>
+                    <p style="text-align: justify;"><strong class="text-white">Masalah / Gejala:</strong> <span class="text-gray-300">${data.gejala}</span></p>
+                    <p style="text-align: justify;"><strong class="text-white">Penjelasan Singkat:</strong> <span class="text-gray-300">${data.penjelasan}</span></p>
+                `;
             } else {
                 // Jika kembali ke kosong
                 customWrapper.classList.add('hidden');
@@ -5399,12 +5438,12 @@ function submitServiceGadget() {
     const orderId = `${rand1}7777${rand2}`;
     let finalIssue = issue === 'Lainnya' ? customIssue : issue;
     let finalPrice = document.getElementById('svc-total-price').innerText;
-    const detailService = document.getElementById('svc-detail').value.trim();
+    const infoServiceText = document.getElementById('svc-detail')?.innerText.trim();
     
     let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
     
-    if (detailService) {
-        msg += `Detail: ${detailService}\n`;
+    if (infoServiceText) {
+        msg += `\n*Informasi Service:*\n${infoServiceText}\n`;
     }
     
     msg += `\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
