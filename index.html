@@ -1705,7 +1705,7 @@
         "Repair IC Baseband / RF Module / Sim Card Reader Check": "Perbaikan komponen sinyal di mesin HP agar kartu SIM terbaca dan muncul sinyal.",
         "Water Damage Handling (Pembersihan Korosi & Short Circuit Diagnostic)": "Pembersihan mesin dari bekas air dan perbaikan komponen yang korslet.",
         "Replacement Flex Button & Biometric Sensor": "Penggantian kabel fleksibel tombol samping atau sensor sidik jari yang macet, keras, atau tidak merespon.",
-        "Repair / Recalibration Face ID Module (TrueDepth / Dot Projector)": "Perbaikan sensor pemindaan wajah yang tidak aktif atau gagal membaca wajah.",
+        "Repair / Recalibration Face ID Module (TrueDepth / Dot Projector)": "Perbaikan sensor pemindahan wajah yang tidak aktif atau gagal membaca wajah.",
         "Write / Repair IMEI & NVRAM/NVDATA Restore": "Mengembalikan nomor IMEI yang hilang (null) agar HP bisa membaca kartu SIM dan menangkap sinyal kembali.",
         "Flashing / Reinstall Stock Firmware": "Instal ulang sistem operasi HP dari awal untuk mengembalikan kinerja HP yang lambat, error, atau terkena virus.",
         "Bypass FRP / Brand Account Unlock": "Membuka HP yang terkunci akun Mi Cloud, Google (FRP), atau akun merek lainnya karena lupa kata sandi setelah di-reset.",
@@ -5010,12 +5010,11 @@ async function submitComplaint() {
     }
     function validateServiceDate(input) {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set jam ke 00:00 agar hanya membandingkan tanggalnya saja
+        today.setHours(0, 0, 0, 0);
         
         const selectedDate = new Date(input.value);
         selectedDate.setHours(0, 0, 0, 0);
 
-        // Jika tanggal yang dipilih lebih kecil dari hari ini (masa lalu)
         if (selectedDate < today) {
             showToast('Tanggal invalid, silakan pilih tanggal yang sesuai!', 'error');
             
@@ -5049,109 +5048,85 @@ function initServiceGadget() {
     serviceAppliedPromoCode = '';
     updateServicePrice();
 }
-function updateServiceBrands() {
-    const os = document.getElementById('svc-os').value;
-    const brandSelect = document.getElementById('svc-brand');
-    brandSelect.innerHTML = '<option value="">Pilih Merk</option>';
-    brandSelect.disabled = true;
-    document.getElementById('svc-model').innerHTML = '<option value="">Pilih Merk dahulu</option>';
-    document.getElementById('svc-model').disabled = true;
-    document.getElementById('svc-issue').innerHTML = '<option value="">Pilih Tipe dahulu</option>';
-    document.getElementById('svc-issue').disabled = true;
-    document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+        function updateServiceBrands() {
+            const os = document.getElementById('svc-os').value;
+            const brandSelect = document.getElementById('svc-brand');
+            brandSelect.innerHTML = '<option value="">Pilih Merk</option>';
+            brandSelect.disabled = true;
+            
+            const modelInput = document.getElementById('svc-model');
+            modelInput.value = ''; 
+            modelInput.disabled = true;
+            
+            const issueSelect = document.getElementById('svc-issue');
+            issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
+            issueSelect.disabled = true;
 
-    if (os && gadgetDb[os]) {
-        Object.keys(gadgetDb[os]).forEach(brand => {
-            brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
-        });
-        brandSelect.disabled = false;
-    }
-    updateServicePrice();
-}
-function updateServiceModels() {
-    const os = document.getElementById('svc-os').value;
-    const brand = document.getElementById('svc-brand').value;
-    const modelInput = document.getElementById('svc-model');
-    const modelList = document.getElementById('autocomplete-model-list');
-    
-    modelInput.value = ''; 
-    modelList.innerHTML = ''; 
-    modelInput.removeAttribute('disabled');
-    
-    document.getElementById('svc-issue').innerHTML = '<option value="">Pilih Tipe dahulu</option>';
-    document.getElementById('svc-issue').disabled = true;
-    document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+            document.getElementById('autocomplete-model-list').innerHTML = '';
+            document.getElementById('autocomplete-model-list').classList.remove('active');
+            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+            document.getElementById('svc-detail-wrapper').classList.add('hidden');
+            document.getElementById('svc-custom-issue').value = '';
+            document.getElementById('svc-detail').value = '';
 
-    if (os && brand && gadgetDb[os][brand]) {
-        modelInput.placeholder = 'Ketik tipe handphone';
-    } else {
-        modelInput.placeholder = 'Pilih Merk dahulu';
-    }
-    updateServicePrice();
-}
-function handleModelInput(val) {
-    const os = document.getElementById('svc-os').value;
-    const brand = document.getElementById('svc-brand').value;
-    const listEl = document.getElementById('autocomplete-model-list');
-    
-    listEl.innerHTML = '';
-    
-    if (!val || !os || !brand || !gadgetDb[os][brand]) {
-        listEl.classList.remove('active');
-        return;
-    }
+            if (os && gadgetDb[os]) {
+                Object.keys(gadgetDb[os]).forEach(brand => {
+                    brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+                });
+                brandSelect.disabled = false;
+                modelInput.placeholder = 'Pilih Merk dahulu';
+            }
+            updateServicePrice();
+        }
+        function updateServiceModels() {
+            const os = document.getElementById('svc-os').value;
+            const brand = document.getElementById('svc-brand').value;
+            const modelInput = document.getElementById('svc-model');
+            const modelList = document.getElementById('autocomplete-model-list');
+            
+            modelInput.value = ''; 
+            modelList.innerHTML = ''; 
+            modelInput.removeAttribute('disabled');
+            
+            const issueSelect = document.getElementById('svc-issue');
+            issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
+            issueSelect.disabled = true;
 
-    // Karena database berbentuk array, kita langsung filter dari array tersebut
-    const models = gadgetDb[os][brand];
-    const filteredModels = models.filter(model => 
-        model.toLowerCase().includes(val.toLowerCase())
-    );
+            document.getElementById('autocomplete-model-list').classList.remove('active');
+            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+            document.getElementById('svc-detail-wrapper').classList.add('hidden');
+            document.getElementById('svc-custom-issue').value = '';
+            document.getElementById('svc-detail').value = '';
 
-    if (filteredModels.length > 0) {
-        filteredModels.forEach(model => {
-            const item = document.createElement('div');
-            item.className = 'autocomplete-item';
-            item.innerText = model;
-            item.onmousedown = (e) => {
-                e.preventDefault();
-                document.getElementById('svc-model').value = model;
-                listEl.innerHTML = '';
-                listEl.classList.remove('active');
-                updateServiceIssues();
-            };
-            listEl.appendChild(item);
-        });
-        listEl.classList.add('active');
-    } else {
-        listEl.classList.remove('active');
-    }
-}
-function updateServiceIssues() {
-    const os = document.getElementById('svc-os').value;
-    const brand = document.getElementById('svc-brand').value;
-    const model = document.getElementById('svc-model').value.trim(); 
-    const issueSelect = document.getElementById('svc-issue');
-    issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
-    issueSelect.disabled = true;
-    
-    // Sembunyikan semua field bantuan
-    document.getElementById('autocomplete-model-list').classList.remove('active');
-    document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
-    document.getElementById('svc-detail-wrapper').classList.add('hidden');
-    document.getElementById('svc-custom-issue').value = '';
-    document.getElementById('svc-detail').value = '';
+            if (os && brand && gadgetDb[os][brand]) {
+                modelInput.placeholder = 'Ketik tipe handphone';
+            } else {
+                modelInput.placeholder = 'Pilih Merk dahulu';
+            }
+            updateServicePrice();
+        }
+        function updateServiceIssues() {
+            const os = document.getElementById('svc-os').value;
+            const brand = document.getElementById('svc-brand').value;
+            const model = document.getElementById('svc-model').value.trim(); 
+            const issueSelect = document.getElementById('svc-issue');
+            issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
+            issueSelect.disabled = true;
 
-    if (os && brand && model) {
-        // Isi dropdown dengan database serviceIssuesDb
-        Object.keys(serviceIssuesDb).forEach(issue => {
-            issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
-        });
-        issueSelect.disabled = false;
-    }
-    updateServicePrice();
-}
+            document.getElementById('autocomplete-model-list').classList.remove('active');
+            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
+            document.getElementById('svc-detail-wrapper').classList.add('hidden');
+            document.getElementById('svc-custom-issue').value = '';
+            document.getElementById('svc-detail').value = '';
 
-// Fungsi baru untuk menangani perubahan pilihan kendala
+            if (os && brand && model) {
+                Object.keys(serviceIssuesDb).forEach(issue => {
+                    issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
+                });
+                issueSelect.disabled = false;
+            }
+            updateServicePrice();
+        }
 function handleIssueChange() {
     const issue = document.getElementById('svc-issue').value;
     const customWrapper = document.getElementById('svc-custom-issue-wrapper');
