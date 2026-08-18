@@ -978,7 +978,7 @@
             </div>
             <div class="mb-4 autocomplete-container">
                 <label class="text-[11px] text-gray-500 mb-1 block">Tipe Handphone</label>
-                <input type="text" id="svc-model" class="form-input" placeholder="Pilih Merk dahulu" oninput="handleModelInput(this.value)" onblur="updateServiceIssues()" autocomplete="off">
+                <input type="text" id="svc-model" class="form-input" placeholder="Pilih Merk dahulu" oninput="handleModelInput(this.value)" autocomplete="off">
                 <div id="autocomplete-model-list" class="autocomplete-list"></div>
             </div>
             <div class="mb-4">
@@ -5048,7 +5048,7 @@ function initServiceGadget() {
     serviceAppliedPromoCode = '';
     updateServicePrice();
 }
-        function updateServiceBrands() {
+                function updateServiceBrands() {
             const os = document.getElementById('svc-os').value;
             const brandSelect = document.getElementById('svc-brand');
             brandSelect.innerHTML = '<option value="">Pilih Merk</option>';
@@ -5062,12 +5062,17 @@ function initServiceGadget() {
             issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
             issueSelect.disabled = true;
 
-            document.getElementById('autocomplete-model-list').innerHTML = '';
-            document.getElementById('autocomplete-model-list').classList.remove('active');
-            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
-            document.getElementById('svc-detail-wrapper').classList.add('hidden');
-            document.getElementById('svc-custom-issue').value = '';
-            document.getElementById('svc-detail').value = '';
+            // RESET FIELD BANTUAN (Aman jika elemen tidak ditemukan)
+            const listEl = document.getElementById('autocomplete-model-list');
+            if (listEl) { listEl.innerHTML = ''; listEl.classList.remove('active'); }
+            const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+            if (customWrapper) customWrapper.classList.add('hidden');
+            const detailWrapper = document.getElementById('svc-detail-wrapper');
+            if (detailWrapper) detailWrapper.classList.add('hidden');
+            const customInput = document.getElementById('svc-custom-issue');
+            if (customInput) customInput.value = '';
+            const detailInput = document.getElementById('svc-detail');
+            if (detailInput) detailInput.value = '';
 
             if (os && gadgetDb[os]) {
                 Object.keys(gadgetDb[os]).forEach(brand => {
@@ -5078,6 +5083,7 @@ function initServiceGadget() {
             }
             updateServicePrice();
         }
+
         function updateServiceModels() {
             const os = document.getElementById('svc-os').value;
             const brand = document.getElementById('svc-brand').value;
@@ -5085,18 +5091,23 @@ function initServiceGadget() {
             const modelList = document.getElementById('autocomplete-model-list');
             
             modelInput.value = ''; 
-            modelList.innerHTML = ''; 
+            if (modelList) modelList.innerHTML = ''; 
             modelInput.removeAttribute('disabled');
             
             const issueSelect = document.getElementById('svc-issue');
             issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
             issueSelect.disabled = true;
 
-            document.getElementById('autocomplete-model-list').classList.remove('active');
-            document.getElementById('svc-custom-issue-wrapper').classList.add('hidden');
-            document.getElementById('svc-detail-wrapper').classList.add('hidden');
-            document.getElementById('svc-custom-issue').value = '';
-            document.getElementById('svc-detail').value = '';
+            // RESET FIELD BANTUAN (Aman jika elemen tidak ditemukan)
+            if (modelList) modelList.classList.remove('active');
+            const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+            if (customWrapper) customWrapper.classList.add('hidden');
+            const detailWrapper = document.getElementById('svc-detail-wrapper');
+            if (detailWrapper) detailWrapper.classList.add('hidden');
+            const customInput = document.getElementById('svc-custom-issue');
+            if (customInput) customInput.value = '';
+            const detailInput = document.getElementById('svc-detail');
+            if (detailInput) detailInput.value = '';
 
             if (os && brand && gadgetDb[os][brand]) {
                 modelInput.placeholder = 'Ketik tipe handphone';
@@ -5105,24 +5116,67 @@ function initServiceGadget() {
             }
             updateServicePrice();
         }
+
+        function updateServiceIssues() {
+            const os = document.getElementById('svc-os').value;
+            const brand = document.getElementById('svc-brand').value;
+            const model = document.getElementById('svc-model').value.trim(); 
+            const issueSelect = document.getElementById('svc-issue');
+            issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
+            issueSelect.disabled = true;
+
+            // RESET FIELD BANTUAN (Aman jika elemen tidak ditemukan)
+            const listEl = document.getElementById('autocomplete-model-list');
+            if (listEl) listEl.classList.remove('active');
+            const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+            if (customWrapper) customWrapper.classList.add('hidden');
+            const detailWrapper = document.getElementById('svc-detail-wrapper');
+            if (detailWrapper) detailWrapper.classList.add('hidden');
+            const customInput = document.getElementById('svc-custom-issue');
+            if (customInput) customInput.value = '';
+            const detailInput = document.getElementById('svc-detail');
+            if (detailInput) detailInput.value = '';
+
+            if (os && brand && model) {
+                if (typeof serviceIssuesDb !== 'undefined') {
+                    Object.keys(serviceIssuesDb).forEach(issue => {
+                        issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
+                    });
+                }
+                issueSelect.disabled = false;
+            }
+            updateServicePrice();
+        }
+
         function handleModelInput(val) {
             const os = document.getElementById('svc-os').value;
             const brand = document.getElementById('svc-brand').value;
             const listEl = document.getElementById('autocomplete-model-list');
+            const issueSelect = document.getElementById('svc-issue');
             
-            listEl.innerHTML = '';
+            if (listEl) listEl.innerHTML = '';
             
             if (!val || !os || !brand || !gadgetDb[os][brand]) {
-                listEl.classList.remove('active');
+                if (listEl) listEl.classList.remove('active');
+                // Jika teks dikosongkan, kunci kembali dropdown kendala
+                if (!val) {
+                    issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
+                    issueSelect.disabled = true;
+                    const customWrapper = document.getElementById('svc-custom-issue-wrapper');
+                    if (customWrapper) customWrapper.classList.add('hidden');
+                    const detailWrapper = document.getElementById('svc-detail-wrapper');
+                    if (detailWrapper) detailWrapper.classList.add('hidden');
+                }
                 return;
             }
 
+            // Filter daftar tipe HP
             const models = gadgetDb[os][brand];
             const filteredModels = models.filter(model => 
                 model.toLowerCase().includes(val.toLowerCase())
             );
 
-            if (filteredModels.length > 0) {
+            if (filteredModels.length > 0 && listEl) {
                 filteredModels.forEach(model => {
                     const item = document.createElement('div');
                     item.className = 'autocomplete-item';
@@ -5138,7 +5192,24 @@ function initServiceGadget() {
                 });
                 listEl.classList.add('active');
             } else {
-                listEl.classList.remove('active');
+                if (listEl) listEl.classList.remove('active');
+            }
+
+            // AKTIFKAN DROPDOWN KENDALA SECARA REAL-TIME SAAT USER MENGETIK
+            // Ini mencegah bug tidak bisa diklik karena onblur
+            if (val.trim().length > 0) {
+                if (issueSelect.disabled) {
+                    issueSelect.innerHTML = '<option value="">Pilih Kendala</option>';
+                    if (typeof serviceIssuesDb !== 'undefined') {
+                        Object.keys(serviceIssuesDb).forEach(issue => {
+                            issueSelect.innerHTML += `<option value="${issue}">${issue}</option>`;
+                        });
+                    }
+                    issueSelect.disabled = false;
+                }
+            } else {
+                issueSelect.innerHTML = '<option value="">Pilih Tipe dahulu</option>';
+                issueSelect.disabled = true;
             }
         }
 function handleIssueChange() {
