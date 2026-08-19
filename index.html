@@ -3705,7 +3705,7 @@ async function applyPromoCode() {
             sendOrderToWhatsApp();
         }
     }
-    function renderQRIS() {
+    async function renderQRIS() {
     const el = document.getElementById('qris-content');
     const total = getGrandTotal(); 
     el.innerHTML = `
@@ -3728,6 +3728,14 @@ async function applyPromoCode() {
             </button>
             <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
         </div>`;
+
+    // 1. Pre-generate gambar di latar belakang saat halaman dibuka
+    // Ini sangat penting agar iOS tidak memblokir tombol Share nantinya
+    try {
+        window._cachedQRISBlob = await generateCompositeQRIS(total);
+    } catch (err) {
+        console.error('Gagal pre-generate QRIS:', err);
+    }
 }
 // Fungsi untuk membungkus teks panjang di Canvas
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -3837,30 +3845,52 @@ async function generateCompositeQRIS(totalNominal) {
 }
 async function saveQRISImage() {
     const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
-    const total = getGrandTotal();
+    const total = getGrandTotal(); 
 
-    showLoading('');
+    // Deteksi iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+    // Jika gambar belum ter-generate (karena user klik terlalu cepat), generate sekarang
+    if (!window._cachedQRISBlob) {
+        showLoading('Menyiapkan barcode...');
+        try {
+            window._cachedQRISBlob = await generateCompositeQRIS(total);
+        } catch (err) {
+            hideLoading();
+            showToast('Gagal menyiapkan barcode: ' + err.message, 'error');
+            return;
+        }
+        hideLoading();
+    }
+
+    const blob = window._cachedQRISBlob;
+
+    // Eksekusi langsung tanpa showLoading agar antrian klik di iOS tidak terputus
     try {
-        const blob = await generateCompositeQRIS(total);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        
         if (isIOS) {
+            // --- BLOK KODE UNTUK iOS ---
             const file = new File([blob], fileName, { type: 'image/png' });
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // Panggilan navigator.share() dilakukan secara langsung (tanpa await proses lain)
                 await navigator.share({
                     files: [file],
-                    title: 'Simpan QRIS',
-                    text: 'Klik "Save Image" untuk menyimpan ke galeri.'
+                    title: 'QRIS Ranel Cell',
+                    text: 'Silakan simpan gambar QRIS ini.'
                 });
-                showToast('Silakan pilih "Save Image" untuk menyimpan', 'info');
             } else {
+                // Fallback jika Safari terlalu lama / versi lama
                 const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
                 showToast('Tekan lama gambar lalu pilih "Save to Photos"', 'info', 5000);
             }
         } else {
+            // --- BLOK KODE UNTUK ANDROID & DESKTOP ---
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -3870,7 +3900,7 @@ async function saveQRISImage() {
             document.body.removeChild(a);
             
             setTimeout(() => URL.revokeObjectURL(url), 1000);
-            showToast('Barcode berhasil disimpan di folder Download!', 'success');
+            showToast('Barcode berhasil disimpan!', 'success');
         }
     } catch (err) {
         console.error('Save Error:', err);
@@ -3878,7 +3908,8 @@ async function saveQRISImage() {
             showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
         }
     } finally {
-        hideLoading();
+        // Bersihkan cache memory setelah digunakan agar RAM HP tidak penuh
+        window._cachedQRISBlob = null;
     }
 }
     function confirmQRISPayment() { sendOrderToWhatsApp(); }
