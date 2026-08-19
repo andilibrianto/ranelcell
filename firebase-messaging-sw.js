@@ -13,13 +13,21 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Tangani notifikasi saat aplikasi tertutup (Background)
+// Tangani notifikasi background
 messaging.onBackgroundMessage((payload) => {
-    const notificationTitle = payload.notification?.title || '🔔 RANEL CELL';
+    // PENTING: Jika pesan dari Firebase Console (mengandung 'notification'),
+    // biarkan Firebase menampilkannya otomatis. Jangan buat dobel!
+    if (payload.notification) {
+        return; 
+    }
+
+    // Jika pesan dari Vercel Backend (hanya 'data'), kita tampilkan manual
+    const notificationTitle = payload.data?.title || '🔔 RANEL CELL';
     const notificationOptions = {
-        body: payload.notification?.body || 'Pesan baru masuk!',
+        body: payload.data?.body || 'Pesan baru masuk!',
         icon: './Gambar/Logo_BL_intuls_NoBCKG.png',
-        badge: './Gambar/Logo_BL_intuls_NoBCKG.png'
+        badge: './Gambar/Logo_BL_intuls_NoBCKG.png',
+        data: payload.data
     };
     self.registration.showNotification(notificationTitle, notificationOptions);
 });

@@ -5571,35 +5571,28 @@ function serviceGadgetBack() {
     resetServiceGadgetForm();
     showView('view-home');
 }
-                // --- FCM SETUP UNTUK PELANGGAN ---
         async function setupCustomerFCM() {
             const { app, getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
             try {
-                // Gunakan app dari window.firebaseAuth
                 const messaging = getMessaging(app);
-                
-                // 1. Minta izin notifikasi ke user
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     console.log('Izin notifikasi ditolak');
                     return;
                 }
 
-                // 2. Ambil Token FCM (Ganti VAPID Key dengan milik Anda)
                 const currentToken = await getToken(messaging, { 
-                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' // PASTIKAN INI SUDAH DIISI VAPID KEY ASLI
+                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0'
                 });
 
                 if (currentToken) {
                     console.log('Token Pelanggan berhasil didapat:', currentToken);
-                    // Simpan token ke koleksi 'user_tokens' di Firestore
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
                         createdAt: new Date().toISOString()
                     });
                 }
 
-                // 3. Tangkap pesan saat aplikasi sedang dibuka (Foreground)
                 onMessage(messaging, (payload) => {
                     console.log('Notifikasi masuk:', payload);
                     const title = payload.notification?.title || 'RANEL CELL';
