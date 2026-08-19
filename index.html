@@ -5571,33 +5571,48 @@ function serviceGadgetBack() {
     resetServiceGadgetForm();
     showView('view-home');
 }
+                // --- FCM SETUP UNTUK PELANGGAN ---
         async function setupCustomerFCM() {
             const { app, getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
             try {
                 const messaging = getMessaging(app);
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.log('Izin notifikasi ditolak');
+                
+                // 1. Cek apakah browser mendukung Service Worker & Notification
+                if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+                    console.log('Browser tidak mendukung Notifikasi/SW');
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2');
+                // 2. Paksa daftar ulang Service Worker (Penting setelah uninstall PWA)
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=3');
                 await navigator.serviceWorker.ready;
 
+                // 3. Minta izin notifikasi (Jika statusnya 'default', pop-up akan muncul)
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.log('Izin notifikasi tidak diberikan:', permission);
+                    return;
+                }
+
+                // 4. Ambil Token FCM baru
                 const currentToken = await getToken(messaging, { 
-                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' 
+                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' // PASTIKAN VAPID KEY ASLI ADA DI SINI
                 });
 
                 if (currentToken) {
                     console.log('Token Pelanggan berhasil didapat:', currentToken);
+                    // Simpan token ke Firestore (akan menimpa token lama jika ada)
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
                         createdAt: new Date().toISOString()
                     });
+                } else {
+                    console.log('Tidak ada token FCM yang didapat.');
                 }
 
+                // 5. Tangkap pesan saat aplikasi sedang dibuka (Foreground)
                 onMessage(messaging, (payload) => {
-                    console.log('Notifikasi masuk:', payload);
+                    console.log('Notifikasi masuk (Foreground):', payload);
                     const title = payload.notification?.title || 'RANEL CELL';
                     const body = payload.notification?.body || 'Pesan baru masuk!';
                     showToast(`${title}\n${body}`, 'info', 5000);
