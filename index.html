@@ -3729,29 +3729,101 @@ async function applyPromoCode() {
             <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
         </div>`;
 }
+// Fungsi untuk membungkus teks panjang di Canvas
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(' ');
+    let line = '';
+    let testLine = '';
+    let lineCount = 0;
+
+    for (let n = 0; n < words.length; n++) {
+        testLine += (testLine === '' ? '' : ' ') + words[n];
+        const metrics = ctx.measureText(testLine);
+        const testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, y);
+            line = words[n];
+            testLine = words[n];
+            y += lineHeight;
+            lineCount++;
+        } else {
+            line = testLine;
+        }
+    }
+    ctx.fillText(line, x, y);
+    return lineCount;
+}
+
+// Fungsi untuk merangkai QRIS + Nominal + Teks menjadi satu gambar
+async function generateCompositeQRIS(totalNominal) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous"; // Mencegah masalah CORS
+        img.onload = function() {
+            // Ukuran kanvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Lebar kanvas 400px, tinggi disesuaikan
+            const canvasWidth = 400;
+            const qrSize = 300;
+            const padding = 40;
+            const textAreaHeight = 120; // Ruang untuk teks di bawah QR
+            
+            canvas.width = canvasWidth;
+            canvas.height = qrSize + textAreaHeight + (padding * 2);
+            
+            // 1. Background Putih
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 2. Gambar QRIS (Ditengah)
+            const xPos = (canvas.width - qrSize) / 2;
+            const yPos = padding;
+            ctx.drawImage(img, xPos, yPos, qrSize, qrSize);
+            
+            // 3. Teks Nominal (Bold & Besar)
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 32px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(formatRp(totalNominal), canvas.width / 2, yPos + qrSize + 40);
+            
+            // 4. Keterangan (Teks terbungkus/wrap)
+            ctx.fillStyle = '#444444';
+            ctx.font = '14px Arial, sans-serif';
+            const instruction = "Harap Simpan Bukti Pembayaran Pada Saat Kirim Data ke WhatsApp";
+            wrapText(ctx, instruction, canvas.width / 2, yPos + qrSize + 75, canvas.width - 40, 20);
+            
+            // Ubah canvas menjadi Blob file
+            canvas.toBlob(function(blob) {
+                resolve(blob);
+            }, 'image/png');
+        };
+        img.onerror = function() {
+            reject(new Error('Gagal memuat gambar QRIS'));
+        };
+        img.src = './Gambar/QRIS_STATIS.png'; // Lokasi gambar lokal Anda
+    });
+}
 async function saveQRISImage() {
-    const imgSrc = './Gambar/QRIS_STATIS.png';
     const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
+    const total = getGrandTotal(); // Mengambil nominal dari transaksi
 
     showLoading('');
 
     try {
-        // Fetch gambar lokal dan ubah menjadi Blob
-        const response = await fetch(imgSrc, { cache: 'no-store' });
-        if (!response.ok) throw new Error('Gagal memuat gambar QRIS');
-        
-        const blob = await response.blob();
+        // 1. Buat gambar komposit (QR + Teks) menggunakan Canvas
+        const blob = await generateCompositeQRIS(total);
 
-        // Deteksi apakah perangkat adalah iOS (iPhone/iPad)
-        // Ini penting karena Apple memblokir fungsi download otomatis ke galeri
+        // 2. Deteksi perangkat iOS (iPhone/iPad)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS) {
-            // --- BLOK KODE UNTUK iOS (iPhone/iPad) ---
+            // --- BLOK KODE UNTUK iOS ---
             const file = new File([blob], fileName, { type: 'image/png' });
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                // Wajib memunculkan popup Share di iPhone agar user bisa klik "Save Image"
+                // Memunculkan popup Share di iPhone agar user bisa klik "Save Image"
                 await navigator.share({
                     files: [file],
                     title: 'Simpan QRIS',
@@ -3759,7 +3831,7 @@ async function saveQRISImage() {
                 });
                 showToast('Silakan pilih "Save Image" untuk menyimpan', 'info');
             } else {
-                // Fallback jika browser Safari terlalu lama
+                // Fallback Safari lama
                 const url = URL.createObjectURL(blob);
                 window.open(url, '_blank');
                 showToast('Tekan lama gambar lalu pilih "Save to Photos"', 'info', 5000);
@@ -3781,7 +3853,6 @@ async function saveQRISImage() {
         }
     } catch (err) {
         console.error('Save Error:', err);
-        // Jika user membatalkan share di iOS, jangan tampilkan error
         if (err.name !== 'AbortError') {
             showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
         }
