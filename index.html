@@ -3705,27 +3705,22 @@ async function applyPromoCode() {
             sendOrderToWhatsApp();
         }
     }
-    async function renderQRIS() {
+async function renderQRIS() {
     const el = document.getElementById('qris-content');
     const total = getGrandTotal(); 
     
     showLoading('');
 
     try {
-        // 1. Generate gambar komposit HD (Header + QRIS + Nominal + Teks)
-        const blob = await generateCompositeQRIS(total);
-        window._cachedQRISBlob = blob; // Simpan untuk tombol Android/Desktop
 
-        // 2. Ubah Blob menjadi Base64 Data URL 
-        // Ini adalah kunci agar iOS PWA 100% mau menampilkan gambar & mengizinkan long-press
+        const blob = await generateCompositeQRIS(total);
+        window._cachedQRISBlob = blob;
+
         const reader = new FileReader();
         reader.onloadend = function() {
             const dataUrl = reader.result;
-
-            // 3. Deteksi iOS
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             
-            // 4. Susun UI tombol simpan
             let saveSectionHtml = '';
             if (isIOS) {
                 saveSectionHtml = `
@@ -3746,8 +3741,6 @@ async function applyPromoCode() {
                 `;
             }
 
-            // 5. Tampilkan gambar ke layar
-            // -webkit-touch-callout: default !important WAJIB ada agar menu longpress muncul di iOS
             el.innerHTML = `
                 <div class="text-center">
                     <div class="inline-block p-4 rounded-2xl bg-white mb-5">
@@ -3769,7 +3762,7 @@ async function applyPromoCode() {
             
             hideLoading();
         };
-        reader.readAsDataURL(blob); // Proses konversi Blob ke Base64
+        reader.readAsDataURL(blob);
 
     } catch (err) {
         hideLoading();
@@ -3777,7 +3770,6 @@ async function applyPromoCode() {
         el.innerHTML = `<p class="text-center text-red-400">Gagal memuat barcode. Coba refresh halaman.</p>`;
     }
 }
-// Fungsi untuk membungkus teks panjang di Canvas
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(' ');
     let line = '';
@@ -3801,78 +3793,55 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     ctx.fillText(line, x, y);
     return lineCount;
 }
-// Fungsi untuk merangkai Header + QRIS + Nominal + Teks menjadi satu gambar HD
 async function generateCompositeQRIS(totalNominal) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.crossOrigin = "Anonymous"; // Mencegah masalah CORS
+        img.crossOrigin = "Anonymous";
         img.onload = function() {
-            // Pengaturan Skala Resolusi (3x lipat resolusi normal)
-            const scale = 3; 
-            
-            // Ukuran dasar (koordinat logis)
+            const scale = 3;
             const baseWidth = 400;
             const qrSize = 260; 
             const padding = 30;
             const headerHeight = 80;
-            
-            // Hitung tinggi dasar total
-            let baseHeight = padding + headerHeight + qrSize + 140; 
-            
-            // Set ukuran canvas fisik (dikali skala)
+            let baseHeight = padding + headerHeight + qrSize + 140;
             const canvas = document.createElement('canvas');
             canvas.width = baseWidth * scale;
             canvas.height = baseHeight * scale;
             const ctx = canvas.getContext('2d');
-            
-            // Skalakan context agar kita bisa tetap coding menggunakan ukuran dasar
+
             ctx.scale(scale, scale);
-            
-            // Aktifkan smoothing agar gambar yang diperbesar tetap halus
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            
-            // 1. Background Putih
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, baseWidth, baseHeight);
             
-            // Posisi awal Y
             let currentY = padding;
             
-            // 2. Teks Header Atas
             ctx.textAlign = 'center';
-            
-            // "RANEL CELL"
-            ctx.fillStyle = '#FF2D78'; // Warna pink sesuai tema
+            ctx.fillStyle = '#FF2D78';
             ctx.font = 'bold 28px Arial, sans-serif';
             ctx.fillText('RANEL CELL', baseWidth / 2, currentY + 28);
-            currentY += 45; // Spasi setelah judul
-            
-            // "Pembayaran Bisa Menggunakan eWallet dan Bank Apapun"
+            currentY += 45;
+
             ctx.fillStyle = '#333333';
             ctx.font = '14px Arial, sans-serif';
             const headerSubText = "Pembayaran Bisa Menggunakan eWallet dan Bank Apapun";
             const headerLines = wrapText(ctx, headerSubText, baseWidth / 2, currentY, baseWidth - 40, 18);
-            currentY += (headerLines * 18) + 20; // Spasi setelah sub-header
+            currentY += (headerLines * 18) + 20;
 
-            // 3. Gambar QRIS (Ditengah)
             const xPos = (baseWidth - qrSize) / 2;
             ctx.drawImage(img, xPos, currentY, qrSize, qrSize);
-            currentY += qrSize + 30; // Spasi setelah QR
+            currentY += qrSize + 30;
             ctx.fillStyle = '#000000';
-            
-            // 4. Teks Nominal (Bold & Besar)
             ctx.font = 'bold 32px Arial, sans-serif';
             ctx.fillText(formatRp(totalNominal), baseWidth / 2, currentY);
-            currentY += 45; // Spasi setelah nominal
+            currentY += 45;
             
-            // 5. Keterangan Bawah (Teks terbungkus/wrap)
             ctx.fillStyle = '#444444';
             ctx.font = '14px Arial, sans-serif';
             const instruction = "Harap Simpan Bukti Pembayaran Pada Saat Kirim Data ke WhatsApp";
             wrapText(ctx, instruction, baseWidth / 2, currentY, baseWidth - 40, 20);
             
-            // Ubah canvas menjadi Blob file
             canvas.toBlob(function(blob) {
                 resolve(blob);
             }, 'image/png');
@@ -3880,7 +3849,7 @@ async function generateCompositeQRIS(totalNominal) {
         img.onerror = function() {
             reject(new Error('Gagal memuat gambar QRIS'));
         };
-        img.src = './Gambar/QRIS_STATIS.png'; // Lokasi gambar lokal Anda
+        img.src = './Gambar/QRIS_STATIS.png';
     });
 }
 async function saveQRISImage() {
@@ -3893,7 +3862,6 @@ async function saveQRISImage() {
     }
 
     try {
-        // Langsung mengunduh ke folder Download tanpa popup
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -4330,7 +4298,35 @@ async function saveQRISImage() {
     }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
-    let deferredPrompt = null
+    let deferredPrompt = null;
+
+// --- TAMBAHKAN KODE INI ---
+// Menangkap event install PWA dari browser
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Mencegah browser menampilkan prompt default kecil di versi lama
+        e.preventDefault();
+            // Simpan event ke dalam variabel deferredPrompt agar bisa dipanggil nanti
+        deferredPrompt = e;
+        console.log('PWA Install Prompt siap ditampilkan.');
+    
+    // Opsional: Jika user sudah berada di halaman login/home, langsung tampilkan modalnya
+        if (currentView === 'view-login' || currentView === 'view-signup' || currentView === 'view-home') {
+            // Cek apakah user belum pernah menutup modalnya di sesi ini
+            if (sessionStorage.getItem('pwa_prompt_dismissed') !== 'true') {
+                setTimeout(() => {
+                    showInstallPwaModal();
+                }, 1500);
+            }
+        }
+    });
+
+    // Mendeteksi jika PWA sudah berhasil di-install, lalu sembunyikan prompt
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            console.log('Aplikasi PWA berhasil diinstall.');
+            showToast('Terima kasih telah memasang aplikasi!', 'success');
+    });
+// --- AKHIR KODE TAMBAHAN ---
     function handleSignup() {
         const nama = document.getElementById('signup-nama').value.trim();
         const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
