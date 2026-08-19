@@ -3753,29 +3753,40 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     ctx.fillText(line, x, y);
     return lineCount;
 }
-
-// Fungsi untuk merangkai Header + QRIS + Nominal + Teks menjadi satu gambar
+// Fungsi untuk merangkai Header + QRIS + Nominal + Teks menjadi satu gambar HD
 async function generateCompositeQRIS(totalNominal) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = "Anonymous"; // Mencegah masalah CORS
         img.onload = function() {
-            // Ukuran kanvas
+            // Pengaturan Skala Resolusi (3x lipat resolusi normal)
+            const scale = 3; 
+            
+            // Ukuran dasar (koordinat logis)
+            const baseWidth = 400;
+            const qrSize = 260; 
+            const padding = 30;
+            const headerHeight = 80;
+            
+            // Hitung tinggi dasar total
+            let baseHeight = padding + headerHeight + qrSize + 140; 
+            
+            // Set ukuran canvas fisik (dikali skala)
             const canvas = document.createElement('canvas');
+            canvas.width = baseWidth * scale;
+            canvas.height = baseHeight * scale;
             const ctx = canvas.getContext('2d');
             
-            const canvasWidth = 400;
-            const qrSize = 260; // QR sedikit dikecilkan agar muat dengan teks atas
-            const padding = 30;
-            const headerHeight = 80; // Ruang untuk teks RANEL CELL di atas
+            // Skalakan context agar kita bisa tetap coding menggunakan ukuran dasar
+            ctx.scale(scale, scale);
             
-            // Tinggi total kanvas disesuaikan
-            canvas.width = canvasWidth;
-            canvas.height = padding + headerHeight + qrSize + 140;
+            // Aktifkan smoothing agar gambar yang diperbesar tetap halus
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             
             // 1. Background Putih
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, baseWidth, baseHeight);
             
             // Posisi awal Y
             let currentY = padding;
@@ -3786,33 +3797,32 @@ async function generateCompositeQRIS(totalNominal) {
             // "RANEL CELL"
             ctx.fillStyle = '#FF2D78'; // Warna pink sesuai tema
             ctx.font = 'bold 28px Arial, sans-serif';
-            ctx.fillText('RANEL CELL', canvas.width / 2, currentY + 28);
+            ctx.fillText('RANEL CELL', baseWidth / 2, currentY + 28);
             currentY += 45; // Spasi setelah judul
             
             // "Pembayaran Bisa Menggunakan eWallet dan Bank Apapun"
             ctx.fillStyle = '#333333';
             ctx.font = '14px Arial, sans-serif';
-            // Bungkus teks header agar tidak keluar kanvas
             const headerSubText = "Pembayaran Bisa Menggunakan eWallet dan Bank Apapun";
-            const headerLines = wrapText(ctx, headerSubText, canvas.width / 2, currentY, canvas.width - 40, 18);
+            const headerLines = wrapText(ctx, headerSubText, baseWidth / 2, currentY, baseWidth - 40, 18);
             currentY += (headerLines * 18) + 20; // Spasi setelah sub-header
 
             // 3. Gambar QRIS (Ditengah)
-            const xPos = (canvas.width - qrSize) / 2;
+            const xPos = (baseWidth - qrSize) / 2;
             ctx.drawImage(img, xPos, currentY, qrSize, qrSize);
             currentY += qrSize + 30; // Spasi setelah QR
             ctx.fillStyle = '#000000';
             
             // 4. Teks Nominal (Bold & Besar)
             ctx.font = 'bold 32px Arial, sans-serif';
-            ctx.fillText(formatRp(totalNominal), canvas.width / 2, currentY);
+            ctx.fillText(formatRp(totalNominal), baseWidth / 2, currentY);
             currentY += 45; // Spasi setelah nominal
             
             // 5. Keterangan Bawah (Teks terbungkus/wrap)
             ctx.fillStyle = '#444444';
             ctx.font = '14px Arial, sans-serif';
             const instruction = "Harap Simpan Bukti Pembayaran Pada Saat Kirim Data ke WhatsApp";
-            wrapText(ctx, instruction, canvas.width / 2, currentY, canvas.width - 40, 20);
+            wrapText(ctx, instruction, baseWidth / 2, currentY, baseWidth - 40, 20);
             
             // Ubah canvas menjadi Blob file
             canvas.toBlob(function(blob) {
@@ -3827,23 +3837,18 @@ async function generateCompositeQRIS(totalNominal) {
 }
 async function saveQRISImage() {
     const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
-    const total = getGrandTotal(); // Mengambil nominal dari transaksi
+    const total = getGrandTotal();
 
     showLoading('');
 
     try {
-        // 1. Buat gambar komposit (QR + Teks) menggunakan Canvas
         const blob = await generateCompositeQRIS(total);
-
-        // 2. Deteksi perangkat iOS (iPhone/iPad)
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         
         if (isIOS) {
-            // --- BLOK KODE UNTUK iOS ---
             const file = new File([blob], fileName, { type: 'image/png' });
             
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                // Memunculkan popup Share di iPhone agar user bisa klik "Save Image"
                 await navigator.share({
                     files: [file],
                     title: 'Simpan QRIS',
@@ -3851,14 +3856,11 @@ async function saveQRISImage() {
                 });
                 showToast('Silakan pilih "Save Image" untuk menyimpan', 'info');
             } else {
-                // Fallback Safari lama
                 const url = URL.createObjectURL(blob);
                 window.open(url, '_blank');
                 showToast('Tekan lama gambar lalu pilih "Save to Photos"', 'info', 5000);
             }
         } else {
-            // --- BLOK KODE UNTUK ANDROID & DESKTOP ---
-            // Langsung mengunduh ke folder Download tanpa popup
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -3867,7 +3869,6 @@ async function saveQRISImage() {
             a.click();
             document.body.removeChild(a);
             
-            // Bersihkan memory
             setTimeout(() => URL.revokeObjectURL(url), 1000);
             showToast('Barcode berhasil disimpan di folder Download!', 'success');
         }
