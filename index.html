@@ -3706,25 +3706,101 @@ async function applyPromoCode() {
         }
     }
     function renderQRIS() {
-        const el = document.getElementById('qris-content');
-        const total = getGrandTotal(); 
-        el.innerHTML = `
-            <div class="text-center">
-                <div class="inline-block p-4 rounded-2xl bg-white mb-5">
-                    <img src="./Gambar/QRIS_STATIS.png">
-                </div>
-                <div class="card p-4 border-pk/30 mb-5">
-                    <p class="text-sm text-gray-300 leading-relaxed">
-                        Mohon selesaikan pembayaran senilai <span class="text-pk font-bold">${formatRp(total)}</span> dan simpan bukti pembayaran
-                    </p>
-                </div>
-                <button onclick="confirmQRISPayment()" class="btn-pk w-full text-center pulse-pk">
-                    <i class="fa-solid fa-circle-check mr-2"></i> Sudah Bayar
-                </button>
-                <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
-            </div>`;
-        setTimeout(() => drawQRIS(document.getElementById('qris-canvas')), 50);
+    const el = document.getElementById('qris-content');
+    const total = getGrandTotal(); 
+    el.innerHTML = `
+        <div class="text-center">
+            <div class="inline-block p-4 rounded-2xl bg-white mb-5">
+                <img id="qris-image" src="./Gambar/QRIS_STATIS.png" alt="QRIS">
+            </div>
+            <div class="card p-4 border-pk/30 mb-5">
+                <p class="text-sm text-gray-300 leading-relaxed">
+                    Mohon selesaikan pembayaran senilai <span class="text-pk font-bold">${formatRp(total)}</span> dan simpan bukti pembayaran
+                </p>
+            </div>
+            
+            <button onclick="saveQRISImage()" class="btn-outline w-full text-center mb-3">
+                <i class="fa-solid fa-download mr-2"></i> Simpan Barcode
+            </button>
+
+            <button onclick="confirmQRISPayment()" class="btn-pk w-full text-center pulse-pk">
+                <i class="fa-solid fa-circle-check mr-2"></i> Sudah Bayar
+            </button>
+            <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
+        </div>`;
+    
+    // Menggambar canvas simulasi QR tetap dipertahankan jika ada
+    setTimeout(() => {
+        const canvas = document.getElementById('qris-canvas');
+        if (canvas) drawQRIS(canvas);
+    }, 50);
+}
+async function saveQRISImage() {
+    const imgSrc = './Gambar/QRIS_STATIS.png';
+    const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
+
+    showLoading('Menyiapkan barcode...');
+
+    try {
+        // 1. Fetch gambar lokal dan ubah menjadi Blob
+        const response = await fetch(imgSrc, { cache: 'no-store' });
+        if (!response.ok) throw new Error('Gagal memuat gambar QRIS');
+        
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        // 2. Cek Web Share API (Prioritas utama untuk Android & iOS)
+        // navigator.canShare dengan files didukung iOS 15+ dan Android Chrome terbaru
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'QRIS Pembayaran Ranel Cell',
+                text: 'Silakan simpan atau bagikan gambar QRIS ini untuk pembayaran.'
+            });
+            showToast('Barcode berhasil dibagikan/disimpan!', 'success');
+        } 
+        // 3. Cek File System Access API (Untuk Desktop Chrome/Edge modern)
+        else if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [{
+                        description: 'PNG Image',
+                        accept: { 'image/png': ['.png'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                showToast('Barcode berhasil diunduh!', 'success');
+            } catch (saveErr) {
+                if (saveErr.name !== 'AbortError') {
+                    throw saveErr; // Abaikan jika user klik cancel
+                }
+            }
+        }
+        // 4. Fallback: Metode Anchor Download (Untuk Desktop lama / browser lain)
+        else {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('Barcode berhasil diunduh!', 'success');
+        }
+    } catch (err) {
+        console.error('Save Error:', err);
+        // Jika user membatalkan share (AbortError), jangan tampilkan error
+        if (err.name !== 'AbortError') {
+            showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
+        }
+    } finally {
+        hideLoading();
     }
+}
     function confirmQRISPayment() { sendOrderToWhatsApp(); }
     function drawQRIS(canvas) {
         if (!canvas) return;
