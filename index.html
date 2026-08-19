@@ -18,7 +18,8 @@
     import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    
+    import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
+
     const firebaseConfig = {
         apiKey: "AIzaSyDmDyI5olQ2a0zaxLIASH3EglRfsAmE7-Q",
         authDomain: "ranel-cell.firebaseapp.com",
@@ -57,7 +58,10 @@
         sendPasswordResetEmail,
         updatePassword,
         reauthenticateWithCredential,
-        EmailAuthProvider
+        EmailAuthProvider,
+        getMessaging,
+        getToken,
+        onMessage
     };
     window.dispatchEvent(new Event('firebase-ready'));
 </script>
@@ -433,25 +437,6 @@
 
             <div class="absolute bottom-0 left-0 w-full h-1 bg-dk-700">
                 <div id="timer-line" class="h-full bg-pk" style="transform: scaleX(1); transform-origin: left;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div id="iam-overlay" class="hidden fixed inset-0 z-[9994] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="card p-6 max-w-xs w-full text-center relative fade-up">
-            <button onclick="closeInAppMessage()" class="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors" aria-label="Tutup">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-            
-            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-pk/10 flex items-center justify-center">
-                <i id="iam-icon" class="fa-solid fa-bullhorn text-pk text-2xl"></i>
-            </div>
-            
-            <h3 id="iam-title" class="text-base font-bold mb-2 text-white">Judul Pesan</h3>
-            <p id="iam-message" class="text-xs text-gray-400 mb-5 text-justify leading-relaxed">Isi pesan di sini.</p>
-            
-            <div class="flex flex-col gap-2">
-                <button id="iam-button" onclick="actionInAppMessage()" class="btn-pk w-full text-sm py-2.5">Saya Mengerti</button>
             </div>
         </div>
     </div>
@@ -4071,49 +4056,6 @@ async function applyPromoCode() {
     function scrollTopHome() {
         document.getElementById('view-home').scrollTo({ top: 0, behavior: 'smooth' });
     }
-    const IAM_CONFIG = {
-        id: 'promo_v.0.0.1',
-        title: 'Beli Kartu Perdana, GRATIS ONGKIR! 🚚✨',
-        message: 'Sekarang, setiap pembelian Kartu Perdana jenis apa pun langsung dapet GRATIS ONGKIR ke rumahmu!<br> Biar makin hemat, jangan lupa masukin kode promo ini ya:<br><br> 🎟️ Kode Promo: <b>PROMOWEB</b>',
-        showOnce: true,
-        buttonText: 'Saya Mau',
-        buttonAction: 'view-perdana'
-    };
-    function checkInAppMessage() {
-        const hasSeen = localStorage.getItem('iam_seen_' + IAM_CONFIG.id);
-        if (!IAM_CONFIG.showOnce || !hasSeen) {
-            document.getElementById('iam-title').textContent = IAM_CONFIG.title;
-            document.getElementById('iam-message').innerHTML = IAM_CONFIG.message;
-
-            const btn = document.getElementById('iam-button');
-            btn.textContent = IAM_CONFIG.buttonText || 'Saya Mengerti';
-
-            setTimeout(() => {
-                document.getElementById('iam-overlay').classList.remove('hidden');
-            }, 1500);
-        }
-    }
-    function actionInAppMessage() {
-        document.getElementById('iam-overlay').classList.add('hidden');
-        
-        if (IAM_CONFIG.showOnce) {
-            localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
-        }
-
-        if (IAM_CONFIG.buttonAction) {
-            showView(IAM_CONFIG.buttonAction);
-        }
-    }
-    function closeInAppMessage() {
-        document.getElementById('iam-overlay').classList.add('hidden');
-        if (IAM_CONFIG.showOnce) {
-            localStorage.setItem('iam_seen_' + IAM_CONFIG.id, 'true');
-        }
-    }
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-    });
     function showInstallPwaModal() {
         if (!deferredPrompt) return;
         if (sessionStorage.getItem('pwa_prompt_dismissed') === 'true') return;
@@ -4400,6 +4342,7 @@ async function applyPromoCode() {
                 renderUserProfile();
                 updateHomeGreeting();
                 initPresenceSystem(user); 
+                setupCustomerFCM();
                 
                 isProcessingAuth = false;
             })
@@ -5060,7 +5003,6 @@ async function submitComplaint() {
                 isUserLoggedIn = true;
                 updateAuthUI();
                 showView('view-home');
-                checkInAppMessage();
                 try {
                     const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
                     const docSnap = await window.firebaseAuth.getDoc(docRef);
@@ -5626,6 +5568,42 @@ function serviceGadgetBack() {
     resetServiceGadgetForm();
     showView('view-home');
 }
+        // --- FCM SETUP UNTUK PELANGGAN ---
+        async function setupCustomerFCM() {
+            const { getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
+            try {
+                const messaging = getMessaging(app);
+                
+                // 1. Minta izin notifikasi ke user
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+
+                // 2. Ambil Token FCM (Ganti VAPID Key dengan milik Anda)
+                const currentToken = await getToken(messaging, { 
+                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' 
+                });
+
+                if (currentToken) {
+                    console.log('Token Pelanggan:', currentToken);
+                    // Simpan token ke koleksi 'user_tokens' di Firestore
+                    await setDoc(doc(db, "user_tokens", currentToken), { 
+                        token: currentToken,
+                        createdAt: new Date().toISOString()
+                    });
+                }
+
+                // 3. Tangkap pesan saat aplikasi sedang dibuka (Foreground)
+                onMessage(messaging, (payload) => {
+                    console.log('Notifikasi masuk:', payload);
+                    const title = payload.notification?.title || 'RANEL CELL';
+                    const body = payload.notification?.body || 'Pesan baru masuk!';
+                    showToast(`${title}\n${body}`, 'info', 5000);
+                });
+
+            } catch (err) {
+                console.error('Gagal setup FCM Pelanggan:', err);
+            }
+        }
     function init() { 
         setupPWA(); 
         updateCartUI();
