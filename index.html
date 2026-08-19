@@ -4490,6 +4490,148 @@ function togglePasswordSection() {
             saveBtn.style.cursor = 'not-allowed';
         }
     }
+    async function saveProfile() {
+    const user = window.firebaseAuth.auth.currentUser;
+    if (!user) {
+        showToast('Sesi telah berakhir, silakan login kembali', 'error');
+        showView('view-login');
+        return;
+    }
+
+    const nama = document.getElementById('edit-nama').value.trim();
+    const telp = document.getElementById('edit-telp').value.trim();
+    const oldPass = document.getElementById('edit-old-password').value;
+    const newPass = document.getElementById('edit-new-password').value;
+    const confPass = document.getElementById('edit-confirm-password').value;
+
+    // --- Validasi dasar ---
+    if (!nama) {
+        showToast('Nama lengkap wajib diisi', 'error');
+        return;
+    }
+    if (!telp || telp.length < 8) {
+        showToast('Nomor telepon tidak valid', 'error');
+        return;
+    }
+
+    // --- Cek apakah user Google (tidak bisa ubah password) ---
+    const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
+    const passSection = document.getElementById('password-section');
+    const isPasswordSectionVisible = !passSection.classList.contains('hidden');
+
+    let wantsToChangePassword = false;
+    if (isPasswordSectionVisible && !isGoogleUser && (oldPass || newPass || confPass)) {
+        wantsToChangePassword = true;
+
+        if (!oldPass) {
+            showToast('Password lama wajib diisi', 'error');
+            return;
+        }
+        if (!newPass) {
+            showToast('Password baru wajib diisi', 'error');
+            return;
+        }
+        if (newPass.length < 6) {
+            showToast('Password baru minimal 6 karakter', 'error');
+            return;
+        }
+        if (isPasswordWeak(newPass)) {
+            showToast('Password baru sangat rentan, gunakan kombinasi yang lebih kuat', 'error');
+            return;
+        }
+        if (newPass !== confPass) {
+            showToast('Konfirmasi password tidak cocok', 'error');
+            return;
+        }
+    }
+
+    // --- Nonaktifkan tombol saat proses ---
+    const saveBtn = document.getElementById('save-profile-btn');
+    const originalBtnHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.style.opacity = '0.7';
+    saveBtn.style.cursor = 'wait';
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...';
+
+    showLoading('Menyimpan perubahan...');
+
+    try {
+        // 1. Update displayName di Firebase Auth (jika berubah)
+        if (nama !== user.displayName) {
+            await window.firebaseAuth.updateProfile(user, { displayName: nama });
+        }
+
+        // 2. Update data di Firestore (nama & telp)
+        const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+        await window.firebaseAuth.setDoc(userDocRef, {
+            nama: nama,
+            telp: telp
+        }, { merge: true });
+
+        // 3. Update variabel global
+        window.currentUserTelp = telp;
+
+        // 4. Ubah password jika diminta
+        if (wantsToChangePassword) {
+            const credential = window.firebaseAuth.EmailAuthProvider.credential(
+                user.email,
+                oldPass
+            );
+            await window.firebaseAuth.reauthenticateWithCredential(user, credential);
+            await window.firebaseAuth.updatePassword(user, newPass);
+        }
+
+        hideLoading();
+
+        // --- Reset form password ---
+        document.getElementById('edit-old-password').value = '';
+        document.getElementById('edit-new-password').value = '';
+        document.getElementById('edit-confirm-password').value = '';
+        const strengthMeter = document.getElementById('edit-strength-meter');
+        if (strengthMeter) strengthMeter.innerHTML = '';
+
+        // --- Update nilai awal untuk deteksi perubahan ---
+        initialEditNama = nama;
+        initialEditTelp = telp;
+
+        // --- Sembunyikan section password jika terlihat ---
+        if (!passSection.classList.contains('hidden')) {
+            togglePasswordSection();
+        }
+
+        showToast('Profil berhasil diperbarui!', 'success');
+
+        // --- Kembali ke tampilan detail ---
+        setTimeout(() => {
+            showEditProfile();
+        }, 600);
+
+    } catch (error) {
+        hideLoading();
+
+        // --- Kembalikan tombol ke kondisi aktif ---
+        saveBtn.disabled = false;
+        saveBtn.style.opacity = '1';
+        saveBtn.style.cursor = 'pointer';
+        saveBtn.innerHTML = originalBtnHtml;
+
+        // --- Handle error spesifik ---
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            showToast('Password lama salah', 'error');
+        } else if (error.code === 'auth/requires-recent-login') {
+            showToast('Sesi telah berakhir, silakan login kembali', 'error');
+            setTimeout(() => {
+                window.firebaseAuth.signOut(window.firebaseAuth.auth);
+            }, 2000);
+        } else if (error.code === 'auth/weak-password') {
+            showToast('Password baru terlalu lemah', 'error');
+        } else if (error.code === 'auth/too-many-requests') {
+            showToast('Terlalu banyak percobaan, coba lagi nanti', 'error');
+        } else {
+            showToast('Gagal menyimpan: ' + error.message, 'error');
+        }
+    }
+}
     function confirmEditBack() {
     const isEditing = !document.getElementById('profile-edit-form').classList.contains('hidden');
     
@@ -5571,37 +5713,32 @@ function serviceGadgetBack() {
     resetServiceGadgetForm();
     showView('view-home');
 }
-                // --- FCM SETUP UNTUK PELANGGAN ---
         async function setupCustomerFCM() {
             const { app, getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
             try {
                 const messaging = getMessaging(app);
                 
-                // 1. Cek apakah browser mendukung Service Worker & Notification
                 if (!('serviceWorker' in navigator) || !('Notification' in window)) {
                     console.log('Browser tidak mendukung Notifikasi/SW');
                     return;
                 }
 
-                // 2. Paksa daftar ulang Service Worker (Penting setelah uninstall PWA)
                 await navigator.serviceWorker.register('firebase-messaging-sw.js?v=3');
                 await navigator.serviceWorker.ready;
 
-                // 3. Minta izin notifikasi (Jika statusnya 'default', pop-up akan muncul)
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
                     console.log('Izin notifikasi tidak diberikan:', permission);
                     return;
                 }
 
-                // 4. Ambil Token FCM baru
                 const currentToken = await getToken(messaging, { 
-                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' // PASTIKAN VAPID KEY ASLI ADA DI SINI
+                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0'
                 });
 
                 if (currentToken) {
                     console.log('Token Pelanggan berhasil didapat:', currentToken);
-                    // Simpan token ke Firestore (akan menimpa token lama jika ada)
+
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
                         createdAt: new Date().toISOString()
@@ -5610,7 +5747,6 @@ function serviceGadgetBack() {
                     console.log('Tidak ada token FCM yang didapat.');
                 }
 
-                // 5. Tangkap pesan saat aplikasi sedang dibuka (Foreground)
                 onMessage(messaging, (payload) => {
                     console.log('Notifikasi masuk (Foreground):', payload);
                     const title = payload.notification?.title || 'RANEL CELL';
