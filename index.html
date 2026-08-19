@@ -3728,59 +3728,45 @@ async function applyPromoCode() {
             </button>
             <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
         </div>`;
-    
-    // Menggambar canvas simulasi QR tetap dipertahankan jika ada
-    setTimeout(() => {
-        const canvas = document.getElementById('qris-canvas');
-        if (canvas) drawQRIS(canvas);
-    }, 50);
 }
 async function saveQRISImage() {
     const imgSrc = './Gambar/QRIS_STATIS.png';
     const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
 
-    showLoading('Menyiapkan barcode...');
+    showLoading('');
 
     try {
-        // 1. Fetch gambar lokal dan ubah menjadi Blob
+        // Fetch gambar lokal dan ubah menjadi Blob
         const response = await fetch(imgSrc, { cache: 'no-store' });
         if (!response.ok) throw new Error('Gagal memuat gambar QRIS');
         
         const blob = await response.blob();
-        const file = new File([blob], fileName, { type: 'image/png' });
 
-        // 2. Cek Web Share API (Prioritas utama untuk Android & iOS)
-        // navigator.canShare dengan files didukung iOS 15+ dan Android Chrome terbaru
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: 'QRIS Pembayaran Ranel Cell',
-                text: 'Silakan simpan atau bagikan gambar QRIS ini untuk pembayaran.'
-            });
-            showToast('Barcode berhasil dibagikan/disimpan!', 'success');
-        } 
-        // 3. Cek File System Access API (Untuk Desktop Chrome/Edge modern)
-        else if (window.showSaveFilePicker) {
-            try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: fileName,
-                    types: [{
-                        description: 'PNG Image',
-                        accept: { 'image/png': ['.png'] }
-                    }]
+        // Deteksi apakah perangkat adalah iOS (iPhone/iPad)
+        // Ini penting karena Apple memblokir fungsi download otomatis ke galeri
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // --- BLOK KODE UNTUK iOS (iPhone/iPad) ---
+            const file = new File([blob], fileName, { type: 'image/png' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                // Wajib memunculkan popup Share di iPhone agar user bisa klik "Save Image"
+                await navigator.share({
+                    files: [file],
+                    title: 'Simpan QRIS',
+                    text: 'Klik "Save Image" untuk menyimpan ke galeri.'
                 });
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-                showToast('Barcode berhasil diunduh!', 'success');
-            } catch (saveErr) {
-                if (saveErr.name !== 'AbortError') {
-                    throw saveErr; // Abaikan jika user klik cancel
-                }
+                showToast('Silakan pilih "Save Image" untuk menyimpan', 'info');
+            } else {
+                // Fallback jika browser Safari terlalu lama
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                showToast('Tekan lama gambar lalu pilih "Save to Photos"', 'info', 5000);
             }
-        }
-        // 4. Fallback: Metode Anchor Download (Untuk Desktop lama / browser lain)
-        else {
+        } else {
+            // --- BLOK KODE UNTUK ANDROID & DESKTOP ---
+            // Langsung mengunduh ke folder Download tanpa popup
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -3788,12 +3774,14 @@ async function saveQRISImage() {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            
+            // Bersihkan memory
             setTimeout(() => URL.revokeObjectURL(url), 1000);
-            showToast('Barcode berhasil diunduh!', 'success');
+            showToast('Barcode berhasil disimpan di folder Download!', 'success');
         }
     } catch (err) {
         console.error('Save Error:', err);
-        // Jika user membatalkan share (AbortError), jangan tampilkan error
+        // Jika user membatalkan share di iOS, jangan tampilkan error
         if (err.name !== 'AbortError') {
             showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
         }
