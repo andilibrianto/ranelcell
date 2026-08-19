@@ -38,6 +38,7 @@
     setPersistence(auth, browserLocalPersistence);
     
     window.firebaseAuth = {
+        app,
         auth,
         db, 
         doc, 
@@ -4252,6 +4253,7 @@ async function applyPromoCode() {
                 renderUserProfile();
                 updateHomeGreeting();
                 initPresenceSystem(user);
+                setupCustomerFCM();
             }
             
             isProcessingAuth = false;
@@ -5018,6 +5020,7 @@ async function submitComplaint() {
                 renderUserProfile();
                 updateHomeGreeting();
                 initPresenceSystem(user);
+                setupCustomerFCM();
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
@@ -5568,23 +5571,27 @@ function serviceGadgetBack() {
     resetServiceGadgetForm();
     showView('view-home');
 }
-        // --- FCM SETUP UNTUK PELANGGAN ---
+                // --- FCM SETUP UNTUK PELANGGAN ---
         async function setupCustomerFCM() {
-            const { getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
+            const { app, getMessaging, getToken, onMessage, db, doc, setDoc } = window.firebaseAuth;
             try {
+                // Gunakan app dari window.firebaseAuth
                 const messaging = getMessaging(app);
                 
                 // 1. Minta izin notifikasi ke user
                 const permission = await Notification.requestPermission();
-                if (permission !== 'granted') return;
+                if (permission !== 'granted') {
+                    console.log('Izin notifikasi ditolak');
+                    return;
+                }
 
                 // 2. Ambil Token FCM (Ganti VAPID Key dengan milik Anda)
                 const currentToken = await getToken(messaging, { 
-                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' 
+                    vapidKey: 'MASUKKAN_VAPID_KEY_ANDA_DISINI' // PASTIKAN INI SUDAH DIISI VAPID KEY ASLI
                 });
 
                 if (currentToken) {
-                    console.log('Token Pelanggan:', currentToken);
+                    console.log('Token Pelanggan berhasil didapat:', currentToken);
                     // Simpan token ke koleksi 'user_tokens' di Firestore
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
