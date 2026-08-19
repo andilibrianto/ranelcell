@@ -3708,34 +3708,65 @@ async function applyPromoCode() {
     async function renderQRIS() {
     const el = document.getElementById('qris-content');
     const total = getGrandTotal(); 
-    el.innerHTML = `
-        <div class="text-center">
-            <div class="inline-block p-4 rounded-2xl bg-white mb-5">
-                <img id="qris-image" src="./Gambar/QRIS_STATIS.png" alt="QRIS">
-            </div>
-            <div class="card p-4 border-pk/30 mb-5">
-                <p class="text-sm text-gray-300 leading-relaxed">
-                    Mohon selesaikan pembayaran senilai <span class="text-pk font-bold">${formatRp(total)}</span> dan simpan bukti pembayaran
+    
+    // Deteksi iOS (iPhone/iPad)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+    // Pre-generate gambar HD di latar belakang
+    let blobUrl = './Gambar/QRIS_STATIS.png';
+    try {
+        showLoading('');
+        const blob = await generateCompositeQRIS(total);
+        window._cachedQRISBlob = blob; // Simpan untuk Android/Desktop
+        blobUrl = URL.createObjectURL(blob);
+        hideLoading();
+    } catch (err) {
+        hideLoading();
+        console.error('Gagal pre-generate QRIS:', err);
+    }
+
+    // Tombol Simpan berbeda untuk iOS vs Android/Desktop
+    let saveSectionHtml = '';
+
+    if (isIOS) {
+        // --- TAMPILAN KHUSUS iOS ---
+        saveSectionHtml = `
+            <div class="card p-3 border-pk/30 mb-4 bg-pk/5">
+                <p class="text-xs text-pk font-bold text-center mb-1">
+                    <i class="fa-solid fa-hand-pointer mr-1"></i> CARA SIMPAN KE GALERI
+                </p>
+                <p class="text-[11px] text-gray-300 text-center leading-relaxed">
+                    Tekan dan tahan gambar QRIS di atas, lalu pilih <b>"Save Image"</b> atau <b>"Add to Photos"</b>.
                 </p>
             </div>
-            
+        `;
+    } else {
+        // --- TAMPILAN ANDROID & DESKTOP ---
+        saveSectionHtml = `
             <button onclick="saveQRISImage()" class="btn-outline w-full text-center mb-3">
                 <i class="fa-solid fa-download mr-2"></i> Simpan Barcode
             </button>
+        `;
+    }
+
+    el.innerHTML = `
+        <div class="text-center">
+            <div class="inline-block p-4 rounded-2xl bg-white mb-5">
+                <img id="qris-image" src="${blobUrl}" alt="QRIS" style="width: 100%; max-width: 300px; height: auto; -webkit-touch-callout: default !important; -webkit-user-select: auto !important;">
+            </div>
+            <div class="card p-4 border-pk/30 mb-5">
+                <p class="text-sm text-gray-300 leading-relaxed">
+                    Mohon selesaikan pembayaran senilai <span class="text-pk font-bold">${formatRp(total)}</span>
+                </p>
+            </div>
+            
+            ${saveSectionHtml}
 
             <button onclick="confirmQRISPayment()" class="btn-pk w-full text-center pulse-pk">
                 <i class="fa-solid fa-circle-check mr-2"></i> Sudah Bayar
             </button>
             <p class="text-[10px] text-gray-600 mt-3">Klik tombol di atas setelah menyelesaikan pembayaran</p>
         </div>`;
-
-    // 1. Pre-generate gambar di latar belakang saat halaman dibuka
-    // Ini sangat penting agar iOS tidak memblokir tombol Share nantinya
-    try {
-        window._cachedQRISBlob = await generateCompositeQRIS(total);
-    } catch (err) {
-        console.error('Gagal pre-generate QRIS:', err);
-    }
 }
 // Fungsi untuk membungkus teks panjang di Canvas
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -3845,71 +3876,29 @@ async function generateCompositeQRIS(totalNominal) {
 }
 async function saveQRISImage() {
     const fileName = `QRIS_RANEL_CELL_${Date.now()}.png`;
-    const total = getGrandTotal(); 
-
-    // Deteksi iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    // Jika gambar belum ter-generate (karena user klik terlalu cepat), generate sekarang
-    if (!window._cachedQRISBlob) {
-        showLoading('Menyiapkan barcode...');
-        try {
-            window._cachedQRISBlob = await generateCompositeQRIS(total);
-        } catch (err) {
-            hideLoading();
-            showToast('Gagal menyiapkan barcode: ' + err.message, 'error');
-            return;
-        }
-        hideLoading();
-    }
-
     const blob = window._cachedQRISBlob;
 
-    // Eksekusi langsung tanpa showLoading agar antrian klik di iOS tidak terputus
+    if (!blob) {
+        showToast('Silahkan Coba Lagi, 'error');
+        return;
+    }
+
+    // Eksekusi langsung tanpa showLoading agar antrian klik di Android tidak terputus
     try {
-        if (isIOS) {
-            // --- BLOK KODE UNTUK iOS ---
-            const file = new File([blob], fileName, { type: 'image/png' });
-            
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                // Panggilan navigator.share() dilakukan secara langsung (tanpa await proses lain)
-                await navigator.share({
-                    files: [file],
-                    title: 'QRIS Ranel Cell',
-                    text: 'Silakan simpan gambar QRIS ini.'
-                });
-            } else {
-                // Fallback jika Safari terlalu lama / versi lama
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast('Tekan lama gambar lalu pilih "Save to Photos"', 'info', 5000);
-            }
-        } else {
-            // --- BLOK KODE UNTUK ANDROID & DESKTOP ---
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-            showToast('Barcode berhasil disimpan!', 'success');
-        }
+        // --- BLOK KODE UNTUK ANDROID & DESKTOP ---
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Barcode berhasil disimpan di folder Download!', 'success');
     } catch (err) {
         console.error('Save Error:', err);
-        if (err.name !== 'AbortError') {
-            showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
-        }
-    } finally {
-        // Bersihkan cache memory setelah digunakan agar RAM HP tidak penuh
-        window._cachedQRISBlob = null;
+        showToast('Gagal menyimpan barcode: ' + err.message, 'error', 4000);
     }
 }
     function confirmQRISPayment() { sendOrderToWhatsApp(); }
