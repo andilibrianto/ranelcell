@@ -5581,8 +5581,13 @@ function serviceGadgetBack() {
                     return;
                 }
 
+                                // PAKSA BROWSER UNTUK UPDATE SERVICE WORKER BARU
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2');
+                await navigator.serviceWorker.ready;
+
+                // 2. Ambil Token FCM (Ganti VAPID Key dengan milik Anda)
                 const currentToken = await getToken(messaging, { 
-                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0'
+                    vapidKey: 'BPduMClEXKWN2l3Z8aTpsyJ3b5S5z2lS31NEp48cwczzAueuPTS_aYZ8MUTQ9NvqsuFmJCH6d0gFexcSG9xpWK0' 
                 });
 
                 if (currentToken) {
