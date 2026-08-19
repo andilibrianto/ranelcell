@@ -87,13 +87,12 @@
         :root { --pk:#FF2D78; --pk-light:#FF6B9D; --dk:#0A0A0A; --card:#141414; --border:#222; }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html, body {
-    margin: 0; padding: 0;
-    /* Mencegah browser melakukan refresh saat pull-to-refresh di body */
-    overscroll-behavior-y: none; 
-}
-body { 
-    font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; overflow-x:hidden; 
-}
+            margin: 0; padding: 0;
+            overscroll-behavior-y: none; 
+        }
+        body { 
+            font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; overflow-x:hidden; 
+        }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:#333; border-radius:4px; }
@@ -115,13 +114,12 @@ body {
         }
 
         .view {
-    position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
-    opacity:0; transform:translateY(16px);
-    transition: opacity 0.35s ease, transform 0.35s ease;
-    pointer-events:none; z-index:1; -webkit-overflow-scrolling:touch;
-    /* Menghentikan efek scroll berantai (scroll chaining) dan pull-to-refresh di dalam view */
-    overscroll-behavior-y: contain; 
-}
+            position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
+            opacity:0; transform:translateY(16px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events:none; z-index:1; -webkit-overflow-scrolling:touch;
+            overscroll-behavior-y: contain; 
+        }
         .view.active { opacity:1; transform:translateY(0); pointer-events:auto; z-index:2; }
 
         .card {
@@ -1878,35 +1876,28 @@ body {
     let modalCancelCallback = null;
     let serverTimeIsOpen = null;
 
-function pushHistory() {
-        window.history.pushState({ app: 'ranel-cell' }, '');
-    }
-    // --- CEGAH PULL TO REFRESH DI ANDROID PWA ---
-let _touchStartY = 0;
-document.body.addEventListener('touchstart', function(e) {
-    // Catat posisi awal jari menyentuh layar
-    _touchStartY = e.touches[0].clientY;
-}, { passive: true });
+    function pushHistory() {
+            window.history.pushState({ app: 'ranel-cell' }, '');
+        }
+    let _touchStartY = 0;
+    document.body.addEventListener('touchstart', function(e) {
+        _touchStartY = e.touches[0].clientY;
+    }, { passive: true });
 
-document.body.addEventListener('touchmove', function(e) {
-    // Cari halaman (view) yang sedang aktif saat ini
-    const activeView = document.querySelector('.view.active');
-    if (!activeView) return;
+    document.body.addEventListener('touchmove', function(e) {
+        const activeView = document.querySelector('.view.active');
+        if (!activeView) return;
 
-    const touchY = e.touches[0].clientY;
-    const touchDelta = touchY - _touchStartY;
+        const touchY = e.touches[0].clientY;
+        const touchDelta = touchY - _touchStartY;
 
-    // KONDISISI PENCEGAHAN:
-    // 1. Jika halaman sedang berada di paling atas (scrollTop <= 0)
-    // 2. DAN jari bergerak ke BAWAH (touchDelta > 0)
-    if (activeView.scrollTop <= 0 && touchDelta > 0) {
-        // Maka batalkan gerakan default browser (mencegah munculnya ikon refresh)
-        e.preventDefault();
-    }
-    // Update posisi Y terakhir
-    _touchStartY = touchY;
-}, { passive: false });
-// --- AKHIR KODE PENCEGAHAN ---
+        if (activeView.scrollTop <= 0 && touchDelta > 0) {
+
+            e.preventDefault();
+        }
+        _touchStartY = touchY;
+    }, { passive: false });
+
     pushHistory();
 
     window.addEventListener('popstate', (event) => {
