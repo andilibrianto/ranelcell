@@ -13,9 +13,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Kita HAPUS fungsi onBackgroundMessage.
-// Biarkan Firebase SDK yang menampilkan notifikasi secara otomatis.
-// Ini akan mencegah notifikasi dobel.
+// Tangani notifikasi saat aplikasi tertutup (Background)
+messaging.onBackgroundMessage((payload) => {
+    const notificationTitle = payload.notification?.title || '🔔 RANEL CELL';
+    const notificationOptions = {
+        body: payload.notification?.body || 'Pesan baru masuk!',
+        icon: './Gambar/Logo_BL_intuls_NoBCKG.png',
+        badge: './Gambar/Logo_BL_intuls_NoBCKG.png'
+    };
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
 
 // Tangani klik notifikasi (Buka aplikasi)
 self.addEventListener('notificationclick', event => {
