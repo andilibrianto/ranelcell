@@ -13,24 +13,9 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Tangani notifikasi background
-messaging.onBackgroundMessage((payload) => {
-    // PENTING: Jika pesan dari Firebase Console (mengandung 'notification'),
-    // biarkan Firebase menampilkannya otomatis. Jangan buat dobel!
-    if (payload.notification) {
-        return; 
-    }
-
-    // Jika pesan dari Vercel Backend (hanya 'data'), kita tampilkan manual
-    const notificationTitle = payload.data?.title || '🔔 RANEL CELL';
-    const notificationOptions = {
-        body: payload.data?.body || 'Pesan baru masuk!',
-        icon: './Gambar/Logo_BL_intuls_NoBCKG.png',
-        badge: './Gambar/Logo_BL_intuls_NoBCKG.png',
-        data: payload.data
-    };
-    self.registration.showNotification(notificationTitle, notificationOptions);
-});
+// Kita HAPUS fungsi onBackgroundMessage.
+// Biarkan Firebase SDK yang menampilkan notifikasi secara otomatis.
+// Ini akan mencegah notifikasi dobel.
 
 // Tangani klik notifikasi (Buka aplikasi)
 self.addEventListener('notificationclick', event => {
