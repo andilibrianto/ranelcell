@@ -522,12 +522,14 @@
                 <section class="mb-8 fade-up fade-up-d1">
     <div class="flex items-center justify-between mb-2">
         <h3 class="section-label" style="margin-bottom:0;">Cara Pesan</h3>
-        <button onclick="toggleCaraPesan()" class="text-gray-500 hover:text-pk transition-colors p-1" aria-label="Sembunyikan Cara Pesan">
-            <i id="icon-cara-pesan" class="fa-solid fa-chevron-up text-xs"></i>
+        <button onclick="toggleCaraPesan()" class="text-gray-500 hover:text-pk transition-colors p-1" aria-label="Tampilkan Cara Pesan">
+            <!-- Ikon awal diubah menjadi panah bawah karena konten disembunyikan -->
+            <i id="icon-cara-pesan" class="fa-solid fa-chevron-down text-xs"></i>
         </button>
     </div>
     
-    <div id="content-cara-pesan" class="grid grid-cols-4 gap-2">
+    <!-- Tambahkan class 'hidden' di sini agar tertutup secara default -->
+    <div id="content-cara-pesan" class="grid grid-cols-4 gap-2 hidden">
         <div class="text-center">
             <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-hand-pointer text-pk text-lg"></i></div>
             <p class="text-[10px] text-gray-400 leading-tight">Pilih Produk</p>
