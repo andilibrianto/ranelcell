@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
-    <link rel="apple-touch-icon" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
+    <link rel="icon" type="image/png" href="./Gambar/512_V1.png?v=3" />
+    <link rel="apple-touch-icon" href="./Gambar/512_V1.png?v=3" />
+    <link rel="manifest" href="manifest.json?v=3">
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -520,34 +521,33 @@
                 </div>
 
                 <section class="mb-8 fade-up fade-up-d1">
-    <div class="flex items-center justify-between mb-2">
-        <h3 class="section-label" style="margin-bottom:0;">Cara Pesan</h3>
-        <button onclick="toggleCaraPesan()" class="text-gray-500 hover:text-pk transition-colors p-1" aria-label="Tampilkan Cara Pesan">
-            <!-- Ikon awal diubah menjadi panah bawah karena konten disembunyikan -->
-            <i id="icon-cara-pesan" class="fa-solid fa-chevron-down text-xs"></i>
-        </button>
-    </div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="section-label" style="margin-bottom:0;">Cara Pesan</h3>
+                        <button onclick="toggleCaraPesan()" class="text-gray-500 hover:text-pk transition-colors p-1" aria-label="Tampilkan Cara Pesan">
     
-    <!-- Tambahkan class 'hidden' di sini agar tertutup secara default -->
-    <div id="content-cara-pesan" class="grid grid-cols-4 gap-2 hidden">
-        <div class="text-center">
-            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-hand-pointer text-pk text-lg"></i></div>
-            <p class="text-[10px] text-gray-400 leading-tight">Pilih Produk</p>
-        </div>
-        <div class="text-center">
-            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-pen-to-square text-pk text-lg"></i></div>
-            <p class="text-[10px] text-gray-400 leading-tight">Data Customer</p>
-        </div>
-        <div class="text-center">
-            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-qrcode text-pk text-lg"></i></div>
-            <p class="text-[10px] text-gray-400 leading-tight">Bayar QRIS</p>
-        </div>
-        <div class="text-center">
-            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-store text-pk text-lg"></i></div>
-            <p class="text-[10px] text-gray-400 leading-tight">Terima Barang</p>
-        </div>
-    </div>
-</section>
+                            <i id="icon-cara-pesan" class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="content-cara-pesan" class="grid grid-cols-4 gap-2 hidden">
+                        <div class="text-center">
+                            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-hand-pointer text-pk text-lg"></i></div>
+                            <p class="text-[10px] text-gray-400 leading-tight">Pilih Produk</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-pen-to-square text-pk text-lg"></i></div>
+                            <p class="text-[10px] text-gray-400 leading-tight">Data Customer</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-qrcode text-pk text-lg"></i></div>
+                            <p class="text-[10px] text-gray-400 leading-tight">Bayar QRIS</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="step-icon mx-auto mb-2"><i class="fa-solid fa-store text-pk text-lg"></i></div>
+                            <p class="text-[10px] text-gray-400 leading-tight">Terima Barang</p>
+                        </div>
+                    </div>
+                </section>
                     
                 <section class="fade-up fade-up-d2">
                     <h3 class="section-label">Menu Layanan</h3>
@@ -4268,12 +4268,12 @@ async function saveQRISImage() {
     const icon = document.getElementById('icon-cara-pesan');
     
     if (content.classList.contains('hidden')) {
-        // Tampilkan kembali
+
         content.classList.remove('hidden');
         icon.classList.remove('fa-chevron-down');
         icon.classList.add('fa-chevron-up');
     } else {
-        // Sembunyikan
+
         content.classList.add('hidden');
         icon.classList.remove('fa-chevron-up');
         icon.classList.add('fa-chevron-down');
@@ -4349,18 +4349,35 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-    function setupPWA() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .catch((err) => console.error('SW registration failed: ', err));
-    }
+        function setupPWA() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                // Cek update Service Worker secara berkala
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Paksa SW baru untuk aktif langsung tanpa menunggu reload
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    });
+                });
+            }).catch((err) => console.error('SW registration failed: ', err));
+
+            // Auto reload saat SW baru mengambil alih
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
+            });
+        }
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 const activeView = document.querySelector('.view.active');
                 if (activeView) {
                     const scrollTop = activeView.scrollTop;
-                    
                     activeView.style.opacity = '0.99';
                     setTimeout(() => {
                         activeView.style.opacity = '';

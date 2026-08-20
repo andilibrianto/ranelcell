@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.1.7.4';
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.7.5'; // NAIKKAN VERSI INI SETIAP KALI GANTI LOGO
 const urlsToCache = [
     './',
     './index.html',
@@ -30,18 +30,49 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim()) // Paksa SW baru langsung mengambil alih
     );
-    self.clients.claim();
+});
+
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
-    if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
+    const requestUrl = new URL(event.request.url);
+    
+    // 1. Abaikan API peta dan notif
+    if (requestUrl.href.includes('nominatim.openstreetmap.org') || requestUrl.href.includes('vercel.app')) {
         return;
     }
 
+    // 2. Strategi Network First khusus untuk Manifest dan Gambar (AGAR LOGO BISA BERUBAH OTOMATIS)
+    if (requestUrl.pathname.endsWith('manifest.json') || 
+        (requestUrl.pathname.includes('/Gambar/') && requestUrl.pathname.endsWith('.png'))) {
+        
+        event.respondWith(
+            fetch(event.request).then(networkResponse => {
+                // Jika berhasil fetch dari network, update cache
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, responseToCache);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => {
+                // Jika offline, gunakan cache
+                return caches.match(event.request);
+            })
+        );
+        return;
+    }
+
+    // 3. Strategi Cache First untuk file statis lainnya
     event.respondWith(
         caches.match(event.request).then(response => {
             return response || fetch(event.request).catch(() => caches.match('./index.html'));
