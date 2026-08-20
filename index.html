@@ -4327,29 +4327,43 @@ async function saveQRISImage() {
     }
     function setupPWA() {
     if ('serviceWorker' in navigator) {
+        // Variabel pencegah reload ganda
+        let refreshing = false;
+
+        // 1. Dengarkan jika Service Worker baru berhasil mengambil alih halaman
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (refreshing) return;
+            console.log('Service Worker baru mengambil alih, memuat ulang halaman...');
+            window.location.reload();
+            refreshing = true;
+        });
+
+        // 2. Daftar Service Worker
         navigator.serviceWorker.register('sw.js').then(registration => {
-            // 1. Paksa browser mengecek update setiap kali PWA dibuka
+            // Paksa cek update setiap kali buka app
             registration.update();
-            
-            // 2. Jika ada SW baru yang menunggu, paksa langsung aktif
+
+            // Jika ada SW baru yang sedang menunggu (waiting)
             if (registration.waiting) {
+                // Kirim pesan untuk langsung aktif (skip waiting)
                 registration.waiting.postMessage({ type: 'SKIP_WAITING' });
             }
-            
-            // 3. Dengarkan jika ada SW baru yang sedang diinstall
+
+            // Dengarkan jika ada SW baru yang sedang diinstall
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
+                    // Saat SW baru selesai diinstall dan masuk ke status waiting
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // Jika sudah terinstall, paksa reload halaman agar logo baru langsung dimuat
-                        window.location.reload();
+                        // Langsung kirim pesan untuk mengambil alih
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
                     }
                 });
             });
         }).catch((err) => console.error('SW registration failed: ', err));
     }
 
-    // Kode visibilitychange untuk memperbaiki header...
+    // Kode visibilitychange untuk memperbaiki header terpotong...
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             const activeView = document.querySelector('.view.active');
@@ -4361,7 +4375,7 @@ async function saveQRISImage() {
                     activeView.scrollTop = scrollTop;
                 }, 50);
             }
-            // Saat user kembali ke PWA, cek update Service Worker lagi!
+            // Cek update Service Worker saat user kembali ke PWA
             if (navigator.serviceWorker) {
                 navigator.serviceWorker.ready.then(registration => {
                     registration.update();
