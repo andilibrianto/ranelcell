@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/192_V2.png" />
-    <link rel="apple-touch-icon" href="./Gambar/512_V2.png" />
+    <link rel="icon" type="image/png" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
+    <link rel="apple-touch-icon" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -4327,63 +4327,25 @@ async function saveQRISImage() {
     }
     function setupPWA() {
     if ('serviceWorker' in navigator) {
-        // Variabel pencegah reload ganda
-        let refreshing = false;
-
-        // 1. Dengarkan jika Service Worker baru berhasil mengambil alih halaman
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (refreshing) return;
-            console.log('Service Worker baru mengambil alih, memuat ulang halaman...');
-            window.location.reload();
-            refreshing = true;
-        });
-
-        // 2. Daftar Service Worker
-        navigator.serviceWorker.register('sw.js').then(registration => {
-            // Paksa cek update setiap kali buka app
-            registration.update();
-
-            // Jika ada SW baru yang sedang menunggu (waiting)
-            if (registration.waiting) {
-                // Kirim pesan untuk langsung aktif (skip waiting)
-                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-
-            // Dengarkan jika ada SW baru yang sedang diinstall
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                newWorker.addEventListener('statechange', () => {
-                    // Saat SW baru selesai diinstall dan masuk ke status waiting
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // Langsung kirim pesan untuk mengambil alih
-                        newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    }
-                });
-            });
-        }).catch((err) => console.error('SW registration failed: ', err));
+        navigator.serviceWorker.register('sw.js')
+            .catch((err) => console.error('SW registration failed: ', err));
     }
 
-    // Kode visibilitychange untuk memperbaiki header terpotong...
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            const activeView = document.querySelector('.view.active');
-            if (activeView) {
-                const scrollTop = activeView.scrollTop;
-                activeView.style.opacity = '0.99';
-                setTimeout(() => {
-                    activeView.style.opacity = '';
-                    activeView.scrollTop = scrollTop;
-                }, 50);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const activeView = document.querySelector('.view.active');
+                if (activeView) {
+                    const scrollTop = activeView.scrollTop;
+                    
+                    activeView.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeView.style.opacity = '';
+                        activeView.scrollTop = scrollTop;
+                    }, 50);
+                }
             }
-            // Cek update Service Worker saat user kembali ke PWA
-            if (navigator.serviceWorker) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.update();
-                });
-            }
-        }
-    });
-}
+        });
+    }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
     let deferredPrompt = null;
