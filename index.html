@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/512_V1.png?v=3" />
-    <link rel="apple-touch-icon" href="./Gambar/512_V1.png?v=3" />
-    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="icon" type="image/png" href="./Gambar/512M_V2.png?v=4" />
+    <link rel="apple-touch-icon" href="./Gambar/512M_V2.png?v=4" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json?v=4">
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -4349,7 +4348,7 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-        function setupPWA() {
+    function setupPWA() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(registration => {
                 // Cek update Service Worker secara berkala
