@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.1.7.0';
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.7.1';
 const urlsToCache = [
     './',
     './index.html',
@@ -43,3 +43,9 @@ self.addEventListener('fetch', event => {
       })
   );
 })
+// Dengarkan pesan dari script utama untuk langsung mengaktifkan SW baru
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});

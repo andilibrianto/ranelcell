@@ -4328,18 +4328,20 @@ async function saveQRISImage() {
     function setupPWA() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').then(registration => {
-            // Cek apakah ada Service Worker baru menunggu
+            // 1. Paksa browser mengecek update setiap kali PWA dibuka
+            registration.update();
+            
+            // 2. Jika ada SW baru yang menunggu, paksa langsung aktif
             if (registration.waiting) {
                 registration.waiting.postMessage({ type: 'SKIP_WAITING' });
             }
             
-            // Deteksi jika Service Worker baru sudah terinstall
+            // 3. Dengarkan jika ada SW baru yang sedang diinstall
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // Jika update berhasil, refresh halaman agar logo baru langsung dimuat
-                        console.log('Logo/Service Worker diperbarui, memuat ulang...');
+                        // Jika sudah terinstall, paksa reload halaman agar logo baru langsung dimuat
                         window.location.reload();
                     }
                 });
@@ -4347,23 +4349,27 @@ async function saveQRISImage() {
         }).catch((err) => console.error('SW registration failed: ', err));
     }
 
-
-
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                const activeView = document.querySelector('.view.active');
-                if (activeView) {
-                    const scrollTop = activeView.scrollTop;
-                    
-                    activeView.style.opacity = '0.99';
-                    setTimeout(() => {
-                        activeView.style.opacity = '';
-                        activeView.scrollTop = scrollTop;
-                    }, 50);
-                }
+    // Kode visibilitychange untuk memperbaiki header...
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            const activeView = document.querySelector('.view.active');
+            if (activeView) {
+                const scrollTop = activeView.scrollTop;
+                activeView.style.opacity = '0.99';
+                setTimeout(() => {
+                    activeView.style.opacity = '';
+                    activeView.scrollTop = scrollTop;
+                }, 50);
             }
-        });
-    }
+            // Saat user kembali ke PWA, cek update Service Worker lagi!
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.ready.then(registration => {
+                    registration.update();
+                });
+            }
+        }
+    });
+}
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
     let deferredPrompt = null;
