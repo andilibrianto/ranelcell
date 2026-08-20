@@ -1,50 +1,44 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.1.6.8';
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.6.9';
 const urlsToCache = [
-    './',
-    './index.html',
-    './manifest.json',
-    'https://cdn.tailwindcss.com',
-    'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap',
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  './Gambar/192_V1.png', // Logo baru
+  './Gambar/512_V1.png', // Logo baru
+  // ... daftar file CSS/JS lokal lainnya jika ada
 ];
 
+// Saat Service Worker diinstall, simpan file baru ke cache
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(urlsToCache);
-        })
-    );
-    self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting()) // Paksa langsung aktif tanpa menunggu
+  );
 });
 
+// Saat Service Worker diaktifkan, HAPUS cache versi lama
 self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME];
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (!cacheWhitelist.includes(cacheName)) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Menghapus cache lama:', cacheName);
+            return caches.delete(cacheName); // Hapus logo lama dari sistem
+          }
         })
-    );
-    self.clients.claim();
+      );
+    }).then(() => self.clients.claim()) // Ambil alih kontrol halaman secara instan
+  );
 });
 
+// Strategi Cache First (Ambil dari cache dulu, jika tidak ada baru ke network)
 self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
-
-    if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
-        return;
-    }
-
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request).catch(() => caches.match('./index.html'));
-        })
-    );
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
+  );
 });

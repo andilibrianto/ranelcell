@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
-    <link rel="apple-touch-icon" href="./Gambar/Logo_BL_intuls_NoBCKG.png" />
+    <link rel="icon" type="image/png" href="./Gambar/192_V1.png" />
+    <link rel="apple-touch-icon" href="./Gambar/512_V1.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -87,24 +87,21 @@
         :root { --pk:#FF2D78; --pk-light:#FF6B9D; --dk:#0A0A0A; --card:#141414; --border:#222; }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         html, body {
-    margin: 0; padding: 0;
-    /* Kunci tinggi dan lebar layar agar tidak bergeser saat ganti aplikasi */
-    position: fixed; 
-    width: 100%; 
-    height: 100%;
-    overscroll-behavior-y: none; 
-}
-body { 
-    font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; overflow-x:hidden; 
-}
-
-/* Perbaiki container utama agar tidak menggunakan 100vh yang menyebabkan bug */
-#app {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
+            margin: 0; padding: 0;
+            position: fixed; 
+            width: 100%; 
+            height: 100%;
+            overscroll-behavior-y: none; 
+        }
+        body { 
+            font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; overflow-x:hidden; 
+        }
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:#333; border-radius:4px; }
@@ -4330,29 +4327,28 @@ async function saveQRISImage() {
     }
     function setupPWA() {
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .catch((err) => console.error('SW registration failed: ', err));
+        navigator.serviceWorker.register('sw.js').then(registration => {
+            // Cek apakah ada Service Worker baru menunggu
+            if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            
+            // Deteksi jika Service Worker baru sudah terinstall
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        // Jika update berhasil, refresh halaman agar logo baru langsung dimuat
+                        console.log('Logo/Service Worker diperbarui, memuat ulang...');
+                        window.location.reload();
+                    }
+                });
+            });
+        }).catch((err) => console.error('SW registration failed: ', err));
     }
 
-    // --- PERBAIKAN HEADER TERPOTONG SAAT KEMBALI DARI WHATSAPP ---
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            // Saat user kembali ke PWA, paksa browser menghitung ulang layout
-            const activeView = document.querySelector('.view.active');
-            if (activeView) {
-                // Simpan posisi scroll user
-                const scrollTop = activeView.scrollTop;
-                
-                // Trigger reflow (browser menggambar ulang UI)
-                activeView.style.opacity = '0.99';
-                setTimeout(() => {
-                    activeView.style.opacity = '';
-                    // Kembalikan posisi scroll
-                    activeView.scrollTop = scrollTop;
-                }, 50);
-            }
-        }
-    });
+    // Kode visibilitychange dari sebelumnya...
+    document.addEventListener('visibilitychange', () => { /* ... */ });
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;

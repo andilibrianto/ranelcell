@@ -1,24 +1,28 @@
 {
   "name": "RANEL CELL",
-  "short_name": "Ranel Cell",
-  "description": "RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant",
-  "start_url": "./index.html?v=2",
+  "short_name": "RANEL CELL",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#FF2D78",
-  "orientation": "portrait",
   "icons": [
     {
-      "src": "./Gambar/PWA_512C.png",
+      "src": "./Gambar/192_V1.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./Gambar/PWA_512C.png",
+      "src": "./Gambar/512_V1.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "./Gambar/512M_V1.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
