@@ -7,19 +7,19 @@
   "theme_color": "#FF2D78",
   "icons": [
     {
-      "src": "./Gambar/192_V1.png",
+      "src": "./Gambar/192_V2.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./Gambar/512_V1.png",
+      "src": "./Gambar/512_V2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./Gambar/512M_V1.png",
+      "src": "./Gambar/512M_V2.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

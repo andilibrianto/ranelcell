@@ -1,14 +1,17 @@
-const CACHE_NAME = 'ranel-cell-cache-v2';
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.7.0';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  './Gambar/192_V1.png', // Logo baru
-  './Gambar/512_V1.png', // Logo baru
-  // ... daftar file CSS/JS lokal lainnya jika ada
+    './',
+    './index.html',
+    './manifest.json',
+    './Gambar/Logo_Ranel_v2_192.png', // Logo baru
+  './Gambar/Logo_Ranel_v2_512.png', // Logo baru
+    'https://cdn.tailwindcss.com',
+    'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap',
+    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
-// Saat Service Worker diinstall, simpan file baru ke cache
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -17,7 +20,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Saat Service Worker diaktifkan, HAPUS cache versi lama
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -33,7 +35,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Strategi Cache First (Ambil dari cache dulu, jika tidak ada baru ke network)
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
@@ -41,4 +42,4 @@ self.addEventListener('fetch', event => {
         return response || fetch(event.request);
       })
   );
-});
+})

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/192_V1.png" />
-    <link rel="apple-touch-icon" href="./Gambar/512_V1.png" />
+    <link rel="icon" type="image/png" href="./Gambar/192_V2.png" />
+    <link rel="apple-touch-icon" href="./Gambar/512_V2.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -4347,9 +4347,23 @@ async function saveQRISImage() {
         }).catch((err) => console.error('SW registration failed: ', err));
     }
 
-    // Kode visibilitychange dari sebelumnya...
-    document.addEventListener('visibilitychange', () => { /* ... */ });
-}
+
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const activeView = document.querySelector('.view.active');
+                if (activeView) {
+                    const scrollTop = activeView.scrollTop;
+                    
+                    activeView.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeView.style.opacity = '';
+                        activeView.scrollTop = scrollTop;
+                    }, 50);
+                }
+            }
+        });
+    }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
     let deferredPrompt = null;
