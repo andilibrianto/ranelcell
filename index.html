@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/PWA_512M.png" />
+    <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
@@ -4022,35 +4022,33 @@ async function saveQRISImage() {
         
         showThankYouOverlay();
     }
-    async function showLocalTransactionNotification(orderId, totalAmount) {
+    async function showLocalComplaintNotification(transactionId, itemsText) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            console.log("Browser tidak mendukung Web Notifications");
+            console.log("Browser tidak mendukung Versi Website");
             return;
         }
 
         try {
-            if (Notification.permission !== 'granted') {
-                if (Notification.permission !== 'denied') {
-                    await Notification.requestPermission();
-                }
-            }
-
             if (Notification.permission === 'granted') {
                 const registration = await navigator.serviceWorker.ready;
-                const title = "Pesanan Diproses! 🎉";
+                const title = "Komplain Akan Segera Kita Tangani! 🛠️";
                 const options = {
-                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                    body: `Komplain dengan detail sebagai berikut:\n${itemsText} (${transactionId})\nMohon ditunggu, tim kami akan segera menghubungi Anda`,
                     icon: './Gambar/PWA_512_M.png',
                     badge: './Gambar/PWA_512.png',
                     vibrate: [200, 100, 200, 100, 200],
-                    tag: orderId,
-                    requireInteraction: false 
+                    tag: 'komplain_' + transactionId, 
+                    silent: false,
+                    data: { 
+                        type: 'complaint', 
+                        transactionId: transactionId 
+                    }
                 };
                 
                 registration.showNotification(title, options);
             }
         } catch (err) {
-            console.error("Gagal menampilkan notifikasi lokal:", err);
+            console.error("Gagal menampilkan notifikasi komplain:", err);
         }
     }
     async function saveTransactionToFirestore(d, orderId) {
@@ -5408,7 +5406,17 @@ async function submitComplaint() {
             items: [{ name: `Pengaduan: ${category}`, quantity: 1 }]
         })
     }).catch(err => console.error("Gagal kirim notif pengaduan:", err));
-
+    let complaintItemsText = selectedTargets.map(sel => {
+            const item = d.items[sel.idx];
+            if (sel.type === 'item') {
+                return item.name;
+            } else if (sel.type === 'idpel') {
+                const idPel = d.idPelanggan[sel.idx][sel.idIdx];
+                return `${item.name} (ID: ${idPel})`;
+            }
+            return '';
+        }).join(', ')
+    showLocalComplaintNotification(currentComplaintId, complaintItemsText);
     showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
 }
     function updateAuthUI() {
@@ -6058,6 +6066,22 @@ function serviceGadgetBack() {
                 checkAuthState();
             }
         }, 50);
+            if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                    const tid = event.data.transactionId;
+                    
+                    if (!window._historyCache) {
+                        showTransactionHistory();
+                        setTimeout(() => {
+                            if (window._historyCache) showTransactionDetail(tid);
+                        }, 1500);
+                    } else {
+                        showTransactionDetail(tid);
+                    }
+                }
+            });
+        }
     }
     window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
