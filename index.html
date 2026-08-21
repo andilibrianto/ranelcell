@@ -1139,6 +1139,7 @@
 
     <script>
     const WA_NUMBER = '6281936664217';
+    const WA_NUMBER1 = '6288989518213';
     function escapeHtml(text) {
     if (!text) return '';
     const map = {
@@ -4021,6 +4022,37 @@ async function saveQRISImage() {
         
         showThankYouOverlay();
     }
+    async function showLocalTransactionNotification(orderId, totalAmount) {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            console.log("Browser tidak mendukung Web Notifications");
+            return;
+        }
+
+        try {
+            if (Notification.permission !== 'granted') {
+                if (Notification.permission !== 'denied') {
+                    await Notification.requestPermission();
+                }
+            }
+
+            if (Notification.permission === 'granted') {
+                const registration = await navigator.serviceWorker.ready;
+                const title = "Pesanan Diproses! 🎉";
+                const options = {
+                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                    icon: './Gambar/PWA_512_M.png',
+                    badge: './Gambar/PWA_512.png',
+                    vibrate: [200, 100, 200, 100, 200],
+                    tag: orderId,
+                    requireInteraction: false 
+                };
+                
+                registration.showNotification(title, options);
+            }
+        } catch (err) {
+            console.error("Gagal menampilkan notifikasi lokal:", err);
+        }
+    }
     async function saveTransactionToFirestore(d, orderId) {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
@@ -4102,6 +4134,7 @@ async function saveQRISImage() {
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
         showThankYouOverlay();
+        showLocalTransactionNotification(orderId, getGrandTotal());
     }
     function renderProfil() {
         const el = document.getElementById('profil-content');
@@ -5874,7 +5907,7 @@ function submitServiceGadget() {
     
     msg += `\n_(Catatan: Harga service/part ditentukan setelah pengecekan unit)_`;
     
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(`https://wa.me/${WA_NUMBER1}?text=${encodeURIComponent(msg)}`, '_blank');
     
     saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
 
@@ -5890,6 +5923,7 @@ function submitServiceGadget() {
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
     showThankYouOverlay("Permintaan service Anda telah dikirim, mohon tunggu konfirmasi admin.");
+    showLocalTransactionNotification(orderId, getGrandTotal());
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
