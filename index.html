@@ -4022,9 +4022,40 @@ async function saveQRISImage() {
         
         showThankYouOverlay();
     }
+    async function showLocalTransactionNotification(orderId, totalAmount) {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            console.log("Browser tidak mendukung Web Notifications");
+            return;
+        }
+
+        try {
+            if (Notification.permission !== 'granted') {
+                if (Notification.permission !== 'denied') {
+                    await Notification.requestPermission();
+                }
+            }
+
+            if (Notification.permission === 'granted') {
+                const registration = await navigator.serviceWorker.ready;
+                const title = "Pesanan Diproses! 🎉";
+                const options = {
+                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                    icon: './Gambar/PWA_512_M.png',
+                    badge: './Gambar/PWA_512_M.png',
+                    vibrate: [200, 100, 200, 100, 200],
+                    tag: orderId,
+                    requireInteraction: false 
+                };
+                
+                registration.showNotification(title, options);
+            }
+        } catch (err) {
+            console.error("Gagal menampilkan notifikasi lokal:", err);
+        }
+    }
     async function showLocalComplaintNotification(transactionId, itemsText) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            console.log("Browser tidak mendukung Versi Website");
+            console.log("Browser tidak mendukung Web Notifications");
             return;
         }
 
@@ -4037,7 +4068,7 @@ async function saveQRISImage() {
                     icon: './Gambar/PWA_512_M.png',
                     badge: './Gambar/PWA_512.png',
                     vibrate: [200, 100, 200, 100, 200],
-                    tag: 'komplain_' + transactionId, 
+                    tag: 'komplain_' + transactionId,
                     silent: false,
                     data: { 
                         type: 'complaint', 
@@ -4397,6 +4428,22 @@ async function saveQRISImage() {
                 }
             }
         });
+        if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                const tid = event.data.transactionId;
+                
+                if (!window._historyCache) {
+                    showTransactionHistory();
+                    setTimeout(() => {
+                        if (window._historyCache) showTransactionDetail(tid);
+                    }, 1500);
+                } else {
+                    showTransactionDetail(tid);
+                }
+            }
+        });
+    }
     }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
@@ -5406,7 +5453,8 @@ async function submitComplaint() {
             items: [{ name: `Pengaduan: ${category}`, quantity: 1 }]
         })
     }).catch(err => console.error("Gagal kirim notif pengaduan:", err));
-    let complaintItemsText = selectedTargets.map(sel => {
+    
+        let complaintItemsText = selectedTargets.map(sel => {
             const item = d.items[sel.idx];
             if (sel.type === 'item') {
                 return item.name;
@@ -5415,10 +5463,11 @@ async function submitComplaint() {
                 return `${item.name} (ID: ${idPel})`;
             }
             return '';
-        }).join(', ')
-    showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-    showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
-}
+        }).join(', ');
+
+        showLocalComplaintNotification(currentComplaintId, complaintItemsText);
+        showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
+    }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
         isUserLoggedIn = !!user;
@@ -6066,22 +6115,6 @@ function serviceGadgetBack() {
                 checkAuthState();
             }
         }, 50);
-            if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', event => {
-                if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                    const tid = event.data.transactionId;
-                    
-                    if (!window._historyCache) {
-                        showTransactionHistory();
-                        setTimeout(() => {
-                            if (window._historyCache) showTransactionDetail(tid);
-                        }, 1500);
-                    } else {
-                        showTransactionDetail(tid);
-                    }
-                }
-            });
-        }
     }
     window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
