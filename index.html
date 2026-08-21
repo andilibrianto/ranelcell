@@ -4847,19 +4847,25 @@ function togglePasswordSection() {
         if (!passSection.classList.contains('hidden')) {
             togglePasswordSection();
         }
+                // =========================================================
+        // BAGIAN PENTING: Update UI Greeting Secara Instan
+        // =========================================================
         updateHomeGreeting(); 
-        updateAuthUI();
+        updateAuthUI(); // Memastikan avatar/nama di header ikut update jika ada
+        // =========================================================
 
         showToast('Profil berhasil diperbarui!', 'success');
 
+        // KEMBALIKAN TOMBOL KE KEADAAN SEMULA SECARA INSTAN
         saveBtn.disabled = true;
         saveBtn.style.opacity = '0.5';
         saveBtn.style.cursor = 'not-allowed';
         saveBtn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> Simpan Perubahan';
 
+        // --- Kembali ke tampilan detail ---
         setTimeout(() => {
             showEditProfile();
-        }, 300);
+        }, 300); // Dipercepat dari 600ms menjadi 300ms agar terasa lebih instan
 
     } catch (error) {
         hideLoading();
@@ -5976,7 +5982,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.4');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.3');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
