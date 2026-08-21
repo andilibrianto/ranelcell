@@ -4846,6 +4846,8 @@ function togglePasswordSection() {
         if (!passSection.classList.contains('hidden')) {
             togglePasswordSection();
         }
+        updateHomeGreeting(); 
+        updateAuthUI();
 
         showToast('Profil berhasil diperbarui!', 'success');
 
@@ -5968,7 +5970,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.2');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.3');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
