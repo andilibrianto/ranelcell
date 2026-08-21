@@ -89,17 +89,16 @@
         html, body {
             margin: 0; padding: 0;
             position: fixed; 
-            width: 100%; 
-            height: 100%;
+            top: 0; left: 0; right: 0; bottom: 0; /* Ubah dari width/height 100% */
+            overflow: hidden;
             overscroll-behavior-y: none; 
         }
         body { 
-            font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; overflow-x:hidden; 
+            font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; 
         }
         #app {
-            position: relative;
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
         }
         ::-webkit-scrollbar { width:4px; }
@@ -1895,24 +1894,26 @@
     function pushHistory() {
             window.history.pushState({ app: 'ranel-cell' }, '');
         }
-    let _touchStartY = 0;
-    document.body.addEventListener('touchstart', function(e) {
-        _touchStartY = e.touches[0].clientY;
-    }, { passive: true });
+    
+        let _touchStartY = 0;
+        document.body.addEventListener('touchstart', function(e) {
+            _touchStartY = e.touches[0].clientY;
+        }, { passive: true });
 
-    document.body.addEventListener('touchmove', function(e) {
-        const activeView = document.querySelector('.view.active');
-        if (!activeView) return;
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.autocomplete-list')) return;
+            
+            const activeView = document.querySelector('.view.active');
+            if (!activeView) return;
 
-        const touchY = e.touches[0].clientY;
-        const touchDelta = touchY - _touchStartY;
+            const touchY = e.touches[0].clientY;
+            const touchDelta = touchY - _touchStartY;
 
-        if (activeView.scrollTop <= 0 && touchDelta > 0) {
-
-            e.preventDefault();
-        }
-        _touchStartY = touchY;
-    }, { passive: false });
+            if (activeView.scrollTop <= 0 && touchDelta > 0) {
+                e.preventDefault();
+            }
+            _touchStartY = touchY;
+        }, { passive: false });
 
     pushHistory();
 
@@ -5624,9 +5625,9 @@ function initServiceGadget() {
                     const item = document.createElement('div');
                     item.className = 'autocomplete-item';
                     item.innerText = model;
-                    item.onmousedown = (e) => {
-                        e.preventDefault();
+                    item.onclick = () => {
                         document.getElementById('svc-model').value = model;
+                        document.getElementById('svc-model').blur();
                         listEl.innerHTML = '';
                         listEl.classList.remove('active');
                         updateServiceIssues();
@@ -5982,7 +5983,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.3');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.4');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
