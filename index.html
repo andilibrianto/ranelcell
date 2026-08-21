@@ -5968,7 +5968,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=6');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=7');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
