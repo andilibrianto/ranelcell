@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.1.9.0';
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.9.1';
 const urlsToCache = [
     './',
     './index.html',
