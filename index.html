@@ -1434,11 +1434,9 @@
             {name:"Veger R1 Pro Micro", price:40000},
             {name:"Veger C1 TypeC", price:40000},
             {name:"Veger R1 Pro TypeC", price:45000},
-            {name:"Jete Atomic II Micro", price:50000},
             {name:"Jete C83 C to C", price:70000}
         ]},
         { category: "Others", items: [
-            {name: "Jete FlashDisk 4GB", price: 70000},
             {name: "Sandisk FlashDisk 16GB", price: 100000},
             {name:"Jete Powerbank C83", price:130000}
         ]}
@@ -4019,8 +4017,8 @@ async function saveQRISImage() {
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         saveTransactionToFirestore(d, orderId);
-        
         showThankYouOverlay();
+        showLocalTransactionNotification(orderId, getGrandTotal());
     }
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
