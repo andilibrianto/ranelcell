@@ -4698,6 +4698,7 @@ async function saveQRISImage() {
     saveBtn.disabled = true;
     saveBtn.style.opacity = '0.5';
     saveBtn.style.cursor = 'not-allowed';
+    saveBtn.innerHTML = '<i class="fa-solid fa-save mr-2"></i>
     document.getElementById('profile-detail-view').classList.remove('hidden');
     document.getElementById('profile-edit-form').classList.add('hidden');
     document.getElementById('edit-profile-title').textContent = 'Detail Akun';
@@ -4851,9 +4852,14 @@ function togglePasswordSection() {
 
         showToast('Profil berhasil diperbarui!', 'success');
 
+        saveBtn.disabled = true;
+        saveBtn.style.opacity = '0.5';
+        saveBtn.style.cursor = 'not-allowed';
+        saveBtn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> Simpan Perubahan';
+
         setTimeout(() => {
             showEditProfile();
-        }, 600);
+        }, 300);
 
     } catch (error) {
         hideLoading();
@@ -5970,7 +5976,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.3');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.4');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
