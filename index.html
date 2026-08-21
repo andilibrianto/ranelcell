@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/512M_V2.png?v=4" />
-    <link rel="apple-touch-icon" href="./Gambar/512M_V2.png?v=4" />
+    <link rel="icon" type="image/png" href="./Gambar/512M_V3.png" />
+    <link rel="apple-touch-icon" href="./Gambar/512M_V3.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
-    <link rel="manifest" href="manifest.json?v=4">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -4349,34 +4349,17 @@ async function saveQRISImage() {
         currentTrackedUserRef = null;
     }
     function setupPWA() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').then(registration => {
-                // Cek update Service Worker secara berkala
-                registration.addEventListener('updatefound', () => {
-                    const newWorker = registration.installing;
-                    newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                            // Paksa SW baru untuk aktif langsung tanpa menunggu reload
-                            newWorker.postMessage({ type: 'SKIP_WAITING' });
-                        }
-                    });
-                });
-            }).catch((err) => console.error('SW registration failed: ', err));
-
-            // Auto reload saat SW baru mengambil alih
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                if (refreshing) return;
-                window.location.reload();
-                refreshing = true;
-            });
-        }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .catch((err) => console.error('SW registration failed: ', err));
+    }
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 const activeView = document.querySelector('.view.active');
                 if (activeView) {
                     const scrollTop = activeView.scrollTop;
+                    
                     activeView.style.opacity = '0.99';
                     setTimeout(() => {
                         activeView.style.opacity = '';
@@ -5985,7 +5968,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=3');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=5');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
