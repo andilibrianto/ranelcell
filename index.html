@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RANEL CELL</title>
-    <link rel="icon" type="image/png" href="./Gambar/512M_V3.png" />
-    <link rel="apple-touch-icon" href="./Gambar/512M_V3.png" />
+    <link rel="icon" type="image/png" href="./Gambar/PWA_512M.png" />
+    <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
     <meta name="description" content="RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant">
     <meta name="theme-color" content="#FF2D78">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -5968,7 +5968,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=5');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=6');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.1.8.0'; // NAIKKAN VERSI INI
+const CACHE_NAME = 'ranel-cell-cache-v.0.1.8.1';
 const urlsToCache = [
     './',
     './index.html',
@@ -12,7 +12,9 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(urlsToCache);
+        })
     );
     self.skipWaiting();
 });
@@ -28,26 +30,18 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        })
     );
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
-    const requestUrl = new URL(event.request.url);
-
-    // JANGAN PERNAH INTERCEPT MANIFEST DAN GAMBAR PWA
-    // Biarkan browser mengambilnya langsung dari server setiap saat
-    if (requestUrl.pathname.endsWith('manifest.json') || requestUrl.href.includes('/Gambar/')) {
-        return; 
-    }
-
-    if (requestUrl.href.includes('nominatim.openstreetmap.org') || requestUrl.href.includes('vercel.app')) {
+    if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
         return;
     }
 
-    // Strategi Cache First untuk file statis lainnya
     event.respondWith(
         caches.match(event.request).then(response => {
             return response || fetch(event.request).catch(() => caches.match('./index.html'));
