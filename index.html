@@ -17,7 +17,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
     const firebaseConfig = {
@@ -48,6 +48,7 @@
         query, 
         where,
         getDocs,
+        onSnapshot,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
         signInWithPopup, 
@@ -394,6 +395,8 @@
             background: rgba(255,45,120,0.1); color: var(--pk);
         }
         .autocomplete-item:last-child { border-bottom: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
@@ -517,7 +520,10 @@
                 <div id="greeting-banner" class="text-center mb-8 fade-up hidden">
                     <p id="greeting-text" class="text-base font-semibold text-gray-300 leading-relaxed"></p>
                 </div>
-
+                    <section id="promo-banner-section" class="mb-8 fade-up fade-up-d1">
+                        <div id="promo-banner-slider" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4" style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;">
+                        </div>
+                    </section>
                 <section class="mb-8 fade-up fade-up-d1">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="section-label" style="margin-bottom:0;">Cara Pesan</h3>
@@ -642,7 +648,15 @@
                 </div>
             </footer>
         </div>
-
+<div id="view-promo-detail" class="view">
+    <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
+        <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <button onclick="showView('view-home')" class="w-9 h-9 rounded-xl bg-dk-700 border border-dk-500 flex items-center justify-center text-gray-300 active:scale-90 transition-transform" aria-label="Kembali"><i class="fa-solid fa-chevron-left text-sm"></i></button>
+            <h2 class="text-sm font-bold flex-1">Detail Promo</h2>
+        </div>
+    </header>
+    <div id="promo-detail-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
+</div>
         <div id="view-accessories" class="view">
             <header class="sticky top-0 z-30 backdrop-blur-xl bg-dk-900/80 border-b border-dk-500/30">
                 <div class="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
@@ -2079,6 +2093,40 @@
     function pushHistory() {
         window.history.pushState({ app: 'ranel-cell' }, '');
     }
+    let bannerAutoScrollInterval = null;
+
+function startBannerAutoScroll() {
+    const slider = document.getElementById('promo-banner-slider');
+    if (!slider) return;
+    
+    stopBannerAutoScroll();
+
+    bannerAutoScrollInterval = setInterval(() => {
+        if (currentView !== 'view-home') {
+            stopBannerAutoScroll();
+            return;
+        }
+
+        if (!slider.children || slider.children.length === 0) return;
+
+        const stepWidth = slider.children[0].offsetWidth + 16;
+        const currentScroll = slider.scrollLeft;
+        const maxScroll = slider.scrollWidth - slider.clientWidth;
+
+        if (currentScroll >= maxScroll - 10) {
+            slider.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            slider.scrollBy({ left: stepWidth, behavior: 'smooth' });
+        }
+    }, 5000);
+}
+
+function stopBannerAutoScroll() {
+    if (bannerAutoScrollInterval) {
+        clearInterval(bannerAutoScrollInterval);
+        bannerAutoScrollInterval = null;
+    }
+}
     function showView(viewId) {
     const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan', 'view-service-gadget'];
     if (restrictedViews.includes(viewId)) {
@@ -2120,6 +2168,11 @@
         if (viewId === 'view-pengaduan') renderPengaduan();
         if (viewId === 'view-preview') renderPreview();
         updateCartUI();
+        if (viewId === 'view-home') {
+            startBannerAutoScroll();
+        } else {
+            stopBannerAutoScroll();
+        }
     }
     function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
     function onlyDigits(val) { return val.replace(/[^0-9]/g, ''); }
@@ -6069,7 +6122,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.4');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.5');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
@@ -6104,21 +6157,128 @@ function serviceGadgetBack() {
                 console.error('Gagal setup FCM Pelanggan:', err);
             }
         }
-    function init() { 
+        function init() { 
         setupPWA(); 
         updateCartUI();
         const checkFirebaseReady = setInterval(() => {
             if (window.firebaseAuth) {
                 clearInterval(checkFirebaseReady);
                 checkAuthState();
+                loadBanners();
             }
         }, 50);
     }
-    window.addEventListener('firebase-ready', function() {
+    let allBanners = [];
+
+async function loadBanners() {
+    if (!window.firebaseAuth) return;
+    const { db, collection, query, onSnapshot } = window.firebaseAuth;
+    try {
+        // onSnapshot akan terus mendengarkan perubahan data secara real-time
+        const q = query(collection(db, "banners"));
+        onSnapshot(q, (snapshot) => {
+            allBanners = [];
+            snapshot.forEach((doc) => {
+                allBanners.push({ id: doc.id, data: doc.data() });
+            });
+            // Setiap kali ada perubahan (admin tambah/hapus banner), slider akan langsung di-render ulang
+            renderBanners();
+            if (currentView === 'view-promo-detail' && window._currentPromoId) {
+                showPromoDetail(window._currentPromoId);
+            }
+        }, (error) => {
+            console.error("Gagal mendengarkan update banner:", error);
+        });
+    } catch(e) { 
+        console.error("Gagal memuat banner:", e); 
+    }
+}
+
+function renderBanners() {
+    const slider = document.getElementById('promo-banner-slider');
+    const section = document.getElementById('promo-banner-section');
+    if (!slider || !section) return;
+    
+    const activeBanners = allBanners.filter(b => b.data.active === true);
+    
+    if (activeBanners.length === 0) {
+        section.style.display = 'none';
+        stopBannerAutoScroll();
+        return;
+    }
+
+    section.style.display = 'block';
+    
+    slider.innerHTML = activeBanners.map(b => `
+        <div onclick="showPromoDetail('${b.id}')" class="flex-shrink-0 w-[85%] rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform" style="scroll-snap-align: center;">
+            <img src="${b.data.imageUrl}" alt="${b.data.title}" class="w-full h-full object-cover">
+        </div>
+    `).join('');
+}
+
+function showPromoDetail(bannerId) {
+    window._currentPromoId = bannerId;
+    const b = allBanners.find(x => x.id === bannerId);
+    if (!b) return;
+    const d = b.data;
+    const el = document.getElementById('promo-detail-content');
+    
+    // Cek jenis konten
+    if (d.type === 'info') {
+        // Format Konten Informasi
+        const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4"><img src="${d.imageUrl}" alt="${d.title}" class="w-full"></div>` : '';
+        const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${d.title}</h3>` : '';
+        // Isi pesan dengan format rata kanan-kiri (text-justify), font 14px (text-sm), warna abu terang (text-gray-300)
+        const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${d.isiPesan}</p>` : '';
+        
+        el.innerHTML = `
+            ${imgHtml}
+            <div class="card p-6 fade-up">
+                ${titleHtml}
+                ${pesanHtml}
+            </div>
+        `;
+    } else {
+        // Format Konten Promosi (Kode lama)
+        const caraIkutHtml = (d.caraIkut || []).map(c => `<li>${c}</li>`).join('');
+        el.innerHTML = `
+            <div class="rounded-xl overflow-hidden mb-4">
+                <img src="${d.imageUrl}" alt="${d.title}" class="w-full">
+            </div>
+            <div class="card p-6 fade-up">
+                <h3 class="text-lg font-bold text-pk mb-2">${d.title || ''}</h3>
+                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-calendar-days mr-2"></i> Periode: ${d.periode || '-'}</p>
+                
+                <div class="space-y-4 text-sm text-gray-300">
+                    ${d.hadiah ? `
+                    <div>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">Total Hadiah</h4>
+                        <p class="text-base font-bold text-white">${d.hadiah}</p>
+                    </div>` : ''}
+                    ${d.pengumuman ? `
+                    <div>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">Pengumuman</h4>
+                        <p class="text-base text-white">${d.pengumuman}</p>
+                    </div>` : ''}
+                    ${caraIkutHtml ? `
+                    <div class="pt-4 border-t border-dk-500/50">
+                        <h4 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">Cara Mengikuti</h4>
+                        <ol class="list-decimal list-inside space-y-1 text-gray-400 text-xs leading-relaxed">
+                            ${caraIkutHtml}
+                        </ol>
+                    </div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    showView('view-promo-detail');
+}
+        window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
+            loadBanners(); // <--- TAMBAHKAN INI
         }
-    });
+    });;
     </script>
 </body>
 </html>
