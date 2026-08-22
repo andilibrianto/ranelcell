@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="referrer" content="no-referrer"> <!-- TAMBAHKAN INI: Agar iOS tidak memblokir gambar dari Imgur -->
     <title>RANEL CELL</title>
     <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
@@ -6172,25 +6173,30 @@ function serviceGadgetBack() {
 
 async function loadBanners() {
     if (!window.firebaseAuth) return;
-    const { db, collection, query, onSnapshot } = window.firebaseAuth;
+    const { db, collection, query, onSnapshot, getDocs } = window.firebaseAuth;
     try {
-        // onSnapshot akan terus mendengarkan perubahan data secara real-time
         const q = query(collection(db, "banners"));
+        
+        // 1. Ambil data AWAL secara langsung (getDocs) - Ini sangat stabil di iOS Safari
+        const querySnapshot = await getDocs(q);
+        allBanners = [];
+        querySnapshot.forEach((doc) => {
+            allBanners.push({ id: doc.id, data: doc.data() });
+        });
+        renderBanners();
+
+        // 2. Pasang listener real-time (onSnapshot) sebagai cadangan jika ada update dari Admin
         onSnapshot(q, (snapshot) => {
             allBanners = [];
             snapshot.forEach((doc) => {
                 allBanners.push({ id: doc.id, data: doc.data() });
             });
-            // Setiap kali ada perubahan (admin tambah/hapus banner), slider akan langsung di-render ulang
             renderBanners();
-            if (currentView === 'view-promo-detail' && window._currentPromoId) {
-                showPromoDetail(window._currentPromoId);
-            }
         }, (error) => {
-            console.error("Gagal mendengarkan update banner:", error);
+            console.error("Listener real-time banner dinonaktifkan (iOS limit):", error);
         });
     } catch(e) { 
-        console.error("Gagal memuat banner:", e); 
+        console.error("Gagal memuat banner awal:", e); 
     }
 }
 

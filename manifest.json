@@ -2,7 +2,7 @@
   "name": "RANEL CELL",
   "short_name": "Ranel Cell",
   "description": "RANEL CELL - Layanan paket data tercepat, terlengkap dan termurah, topup game proses masuk instant",
-  "start_url": "./index.html?v=2.5",
+  "start_url": "./index.html?v=2.6",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#FF2D78",
