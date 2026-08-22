@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>RANEL CELL</title>
     <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
@@ -87,20 +87,25 @@
     <style>
         :root { --pk:#FF2D78; --pk-light:#FF6B9D; --dk:#0A0A0A; --card:#141414; --border:#222; }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        html, body {
-            margin: 0; padding: 0;
-            position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0; /* Ubah dari width/height 100% */
-            overflow: hidden;
-            overscroll-behavior-y: none; 
+        html {
+        margin: 0; padding: 0;
+        background-color: #0A0A0A;
         }
         body { 
-            font-family:'Poppins',sans-serif; background:var(--dk); color:#fff; 
+            margin: 0; padding: 0;
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            overscroll-behavior-y: none; 
+            font-family:'Poppins',sans-serif; 
+            background-color: #0A0A0A; 
+            color:#fff; 
         }
         #app {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
+            background-color: #0A0A0A;
         }
         ::-webkit-scrollbar { width:4px; }
         ::-webkit-scrollbar-track { background:transparent; }
