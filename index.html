@@ -2104,7 +2104,8 @@
     function pushHistory() {
         window.history.pushState({ app: 'ranel-cell' }, '');
     }
-    let bannerAutoScrollInterval = null;
+let bannerAutoScrollInterval = null;
+let isAutoScrolling = false; // Flag untuk mencegah dobel trigger di iOS
 
 function startBannerAutoScroll() {
     const slider = document.getElementById('promo-banner-slider');
@@ -2119,17 +2120,37 @@ function startBannerAutoScroll() {
         }
 
         if (!slider.children || slider.children.length === 0) return;
+        if (isAutoScrolling) return;
 
-        const stepWidth = slider.children[0].offsetWidth + 16;
+        let currentIndex = 0;
+        let minDistance = Infinity;
         const currentScroll = slider.scrollLeft;
-        const maxScroll = slider.scrollWidth - slider.clientWidth;
 
-        if (currentScroll >= maxScroll - 10) {
-            slider.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-            slider.scrollBy({ left: stepWidth, behavior: 'smooth' });
+        for (let i = 0; i < slider.children.length; i++) {
+            const distance = Math.abs(slider.children[i].offsetLeft - currentScroll);
+            if (distance < minDistance) {
+                minDistance = distance;
+                currentIndex = i;
+            }
         }
-    }, 5000);
+
+        let nextIndex = currentIndex + 1;
+        if (nextIndex >= slider.children.length) {
+            nextIndex = 0; // Kembali ke awal jika sudah di banner terakhir
+        }
+
+        const nextBanner = slider.children[nextIndex];
+        const targetScroll = nextBanner.offsetLeft + (nextBanner.offsetWidth / 2) - (slider.clientWidth / 2);
+
+        isAutoScrolling = true;
+
+        slider.scrollTo({ left: targetScroll, behavior: 'smooth' });
+
+        setTimeout(() => {
+            isAutoScrolling = false;
+        }, 1000);
+
+    }, 5000); // 5000 milidetik = 5 detik
 }
 
 function stopBannerAutoScroll() {
@@ -2137,6 +2158,7 @@ function stopBannerAutoScroll() {
         clearInterval(bannerAutoScrollInterval);
         bannerAutoScrollInterval = null;
     }
+    isAutoScrolling = false;
 }
     function showView(viewId) {
     const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan', 'view-service-gadget'];
