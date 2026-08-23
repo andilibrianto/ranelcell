@@ -6227,9 +6227,10 @@ function renderBanners() {
     // Jika ada banner, tampilkan kembali sectionnya
     section.style.display = 'block';
     
+    // Gunakan inline style untuk memastikan iOS Safari 100% membaca tinggi dan rasio gambar
     slider.innerHTML = activeBanners.map(b => `
-        <div onclick="showPromoDetail('${b.id}')" class="flex-shrink-0 w-[85%] rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform aspect-[2/1] bg-dk-700" style="scroll-snap-align: center;">
-            <img src="${b.data.imageUrl}" alt="${b.data.title}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+        <div onclick="showPromoDetail('${b.id}')" class="flex-shrink-0 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform" style="width: 85%; aspect-ratio: 2 / 1; scroll-snap-align: center; flex-shrink: 0; background-color: #1A1A1A;">
+            <img src="${b.data.imageUrl}" alt="${b.data.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
         </div>
     `).join('');
 }
@@ -6241,12 +6242,9 @@ function showPromoDetail(bannerId) {
     const d = b.data;
     const el = document.getElementById('promo-detail-content');
     
-    // Cek jenis konten
     if (d.type === 'info') {
-        // Format Konten Informasi
-        const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4"><img src="${d.imageUrl}" alt="${d.title}" class="w-full"></div>` : '';
+        const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;"><img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer"></div>` : '';
         const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${d.title}</h3>` : '';
-        // Isi pesan dengan format rata kanan-kiri (text-justify), font 14px (text-sm), warna abu terang (text-gray-300)
         const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${d.isiPesan}</p>` : '';
         
         el.innerHTML = `
@@ -6257,11 +6255,10 @@ function showPromoDetail(bannerId) {
             </div>
         `;
     } else {
-        // Format Konten Promosi (Kode lama)
         const caraIkutHtml = (d.caraIkut || []).map(c => `<li>${c}</li>`).join('');
         el.innerHTML = `
-            <div class="rounded-xl overflow-hidden mb-4">
-                <img src="${d.imageUrl}" alt="${d.title}" class="w-full">
+            <div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;">
+                <img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
             </div>
             <div class="card p-6 fade-up">
                 <h3 class="text-lg font-bold text-pk mb-2">${d.title || ''}</h3>
