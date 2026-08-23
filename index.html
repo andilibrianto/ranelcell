@@ -6229,6 +6229,12 @@ function renderBanners() {
     
     const activeBanners = allBanners.filter(b => b.data.active === true);
     
+    activeBanners.sort((a, b) => {
+        const orderA = a.data.order || 999; // Jika kosong, taruh di paling belakang
+        const orderB = b.data.order || 999;
+        return orderA - orderB;
+    });
+    
     // Jika tidak ada banner aktif di Firestore
     if (activeBanners.length === 0) {
         section.style.display = 'none';
