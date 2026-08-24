@@ -4515,7 +4515,7 @@ async function saveQRISImage() {
     }
     setInterval(() => {
     if (currentView === 'view-home' && allBanners.length > 0) {
-        const hasScheduled = allBanners.some(b => b.data.scheduleTime);
+        const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
         if (hasScheduled) {
             renderBanners();
         }
@@ -6220,13 +6220,19 @@ function renderBanners() {
     const slider = document.getElementById('promo-banner-slider');
     const section = document.getElementById('promo-banner-section');
     if (!slider || !section) return;
-    
+
     const now = new Date();
     const activeBanners = allBanners.filter(b => {
         if (b.data.active !== true) return false;
-        if (b.data.scheduleTime) {
-            const scheduleDate = new Date(b.data.scheduleTime);
-            if (now < scheduleDate) return false;
+        
+        if (b.data.scheduleStartTime) {
+            const start = new Date(b.data.scheduleStartTime);
+            if (now < start) return false;
+        }
+      
+        if (b.data.scheduleEndTime) {
+            const end = new Date(b.data.scheduleEndTime);
+            if (now > end) return false;
         }
         
         return true;
