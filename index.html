@@ -4513,6 +4513,14 @@ async function saveQRISImage() {
             }
         });
     }
+    setInterval(() => {
+    if (currentView === 'view-home' && allBanners.length > 0) {
+        const hasScheduled = allBanners.some(b => b.data.scheduleTime);
+        if (hasScheduled) {
+            renderBanners();
+        }
+    }
+    }, 60000);
     }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
@@ -6213,7 +6221,16 @@ function renderBanners() {
     const section = document.getElementById('promo-banner-section');
     if (!slider || !section) return;
     
-    const activeBanners = allBanners.filter(b => b.data.active === true);
+    const now = new Date();
+    const activeBanners = allBanners.filter(b => {
+        if (b.data.active !== true) return false;
+        if (b.data.scheduleTime) {
+            const scheduleDate = new Date(b.data.scheduleTime);
+            if (now < scheduleDate) return false;
+        }
+        
+        return true;
+    });
     
     activeBanners.sort((a, b) => {
         const orderA = a.data.order || 999;
