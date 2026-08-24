@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="referrer" content="no-referrer"> <!-- TAMBAHKAN INI: Agar iOS tidak memblokir gambar dari Imgur -->
+    <meta name="referrer" content="no-referrer">
     <title>RANEL CELL</title>
     <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
@@ -3786,7 +3786,7 @@ async function applyPromoCode() {
                         <i class="fa-solid fa-qrcode text-pk text-lg"></i>
                     </div>
                     <div class="flex-1">
-                        <p class="font-semibold text-sm">QRIS Bank Lain</p>
+                        <p class="font-semibold text-sm">QRIS</p>
                         <p class="text-[11px] text-gray-500 mt-0.5">eWallet klik disini</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-gray-600 text-xs"></i>
@@ -3813,7 +3813,7 @@ async function applyPromoCode() {
             selectedPaymentMethod = 'QRIS Bank BCA';
             sendOrderToWhatsApp();
         } else if (method === 'qris') {
-            selectedPaymentMethod = 'QRIS Bank Lain / eWallet';
+            selectedPaymentMethod = 'QRIS / eWallet';
             showView('view-qris'); renderQRIS();
         } else if (method === 'cod') {
             selectedPaymentMethod = 'Cash on Delivery (CoD)';
