@@ -91,7 +91,7 @@
         html, body {
             margin: 0; padding: 0;
             position: fixed; 
-            top: 0; left: 0; right: 0; bottom: 0; /* Ubah dari width/height 100% */
+            top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
             overscroll-behavior-y: none; 
         }
@@ -234,14 +234,12 @@
             transition:all 0.25s; font-family:'Poppins',sans-serif; text-align:center;
         }
         .toggle-btn.active { border-color:var(--pk); background:rgba(255,45,120,0.1); color:var(--pk); }
-
         .price-add { position:relative; overflow:hidden; }
         .price-add::before {
             content:''; position:absolute; inset:0; background:rgba(255,45,120,0.1);
             transform:scaleX(0); transform-origin:left; transition:transform 0.3s ease;
         }
         .price-add:active::before { transform:scaleX(1); }
-
         .qty-btn {
             width:34px; height:34px; border-radius:8px; border:1px solid #333;
             background:transparent; color:#fff; font-size:16px; cursor:pointer;
@@ -340,7 +338,6 @@
         .id-pel-type-badge.type-token { background:rgba(250,204,21,0.15); color:#facc15; }
         .id-pel-type-badge.type-game { background:rgba(168, 85, 247, 0.15); color:#c084fc; }
         .id-pel-type-badge.type-perdana { background:rgba(255, 45, 120, 0.15); color: #ff8fab; }
-
         .step-icon {
             width:56px; height:56px; border-radius:18px;
             background:linear-gradient(135deg, rgba(255,45,120,0.2), rgba(255,45,120,0.05));
@@ -349,11 +346,9 @@
             transition: transform 0.25s ease;
         }
         .step-icon:active { transform:scale(0.9); }
-
         .footer-text { font-size:11px; color:#555; text-align:center; line-height:1.8; }
         .footer-text .copyright { color:#444; font-weight:500; }
         .footer-text .brand { color:var(--pk); font-weight:600; }
-
         .promo-card {
             display:block; text-decoration:none; color:inherit;
             background:linear-gradient(135deg, rgba(255,45,120,0.12), rgba(255,45,120,0.03));
@@ -2105,7 +2100,7 @@
         window.history.pushState({ app: 'ranel-cell' }, '');
     }
 let bannerAutoScrollInterval = null;
-let isAutoScrolling = false; // Flag untuk mencegah dobel trigger di iOS
+let isAutoScrolling = false;
 
 function startBannerAutoScroll() {
     const slider = document.getElementById('promo-banner-slider');
@@ -2136,7 +2131,7 @@ function startBannerAutoScroll() {
 
         let nextIndex = currentIndex + 1;
         if (nextIndex >= slider.children.length) {
-            nextIndex = 0; // Kembali ke awal jika sudah di banner terakhir
+            nextIndex = 0; 
         }
 
         const nextBanner = slider.children[nextIndex];
@@ -2150,7 +2145,7 @@ function startBannerAutoScroll() {
             isAutoScrolling = false;
         }, 1000);
 
-    }, 5000); // 5000 milidetik = 5 detik
+    }, 5000); 
 }
 
 function stopBannerAutoScroll() {
@@ -4997,25 +4992,19 @@ function togglePasswordSection() {
         if (!passSection.classList.contains('hidden')) {
             togglePasswordSection();
         }
-                // =========================================================
-        // BAGIAN PENTING: Update UI Greeting Secara Instan
-        // =========================================================
         updateHomeGreeting(); 
-        updateAuthUI(); // Memastikan avatar/nama di header ikut update jika ada
-        // =========================================================
+        updateAuthUI(); 
 
         showToast('Profil berhasil diperbarui!', 'success');
 
-        // KEMBALIKAN TOMBOL KE KEADAAN SEMULA SECARA INSTAN
         saveBtn.disabled = true;
         saveBtn.style.opacity = '0.5';
         saveBtn.style.cursor = 'not-allowed';
         saveBtn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> Simpan Perubahan';
 
-        // --- Kembali ke tampilan detail ---
         setTimeout(() => {
             showEditProfile();
-        }, 300); // Dipercepat dari 600ms menjadi 300ms agar terasa lebih instan
+        }, 300);
 
     } catch (error) {
         hideLoading();
@@ -6198,8 +6187,6 @@ async function loadBanners() {
     const { db, collection, query, onSnapshot, getDocs } = window.firebaseAuth;
     try {
         const q = query(collection(db, "banners"));
-        
-        // 1. Ambil data AWAL secara langsung (getDocs) - Ini sangat stabil di iOS Safari
         const querySnapshot = await getDocs(q);
         allBanners = [];
         querySnapshot.forEach((doc) => {
@@ -6207,7 +6194,6 @@ async function loadBanners() {
         });
         renderBanners();
 
-        // 2. Pasang listener real-time (onSnapshot) sebagai cadangan jika ada update dari Admin
         onSnapshot(q, (snapshot) => {
             allBanners = [];
             snapshot.forEach((doc) => {
@@ -6230,22 +6216,17 @@ function renderBanners() {
     const activeBanners = allBanners.filter(b => b.data.active === true);
     
     activeBanners.sort((a, b) => {
-        const orderA = a.data.order || 999; // Jika kosong, taruh di paling belakang
+        const orderA = a.data.order || 999;
         const orderB = b.data.order || 999;
         return orderA - orderB;
     });
-    
-    // Jika tidak ada banner aktif di Firestore
     if (activeBanners.length === 0) {
         section.style.display = 'none';
         stopBannerAutoScroll();
         return;
     }
-    
-    // Jika ada banner, tampilkan kembali sectionnya
     section.style.display = 'block';
-    
-    // Gunakan inline style untuk memastikan iOS Safari 100% membaca tinggi dan rasio gambar
+
     slider.innerHTML = activeBanners.map(b => `
         <div onclick="showPromoDetail('${b.id}')" class="flex-shrink-0 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform" style="width: 85%; aspect-ratio: 2 / 1; scroll-snap-align: center; flex-shrink: 0; background-color: #1A1A1A;">
             <img src="${b.data.imageUrl}" alt="${b.data.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
@@ -6309,7 +6290,7 @@ function showPromoDetail(bannerId) {
         window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
-            loadBanners(); // <--- TAMBAHKAN INI
+            loadBanners();
         }
     });;
     </script>
