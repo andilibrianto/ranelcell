@@ -6270,30 +6270,36 @@ function showPromoDetail(bannerId) {
                 ${pesanHtml}
             </div>
         `;
-    } else {
+        } else {
+        // Format Konten Promosi (Dengan Label Custom)
+        const labelPeriode = d.labelPeriode || 'Periode';
+        const labelHadiah = d.labelHadiah || 'Total Hadiah / Keuntungan';
+        const labelPengumuman = d.labelPengumuman || 'Pemenang / Pengumuman';
+        const labelCaraIkut = d.labelCaraIkut || 'Cara Mengikuti';
         const caraIkutHtml = (d.caraIkut || []).map(c => `<li>${c}</li>`).join('');
+        
         el.innerHTML = `
             <div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;">
                 <img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
             </div>
             <div class="card p-6 fade-up">
                 <h3 class="text-lg font-bold text-pk mb-2">${d.title || ''}</h3>
-                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-calendar-days mr-2"></i> Periode: ${d.periode || '-'}</p>
+                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-calendar-days mr-2"></i> ${labelPeriode}: ${d.periode || '-'}</p>
                 
                 <div class="space-y-4 text-sm text-gray-300">
                     ${d.hadiah ? `
                     <div>
-                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">Total Hadiah</h4>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${labelHadiah}</h4>
                         <p class="text-base font-bold text-white">${d.hadiah}</p>
                     </div>` : ''}
                     ${d.pengumuman ? `
                     <div>
-                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">Pengumuman</h4>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${labelPengumuman}</h4>
                         <p class="text-base text-white">${d.pengumuman}</p>
                     </div>` : ''}
                     ${caraIkutHtml ? `
                     <div class="pt-4 border-t border-dk-500/50">
-                        <h4 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">Cara Mengikuti</h4>
+                        <h4 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">${labelCaraIkut}</h4>
                         <ol class="list-decimal list-inside space-y-1 text-gray-400 text-xs leading-relaxed">
                             ${caraIkutHtml}
                         </ol>
