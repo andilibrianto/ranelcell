@@ -4451,12 +4451,18 @@ async function saveQRISImage() {
             LastSeen: getWaktuWIB()
         }, { merge: true }).catch(()=>{});
     }
-    function initPresenceSystem(user) {
+        function initPresenceSystem(user) {
         if (currentTrackedUserRef && currentTrackedUserRef.id === user.uid) return;
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
 
         currentTrackedUserRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        if (isStandalone) {
+            window.firebaseAuth.setDoc(currentTrackedUserRef, {
+                isInstalled: true
+            }, { merge: true }).catch(()=>{});
+        }
 
         const setOnline = () => setPresenceStatus(true);
         const setOffline = () => setPresenceStatus(false);
