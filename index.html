@@ -3335,7 +3335,7 @@ async function applyPromoCode() {
         const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "promo_codes", code);
         const docSnap = await window.firebaseAuth.getDoc(docRef);
 
-        if (docSnap.exists() && docSnap.data().discount > 0) {
+        if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
             appliedPromoCode = code;
             promoDiscount = docSnap.data().discount; 
             showToast(`Kode promo berhasil diterapkan! Anda hemat ${formatRp(promoDiscount)}`, 'success');
@@ -5969,7 +5969,7 @@ async function applyServicePromo() {
         const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "promo_codes", code);
         const docSnap = await window.firebaseAuth.getDoc(docRef);
 
-        if (docSnap.exists() && docSnap.data().discount > 0) {
+        if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
             serviceAppliedPromoCode = code;
             servicePromoDiscount = docSnap.data().discount;
             
