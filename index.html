@@ -4089,8 +4089,8 @@ async function saveQRISImage() {
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         saveTransactionToFirestore(d, orderId);
+        showThankYouOverlay();
         showLocalTransactionNotification(orderId, getGrandTotal());
-        sessionStorage.setItem('pendingNotif', JSON.stringify({ type: 'order', id: orderId, total: getGrandTotal() }));
     }
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -4232,8 +4232,8 @@ async function saveQRISImage() {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
+        showThankYouOverlay();
         showLocalTransactionNotification(orderId, getGrandTotal());
-        sessionStorage.setItem('pendingNotif', JSON.stringify({ type: 'cek_tagihan', jenis: jenis }));
     }
     function renderProfil() {
         const el = document.getElementById('profil-content');
@@ -4490,50 +4490,20 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-        function checkPendingNotif() {
-        const pendingStr = sessionStorage.getItem('pendingNotif');
-        if (!pendingStr) return;
-        
-        const pending = JSON.parse(pendingStr);
-        sessionStorage.removeItem('pendingNotif'); // Hapus agar tidak dobel
-        
-        if (pending.type === 'order') {
-            showLocalTransactionNotification(pending.id, pending.total);
-            showTransactionHistory(pending.id);
-        } else if (pending.type === 'complaint') {
-            showLocalComplaintNotification(pending.id, pending.itemsText);
-            showTransactionHistory(pending.id);
-        } else if (pending.type === 'cek_tagihan') {
-            if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-                navigator.serviceWorker.ready.then(registration => {
-                    registration.showNotification("Permintaan Diterima! 📋", {
-                        body: `Permintaan cek tagihan ${pending.jenis} Anda telah dikirim.\nMohon tunggu konfirmasi dari admin.`,
-                        icon: './Gambar/PWA_512_M.png',
-                        vibrate: [200, 100, 200, 100, 200],
-                        tag: 'cek_tagihan_' + Date.now()
-                    });
-                });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const activeView = document.querySelector('.view.active');
+                if (activeView) {
+                    const scrollTop = activeView.scrollTop;
+                    
+                    activeView.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeView.style.opacity = '';
+                        activeView.scrollTop = scrollTop;
+                    }, 50);
+                }
             }
-            showView('view-home');
-        }
-    }
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            checkPendingNotif(); // Cek saat user kembali ke PWA
-            
-            // Force reflow UI
-            const activeView = document.querySelector('.view.active');
-            if (activeView) {
-                const scrollTop = activeView.scrollTop;
-                activeView.style.opacity = '0.99';
-                setTimeout(() => {
-                    activeView.style.opacity = '';
-                    activeView.scrollTop = scrollTop;
-                }, 50);
-            }
-        }
-    });
+        });
         if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', event => {
             if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
@@ -5100,7 +5070,7 @@ function confirmEditBack() {
         showView('view-home');
     }
 }
-async function showTransactionHistory(autoOpenId = null) {
+async function showTransactionHistory() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
 
@@ -5183,17 +5153,11 @@ async function showTransactionHistory(autoOpenId = null) {
             `;
         });
         contentEl.innerHTML = html;
+    } catch (error) {
         console.error("Gagal memuat riwayat transaksi:", error);
-            contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
-        }
-
-        if (autoOpenId && window._historyCache) {
-            const orderObj = window._historyCache.find(t => t.id === autoOpenId);
-            if (orderObj) {
-                showTransactionDetail(autoOpenId);
-            }
-        }
+        contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
     }
+}
 function showTransactionDetail(transactionId) {
     if (!window._historyCache) return;
     
@@ -5580,7 +5544,7 @@ async function submitComplaint() {
         }).join(', ');
 
         showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-        sessionStorage.setItem('pendingNotif', JSON.stringify({ type: 'complaint', id: currentComplaintId, itemsText: complaintItemsText }));
+        showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
     }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
@@ -6093,8 +6057,8 @@ function submitServiceGadget() {
         })
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
+    showThankYouOverlay("Permintaan service Anda telah dikirim, mohon tunggu konfirmasi admin.");
     showLocalTransactionNotification(orderId, getGrandTotal());
-    sessionStorage.setItem('pendingNotif', JSON.stringify({ type: 'order', id: orderId, total: serviceTotal }));
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
@@ -6362,12 +6326,9 @@ function showPromoDetail(bannerId) {
         window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
-            // Cek jika user baru kembali dari WA dan PWA sempat dimatikan sistem
-            setTimeout(() => {
-                checkPendingNotif();
-            }, 2000); // Jeda 2 detik agar Firebase Auth selesai diinisialisasi
+            loadBanners();
         }
-    });
+    });;
     </script>
 </body>
 </html>
