@@ -4089,7 +4089,8 @@ async function saveQRISImage() {
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         saveTransactionToFirestore(d, orderId);
-        window._pendingNotif = { type: 'order', id: orderId, total: getGrandTotal() };
+        showLocalTransactionNotification(orderId, getGrandTotal());
+        window._pendingNotif = { type: 'order', id: orderId, total: getGrandTotal() }
     }
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -4231,6 +4232,18 @@ async function saveQRISImage() {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
+        showLocalTransactionNotification(orderId, getGrandTotal());
+        if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification("Permintaan Diterima! 📋", {
+                    body: `Permintaan cek tagihan ${jenis} Anda telah dikirim.\nMohon tunggu konfirmasi dari admin.`,
+                    icon: './Gambar/PWA_512_M.png',
+                    badge: './Gambar/PWA_512.png',
+                    vibrate: [200, 100, 200, 100, 200],
+                    tag: 'cek_tagihan_' + Date.now()
+                });
+            });
+        }
         window._pendingNotif = { type: 'cek_tagihan', jenis: jenis };
     }
     function renderProfil() {
@@ -4488,37 +4501,19 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-            document.addEventListener('visibilitychange', () => {
+        document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             
-                if (window._pendingNotif) {
+            if (window._pendingNotif) {
                 const pending = window._pendingNotif;
                 window._pendingNotif = null;
                 
-                if (pending.type === 'order') {
-                    showLocalTransactionNotification(pending.id, pending.total);
-                    showTransactionHistory();
-                    setTimeout(() => {
-                        showTransactionDetail(pending.id);
-                    }, 1500);
-                } else if (pending.type === 'complaint') {
-                    showLocalComplaintNotification(pending.id, pending.itemsText);
+                if (pending.type === 'order' || pending.type === 'complaint') {
                     showTransactionHistory();
                     setTimeout(() => {
                         showTransactionDetail(pending.id);
                     }, 1500);
                 } else if (pending.type === 'cek_tagihan') {
-                    if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-                        navigator.serviceWorker.ready.then(registration => {
-                            registration.showNotification("Permintaan Diterima! 📋", {
-                                body: `Permintaan cek tagihan ${pending.jenis} Anda telah dikirim.\nMohon tunggu konfirmasi dari admin.`,
-                                icon: './Gambar/PWA_512_M.png',
-                                badge: './Gambar/PWA_512.png',
-                                vibrate: [200, 100, 200, 100, 200],
-                                tag: 'cek_tagihan_' + Date.now()
-                            });
-                        });
-                    }
                     showView('view-home');
                 }
             }
@@ -5572,7 +5567,9 @@ async function submitComplaint() {
             }
             return '';
         }).join(', ');
-        window._pendingNotif = { type: 'complaint', id: currentComplaintId, itemsText: complaintItemsText };
+
+        showLocalComplaintNotification(currentComplaintId, complaintItemsText);
+        window._pendingNotif = { type: 'complaint', id: currentComplaintId };
     }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
@@ -6075,10 +6072,18 @@ function submitServiceGadget() {
     saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
 
     fetch('https://adminranel.vercel.app/api/send-notif', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            orderId: orderId,
+            userName: nama,
+            total: isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
+            items: [{ name: `Service: ${brand} ${model} (${finalIssue})`, quantity: 1 }]
+        })
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
-    let serviceTotal = isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0;
-    window._pendingNotif = { type: 'order', id: orderId, total: serviceTotal };
+    showLocalTransactionNotification(orderId, getGrandTotal());
+    window._pendingNotif = { type: 'order', id: orderId };
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
