@@ -4089,8 +4089,7 @@ async function saveQRISImage() {
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         saveTransactionToFirestore(d, orderId);
-        showThankYouOverlay();
-        showLocalTransactionNotification(orderId, getGrandTotal());
+        window._pendingNotif = { type: 'order', id: orderId, total: getGrandTotal() };
     }
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -4232,8 +4231,7 @@ async function saveQRISImage() {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
-        showThankYouOverlay();
-        showLocalTransactionNotification(orderId, getGrandTotal());
+        window._pendingNotif = { type: 'cek_tagihan', jenis: jenis };
     }
     function renderProfil() {
         const el = document.getElementById('profil-content');
@@ -4490,20 +4488,52 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                const activeView = document.querySelector('.view.active');
-                if (activeView) {
-                    const scrollTop = activeView.scrollTop;
-                    
-                    activeView.style.opacity = '0.99';
+            document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            
+                if (window._pendingNotif) {
+                const pending = window._pendingNotif;
+                window._pendingNotif = null;
+                
+                if (pending.type === 'order') {
+                    showLocalTransactionNotification(pending.id, pending.total);
+                    showTransactionHistory();
                     setTimeout(() => {
-                        activeView.style.opacity = '';
-                        activeView.scrollTop = scrollTop;
-                    }, 50);
+                        showTransactionDetail(pending.id);
+                    }, 1500);
+                } else if (pending.type === 'complaint') {
+                    showLocalComplaintNotification(pending.id, pending.itemsText);
+                    showTransactionHistory();
+                    setTimeout(() => {
+                        showTransactionDetail(pending.id);
+                    }, 1500);
+                } else if (pending.type === 'cek_tagihan') {
+                    if ('Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+                        navigator.serviceWorker.ready.then(registration => {
+                            registration.showNotification("Permintaan Diterima! 📋", {
+                                body: `Permintaan cek tagihan ${pending.jenis} Anda telah dikirim.\nMohon tunggu konfirmasi dari admin.`,
+                                icon: './Gambar/PWA_512_M.png',
+                                badge: './Gambar/PWA_512.png',
+                                vibrate: [200, 100, 200, 100, 200],
+                                tag: 'cek_tagihan_' + Date.now()
+                            });
+                        });
+                    }
+                    showView('view-home');
                 }
             }
-        });
+
+            const activeView = document.querySelector('.view.active');
+            if (activeView) {
+                const scrollTop = activeView.scrollTop;
+                activeView.style.opacity = '0.99';
+                setTimeout(() => {
+                    activeView.style.opacity = '';
+                    activeView.scrollTop = scrollTop;
+                }, 50);
+            }
+        }
+    });
         if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', event => {
             if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
@@ -5542,9 +5572,7 @@ async function submitComplaint() {
             }
             return '';
         }).join(', ');
-
-        showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-        showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
+        window._pendingNotif = { type: 'complaint', id: currentComplaintId, itemsText: complaintItemsText };
     }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
@@ -6047,18 +6075,10 @@ function submitServiceGadget() {
     saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
 
     fetch('https://adminranel.vercel.app/api/send-notif', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            orderId: orderId,
-            userName: nama,
-            total: isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
-            items: [{ name: `Service: ${brand} ${model} (${finalIssue})`, quantity: 1 }]
-        })
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
-    showThankYouOverlay("Permintaan service Anda telah dikirim, mohon tunggu konfirmasi admin.");
-    showLocalTransactionNotification(orderId, getGrandTotal());
+    let serviceTotal = isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0;
+    window._pendingNotif = { type: 'order', id: orderId, total: serviceTotal };
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
