@@ -3932,7 +3932,7 @@ async function saveQRISImage() {
         ctx.fillStyle='#000000'; ctx.font='bold 16px Poppins,sans-serif';
         ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('QRIS',W/2,oy+qrArea+14);
     }
-    function sendOrderToWhatsApp() {
+    async function sendOrderToWhatsApp() {
         const d = window._orderData; if (!d) return;
         const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
         const now = new Date();
@@ -3997,10 +3997,49 @@ async function saveQRISImage() {
         }
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+        
+        let defaultStatus = "Sedang Dalam Proses";
+        if (selectedPaymentMethod === 'QRIS Bank BCA') {
+            defaultStatus = "Menunggu Pembayaran";
+        }
+        
+        const localTransaction = {
+            id: orderId,
+            data: {
+                orderId: orderId,
+                userName: d.nama,
+                userTelp: d.telp,
+                items: cart.map(item => ({
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+                subtotal: getCartTotal(),
+                shippingMode: d.shippingMode || null,
+                shippingCost: d.shippingCost || 0,
+                promoCode: d.promoCode || '',
+                promoDiscount: d.promoDiscount || 0,
+                total: getGrandTotal(),
+                paymentMethod: selectedPaymentMethod,
+                address: d.alamat || '-',
+                idPelanggan: d.idPelanggan || {},
+                namaPelanggan: d.namaPelanggan || {},
+                status: defaultStatus,
+                transactionDate: new Date().toLocaleString('id-ID', { 
+                    timeZone: 'Asia/Jakarta',
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                    hour12: false
+                })
+            }
+        };
+        
+        if (!window._historyCache) window._historyCache = [];
+        window._historyCache.unshift(localTransaction);
         saveTransactionToFirestore(d, orderId);
         showTransactionDetail(orderId);
         showLocalTransactionNotification(orderId, getGrandTotal());
-    }
+}
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
@@ -5447,9 +5486,19 @@ async function submitComplaint() {
             idPelanggan: updatedIdPelanggan 
         }, { merge: true });
         
-        console.log("Komplain berhasil");
+        if (window._historyCache) {
+            const cacheIdx = window._historyCache.findIndex(t => t.id === currentComplaintId);
+            if (cacheIdx !== -1) {
+                window._historyCache[cacheIdx].data.status = "Sedang Ditinjau";
+                window._historyCache[cacheIdx].data.items = updatedItems;
+                window._historyCache[cacheIdx].data.idPelanggan = updatedIdPelanggan;
+            }
+        }
+        
+        console.log("Komplain berhasil diproses");
     } catch (err) {
         console.error("Gagal memperbarui data komplain:", err);
+        showToast("Gagal menyimpan komplain ke server", "error");
     }
 
     fetch('https://adminranel.vercel.app/api/send-notif', {
@@ -5463,20 +5512,20 @@ async function submitComplaint() {
         })
     }).catch(err => console.error("Gagal kirim notif pengaduan:", err));
     
-        let complaintItemsText = selectedTargets.map(sel => {
-            const item = d.items[sel.idx];
-            if (sel.type === 'item') {
-                return item.name;
-            } else if (sel.type === 'idpel') {
-                const idPel = d.idPelanggan[sel.idx][sel.idIdx];
-                return `${item.name} (ID: ${idPel})`;
-            }
-            return '';
-        }).join(', ');
+    let complaintItemsText = selectedTargets.map(sel => {
+        const item = d.items[sel.idx];
+        if (sel.type === 'item') {
+            return item.name;
+        } else if (sel.type === 'idpel') {
+            const idPel = d.idPelanggan[sel.idx][sel.idIdx];
+            return `${item.name} (ID: ${idPel})`;
+        }
+        return '';
+    }).join(', ');
 
-        showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-        showTransactionDetail(orderId);
-    }
+    showLocalComplaintNotification(currentComplaintId, complaintItemsText);
+    showTransactionDetail(currentComplaintId);
+}
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
         isUserLoggedIn = !!user;
@@ -5923,7 +5972,7 @@ async function applyServicePromo() {
         hideLoading();
     }
 }
-function submitServiceGadget() {
+async function submitServiceGadget() {
     const nama = document.getElementById('svc-nama').value.trim().toUpperCase();
     const telp = document.getElementById('svc-telp').value.trim();
     const os = document.getElementById('svc-os').value;
@@ -5975,7 +6024,41 @@ function submitServiceGadget() {
     
     window.open(`https://wa.me/${WA_NUMBER1}?text=${encodeURIComponent(msg)}`, '_blank');
     
-    saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
+    let defaultStatus = isActiveAntar ? "Sedang Ditinjau" : "Unit Belum Diserahkan";
+    
+    const localTransaction = {
+        id: orderId,
+        data: {
+            orderId: orderId,
+            userName: nama,
+            userTelp: telp,
+            items: [{
+                name: `${brand} ${model} (${finalIssue})`,
+                price: 0,
+                quantity: 1
+            }],
+            subtotal: 0,
+            shippingMode: isActiveAntar ? 'deliver' : 'pickup',
+            shippingCost: isActiveAntar ? serviceShippingCost : 0,
+            promoCode: isActiveAntar ? serviceAppliedPromoCode : '',
+            promoDiscount: isActiveAntar ? servicePromoDiscount : 0,
+            total: isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
+            paymentMethod: 'Pending',
+            address: isActiveAntar ? alamat : 'Datang ke Toko',
+            status: defaultStatus,
+            transactionDate: new Date().toLocaleString('id-ID', { 
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            })
+        }
+    };
+    
+    if (!window._historyCache) window._historyCache = [];
+    window._historyCache.unshift(localTransaction);
+    
+    await saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
 
     fetch('https://adminranel.vercel.app/api/send-notif', {
         method: 'POST',
@@ -5989,7 +6072,7 @@ function submitServiceGadget() {
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
     showTransactionDetail(orderId);
-    showLocalTransactionNotification(orderId, getGrandTotal());
+    showLocalTransactionNotification(orderId, 0);
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
