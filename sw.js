@@ -1,8 +1,8 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.2';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.3';
 const urlsToCache = [
     './',
-    './index.html?v=5.5',
-    './manifest.json?v=v5.5',
+    './index.html?v=5.6',
+    './manifest.json?v=v5.6',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
@@ -52,19 +52,21 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const targetUrl = '/';
+    const tid = notifData.transactionId || '';
+    const targetUrl = tid ? `./index.html?tid=${tid}` : './';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
                 if (client.url.includes('/') && 'focus' in client) {
-                    if (notifData.type === 'complaint' && notifData.transactionId) {
+                    client.focus();
+                    if (tid) {
                         client.postMessage({ 
-                            type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: notifData.transactionId 
+                            type: 'NAVIGATE_TO_DETAIL', 
+                            transactionId: tid 
                         });
                     }
-                    return client.focus();
+                    return;
                 }
             }
             if (clients.openWindow) {

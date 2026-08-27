@@ -4079,7 +4079,11 @@ async function saveQRISImage() {
                     badge: './Gambar/PWA_512_M.png',
                     vibrate: [200, 100, 200, 100, 200],
                     tag: orderId,
-                    requireInteraction: false 
+                    requireInteraction: false,
+                    data: {
+                        type: 'NAVIGATE_TO_DETAIL',
+                        transactionId: orderId
+                    }
                 };
                 
                 registration.showNotification(title, options);
@@ -4536,10 +4540,10 @@ async function saveQRISImage() {
         currentTrackedUserRef = null;
     }
     function setupPWA() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .catch((err) => console.error('SW registration failed: ', err));
-    }
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .catch((err) => console.error('SW registration failed: ', err));
+        }
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
@@ -4555,21 +4559,23 @@ async function saveQRISImage() {
                 }
             }
         });
+
         if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                const tid = event.data.transactionId;
-                
-                if (!window._historyCache) {
-                    showTransactionHistory();
-                    setTimeout(() => {
-                        if (window._historyCache) showTransactionDetail(tid);
-                    }, 1500);
-                } else {
-                    showTransactionDetail(tid);
+            navigator.serviceWorker.addEventListener('message', event => {
+                if (event.data && event.data.type === 'NAVIGATE_TO_DETAIL' && event.data.transactionId) {
+                    const tid = event.data.transactionId;
+                    
+                    if (!window._historyCache) {
+                        showTransactionHistory();
+                        setTimeout(() => {
+                            showTransactionDetail(tid);
+                        }, 1500);
+                    } else {
+                        showTransactionDetail(tid);
+                    }
                 }
-            }
-        });
+            });
+        }
     }
     setInterval(() => {
     if (currentView === 'view-home' && allBanners.length > 0) {
@@ -5653,6 +5659,7 @@ async function submitComplaint() {
                     });
                     return;
                 }
+                
                 isUserLoggedIn = true;
                 updateAuthUI();
                 showView('view-home');
@@ -5672,6 +5679,19 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
+                const urlParams = new URLSearchParams(window.location.search);
+                const pendingTid = urlParams.get('tid');
+                if (pendingTid) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    if (!window._historyCache) {
+                        showTransactionHistory();
+                        setTimeout(() => {
+                            showTransactionDetail(pendingTid);
+                        }, 1500);
+                    } else {
+                        showTransactionDetail(pendingTid);
+                    }
+                }
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
