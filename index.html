@@ -4118,58 +4118,64 @@ async function saveQRISImage() {
         }
     }
     async function saveTransactionToFirestore(d, orderId) {
-        const user = window.firebaseAuth.auth.currentUser;
-        if (!user) return;
+    const user = window.firebaseAuth.auth.currentUser;
+    if (!user) return;
 
-        const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", orderId);
-        let defaultStatus = "Sedang Dalam Proses";
-        if (selectedPaymentMethod === 'QRIS Bank BCA') {
-            defaultStatus = "Menunggu Pembayaran";
-        }
-        
-        try {
-            await window.firebaseAuth.setDoc(orderRef, {
-                orderId: orderId,
-                userId: user.uid,
-                userName: d.nama,
-                userTelp: d.telp,
-                items: cart.map(item => ({
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
-                subtotal: getCartTotal(),
-                shippingMode: d.shippingMode || null,
-                shippingCost: d.shippingCost || 0,
-                promoCode: d.promoCode || '',
-                promoDiscount: d.promoDiscount || 0,
-                total: getGrandTotal(),
-                paymentMethod: selectedPaymentMethod,
-                address: d.alamat || '-',
-                idPelanggan: d.idPelanggan || {},
-                status: defaultStatus,
-                transactionDate: new Date().toLocaleString('id-ID', { 
-                    timeZone: 'Asia/Jakarta',
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit',
-                    hour12: false
-                })
-            });
-            fetch('https://adminranel.vercel.app/api/send-notif', {
+    const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", orderId);
+    
+    let defaultStatus = "Sedang Dalam Proses";
+    if (selectedPaymentMethod === 'QRIS Bank BCA') {
+        defaultStatus = "Menunggu Pembayaran";
+    }
+    const cartItems = cart.map(item => ({
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+    }));
+    const subtotalProduk = getCartTotal();
+    const grandTotal = getGrandTotal();
+    const paymentMethod = selectedPaymentMethod;
+    
+    try {
+        await window.firebaseAuth.setDoc(orderRef, {
+            orderId: orderId,
+            userId: user.uid,
+            userName: d.nama,
+            userTelp: d.telp,
+            items: cartItems, // Gunakan variabel yang dikunci
+            subtotal: subtotalProduk,
+            shippingMode: d.shippingMode || null,
+            shippingCost: d.shippingCost || 0,
+            promoCode: d.promoCode || '',
+            promoDiscount: d.promoDiscount || 0,
+            total: grandTotal,
+            paymentMethod: paymentMethod,
+            address: d.alamat || '-',
+            idPelanggan: d.idPelanggan || {},
+            status: defaultStatus,
+            transactionDate: new Date().toLocaleString('id-ID', { 
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            })
+        });
+        fetch('https://adminranel.vercel.app/api/send-notif', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 orderId: orderId,
                 userName: d.nama,
-                total: getGrandTotal(),
-                items: cart.map(item => ({ name: item.name, quantity: item.quantity }))
+                total: grandTotal,
+                items: cartItems
             })
         }).catch(err => console.error("Gagal kirim notif ke admin:", err));
-            console.log("Transaksi berhasil disimpan ke Firestore");
-        } catch (err) {
-            console.error("Gagal menyimpan transaksi ke Firestore:", err);
-        }
+        
+        console.log("Transaksi berhasil disimpan ke Firestore");
+    } catch (err) {
+        console.error("Gagal menyimpan transaksi ke Firestore:", err);
     }
+}
     function openCekTagihanForm(jenis) {
         pricelistState.cekJenis = jenis;
         document.getElementById('cek-form-title').textContent = `Cek Tagihan ${jenis}`;
