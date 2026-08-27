@@ -13,38 +13,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Tangkap klik notifikasi (baik dari FCM maupun Notifikasi Lokal)
 self.addEventListener('notificationclick', event => {
     event.notification.close();
-
-    const notifData = event.notification.data || {};
-    const tid = notifData.transactionId || '';
-    
-    // Buat URL target berdasarkan ID Transaksi
-    let targetUrl = './';
-    if (tid) {
-        targetUrl = `./index.html?tid=${tid}`;
-    }
-
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if (client.url.includes('/') && 'focus' in client) {
-                    client.focus();
-                    if (tid) {
-                        // Kirim sinyal ke aplikasi jika sedang terbuka di background
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_DETAIL', 
-                            transactionId: tid 
-                        });
-                    }
-                    return;
-                }
+                if ('focus' in client) return client.focus();
             }
-            // Buka aplikasi baru jika sedang tertutup total
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
+            if (clients.openWindow) return clients.openWindow('./index.html');
         })
     );
 });

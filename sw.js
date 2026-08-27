@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.2';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.3';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,30 +52,21 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const tid = notifData.transactionId || '';
-    
-    // Tentukan URL target berdasarkan tipe notifikasi
-    let targetUrl = './';
-    if (tid) {
-        targetUrl = `./index.html?tid=${tid}`;
-    }
+    const targetUrl = '/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
                 if (client.url.includes('/') && 'focus' in client) {
-                    client.focus();
-                    if (tid) {
-                        // Kirim pesan ke aplikasi yang sedang terbuka di background
+                    if (notifData.type === 'complaint' && notifData.transactionId) {
                         client.postMessage({ 
-                            type: notifData.type === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_DETAIL', 
-                            transactionId: tid 
+                            type: 'NAVIGATE_TO_COMPLAINT', 
+                            transactionId: notifData.transactionId 
                         });
                     }
-                    return;
+                    return client.focus();
                 }
             }
-            // Jika aplikasi tertutup, buka window baru dengan URL target
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }

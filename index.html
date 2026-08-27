@@ -4057,7 +4057,7 @@ async function saveQRISImage() {
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
 }
-        async function showLocalTransactionNotification(orderId, totalAmount) {
+    async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
             return;
@@ -4079,11 +4079,7 @@ async function saveQRISImage() {
                     badge: './Gambar/PWA_512_M.png',
                     vibrate: [200, 100, 200, 100, 200],
                     tag: orderId,
-                    requireInteraction: false,
-                    data: {
-                        type: 'NAVIGATE_TO_DETAIL',
-                        transactionId: orderId
-                    }
+                    requireInteraction: false 
                 };
                 
                 registration.showNotification(title, options);
@@ -4545,11 +4541,11 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-            function setupPWA() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .catch((err) => console.error('SW registration failed: ', err));
-        }
+    function setupPWA() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .catch((err) => console.error('SW registration failed: ', err));
+    }
 
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
@@ -4565,24 +4561,30 @@ async function saveQRISImage() {
                 }
             }
         });
-
-        // Tangkap pesan dari Service Worker saat notifikasi diklik di background
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', event => {
-                if (event.data && event.data.transactionId) {
-                    showTransactionDetail(event.data.transactionId);
-                }
-            });
-        }
-
-        setInterval(() => {
-            if (currentView === 'view-home' && allBanners.length > 0) {
-                const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
-                if (hasScheduled) {
-                    renderBanners();
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                const tid = event.data.transactionId;
+                
+                if (!window._historyCache) {
+                    showTransactionHistory();
+                    setTimeout(() => {
+                        if (window._historyCache) showTransactionDetail(tid);
+                    }, 1500);
+                } else {
+                    showTransactionDetail(tid);
                 }
             }
-        }, 60000);
+        });
+    }
+    setInterval(() => {
+    if (currentView === 'view-home' && allBanners.length > 0) {
+        const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
+        if (hasScheduled) {
+            renderBanners();
+        }
+    }
+    }, 60000);
     }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
@@ -5640,7 +5642,7 @@ async function submitComplaint() {
 
         updateCartUI();
     }
-        function checkAuthState() {
+    function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             hideLoading();
 
@@ -5676,25 +5678,6 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
-                
-                // === TAMBAHAN: CEK URL PARAMETER TID (Dari Klik Notifikasi saat App Tertutup) ===
-                const urlParams = new URLSearchParams(window.location.search);
-                const pendingTid = urlParams.get('tid');
-                if (pendingTid) {
-                    // Hapus parameter URL agar tidak nyangkut saat di-refresh
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    
-                    if (!window._historyCache) {
-                        showTransactionHistory();
-                        setTimeout(() => {
-                            if (window._historyCache) showTransactionDetail(pendingTid);
-                        }, 1500);
-                    } else {
-                        showTransactionDetail(pendingTid);
-                    }
-                }
-                // =====================================================================
-
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
@@ -6291,7 +6274,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.7');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.6');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
