@@ -4545,7 +4545,7 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-        function setupPWA() {
+            function setupPWA() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .catch((err) => console.error('SW registration failed: ', err));
@@ -4566,19 +4566,11 @@ async function saveQRISImage() {
             }
         });
 
+        // Tangkap pesan dari Service Worker saat notifikasi diklik di background
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', event => {
                 if (event.data && event.data.transactionId) {
-                    const tid = event.data.transactionId;
-                    
-                    if (!window._historyCache) {
-                        showTransactionHistory();
-                        setTimeout(() => {
-                            if (window._historyCache) showTransactionDetail(tid);
-                        }, 1500);
-                    } else {
-                        showTransactionDetail(tid);
-                    }
+                    showTransactionDetail(event.data.transactionId);
                 }
             });
         }
@@ -6299,7 +6291,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.6');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.7');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
