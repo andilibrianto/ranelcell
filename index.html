@@ -4189,17 +4189,103 @@ async function saveQRISImage() {
             <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label><input type="tel" id="cek-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}></div>
             <button onclick="submitCekTagihan('${jenis}')" class="btn-pk w-full text-center"><i class="fa-brands fa-whatsapp mr-2"></i> Kirim via WhatsApp</button>`;
     }
-    function submitCekTagihan(jenis) {
-        const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
-        const telp = document.getElementById('cek-telp').value.trim();
-        const idpel = document.getElementById('cek-idpel').value.trim();
-        if (!nama) { showToast('Nama lengkap wajib diisi','error'); return; }
-        if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
-        if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
-        window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
-        showTransactionDetail(orderId);
-        showLocalTransactionNotification(orderId, getGrandTotal());
+    async function submitCekTagihan(jenis) {
+    const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
+    const telp = document.getElementById('cek-telp').value.trim();
+    const idpel = document.getElementById('cek-idpel').value.trim();
+    
+    if (!nama) { showToast('Nama lengkap wajib diisi','error'); return; }
+    if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
+    if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
+    
+    const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
+    const transactionDate = new Date().toLocaleString('id-ID', { 
+        timeZone: 'Asia/Jakarta',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+    });
+
+    const msg = `*RANEL CELL - Cek Tagihan*\n\nID Transaksi: ${orderId}\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`;
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    const localTransaction = {
+        id: orderId,
+        data: {
+            orderId: orderId,
+            userName: nama,
+            userTelp: telp,
+            items: [{
+                name: `Cek Tagihan ${jenis}`,
+                price: 0,
+                quantity: 1
+            }],
+            subtotal: 0,
+            shippingMode: null,
+            shippingCost: 0,
+            promoCode: '',
+            promoDiscount: 0,
+            total: 0,
+            paymentMethod: 'Cek via WhatsApp',
+            address: '-',
+            idPelanggan: { 0: [idpel] },
+            status: 'Sedang Dalam Proses',
+            transactionDate: transactionDate
+        }
+    };
+    
+    if (!window._historyCache) window._historyCache = [];
+    window._historyCache.unshift(localTransaction);
+    
+    const user = window.firebaseAuth.auth.currentUser;
+    if (user) {
+        try {
+            const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", orderId);
+            await window.firebaseAuth.setDoc(orderRef, {
+                orderId: orderId,
+                userId: user.uid,
+                userName: nama,
+                userTelp: telp,
+                items: [{ name: `Cek Tagihan ${jenis}`, price: 0, quantity: 1 }],
+                subtotal: 0,
+                shippingMode: null,
+                shippingCost: 0,
+                promoCode: '',
+                promoDiscount: 0,
+                total: 0,
+                paymentMethod: 'Cek via WhatsApp',
+                address: '-',
+                idPelanggan: { 0: [idpel] },
+                status: 'Sedang Dalam Proses',
+                transactionDate: transactionDate
+            });
+            
+            fetch('https://adminranel.vercel.app/api/send-notif', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    userName: nama,
+                    total: 0,
+                    items: [{ name: `Cek Tagihan: ${jenis}`, quantity: 1 }]
+                })
+            }).catch(err => console.error("Gagal kirim notif cek tagihan:", err));
+            
+        } catch (err) {
+            console.error("Gagal menyimpan cek tagihan ke Firestore:", err);
+            showToast("Data transaksi tersimpan secara lokal", "info");
+        }
+    } else {
+        showToast('Anda belum login, data transaksi tidak tersimpan permanen', 'info');
     }
+    
+    document.getElementById('cek-nama').value = '';
+    document.getElementById('cek-telp').value = '';
+    document.getElementById('cek-idpel').value = '';
+    
+    showTransactionDetail(orderId);
+    showLocalTransactionNotification(orderId, 0);
+}
     function renderProfil() {
         const el = document.getElementById('profil-content');
         el.innerHTML = `
