@@ -1,8 +1,8 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.1';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.2';
 const urlsToCache = [
     './',
-    './index.html?v=5.4',
-    './manifest.json?v=v5.4',
+    './index.html?v=5.5',
+    './manifest.json?v=v5.5',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
