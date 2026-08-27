@@ -3932,113 +3932,130 @@ async function saveQRISImage() {
         ctx.fillStyle='#000000'; ctx.font='bold 16px Poppins,sans-serif';
         ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('QRIS',W/2,oy+qrArea+14);
     }
+    function resetCartState() {
+    cart = [];
+    paketMode = 'isi_ulang';
+    savedFormData = null;
+    shouldRestoreForm = false;
+    shippingMode = null;
+    shippingCost = 0;
+    appliedPromoCode = '';
+    promoDiscount = 0;
+    destinationLat = null;
+    destinationLng = null;
+    selectedPaymentMethod = '';
+    updateCartUI();
+}
     async function sendOrderToWhatsApp() {
-        const d = window._orderData; if (!d) return;
-        const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
-        const now = new Date();
-        const options = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
-        const waktuPemesanan = now.toLocaleString('id-ID', options) + ' WIB';
-        let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*RANEL CELL - Pemesanan*\n\nWaktu Pemesanan: ${waktuPemesanan}\nID Transaksi: ${orderId}\n\nNama Lengkap: ${d.nama}\nNomor Telepon: ${d.telp}\n\n*Nama Barang:*\n`;
-        
-        cart.forEach((item, idx) => { msg += `${idx+1}. ${item.name} - ${formatRp(item.price)}\n`; });
-        msg += `\n*Jumlah Barang:*\n`;
-        cart.forEach((item, idx) => { msg += `${idx+1}. ${item.quantity}\n`; });
-        
-        if (d.idPelanggan && Object.keys(d.idPelanggan).length > 0) {
-            msg += `\n*ID Pelanggan / No. HP / ID Game Tujuan:*\n`;
-            let pelNum = 1;
-            cart.forEach((item, idx) => {
-                if (item.type === 'paket_data' && paketMode === 'voucher') return;
-                if (d.idPelanggan[idx]) {
-                    d.idPelanggan[idx].forEach((id, n) => { 
-                        let nameStr = '';
-                        if (d.namaPelanggan && d.namaPelanggan[idx] && d.namaPelanggan[idx][n]) {
-                            nameStr = ` (Nama: ${d.namaPelanggan[idx][n]})`;
-                        }
-                        msg += `${pelNum}. ${id} (${item.name})${nameStr}\n`; 
-                        pelNum++; 
-                    }); 
-                }
-            });
-        }
-        
-        if (hasPaketData() && paketMode === 'voucher') { msg += `\n*Jenis Paket Data: Voucher*\nKode voucher akan dikirimkan oleh admin.\n`; }
-        
-        msg += `\n*Subtotal Produk:* ${formatRp(getCartTotal())}\n`;
-        
-        if (hasShippingItems() && d.shippingMode === 'pickup') {
-            msg += `*Pengiriman:* Ambil di Toko\n`;
-        } else if (hasShippingItems() && d.shippingMode === 'deliver') {
-            msg += `*Pengiriman:* Kirim ke Alamat\n`;
-            if (d.shippingCost > 0) {
-                msg += `*Ongkos Kirim:* ${formatRp(d.shippingCost)}\n`;
+    const d = window._orderData; if (!d) return;
+    const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
+    const now = new Date();
+    const options = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
+    const waktuPemesanan = now.toLocaleString('id-ID', options) + ' WIB';
+    const totalNotif = getGrandTotal();
+    
+    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*RANEL CELL - Pemesanan*\n\nWaktu Pemesanan: ${waktuPemesanan}\nID Transaksi: ${orderId}\n\nNama Lengkap: ${d.nama}\nNomor Telepon: ${d.telp}\n\n*Nama Barang:*\n`;
+    
+    cart.forEach((item, idx) => { msg += `${idx+1}. ${item.name} - ${formatRp(item.price)}\n`; });
+    msg += `\n*Jumlah Barang:*\n`;
+    cart.forEach((item, idx) => { msg += `${idx+1}. ${item.quantity}\n`; });
+    
+    if (d.idPelanggan && Object.keys(d.idPelanggan).length > 0) {
+        msg += `\n*ID Pelanggan / No. HP / ID Game Tujuan:*\n`;
+        let pelNum = 1;
+        cart.forEach((item, idx) => {
+            if (item.type === 'paket_data' && paketMode === 'voucher') return;
+            if (d.idPelanggan[idx]) {
+                d.idPelanggan[idx].forEach((id, n) => { 
+                    let nameStr = '';
+                    if (d.namaPelanggan && d.namaPelanggan[idx] && d.namaPelanggan[idx][n]) {
+                        nameStr = ` (Nama: ${d.namaPelanggan[idx][n]})`;
+                    }
+                    msg += `${pelNum}. ${id} (${item.name})${nameStr}\n`; 
+                    pelNum++; 
+                }); 
             }
+        });
+    }
+    
+    if (hasPaketData() && paketMode === 'voucher') { msg += `\n*Jenis Paket Data: Voucher*\nKode voucher akan dikirimkan oleh admin.\n`; }
+    
+    msg += `\n*Subtotal Produk:* ${formatRp(getCartTotal())}\n`;
+    
+    if (hasShippingItems() && d.shippingMode === 'pickup') {
+        msg += `*Pengiriman:* Ambil di Toko\n`;
+    } else if (hasShippingItems() && d.shippingMode === 'deliver') {
+        msg += `*Pengiriman:* Kirim ke Alamat\n`;
+        if (d.shippingCost > 0) {
+            msg += `*Ongkos Kirim:* ${formatRp(d.shippingCost)}\n`;
         }
-        
-        if (d.promoDiscount > 0 && d.promoCode) {
-            msg += `*Kode Promo:* ${d.promoCode}\n`;
-            msg += `*Diskon Promo:* -${formatRp(d.promoDiscount)}\n\n`;
-        }
-        
-        msg += `*Total Harga: ${formatRp(getGrandTotal())}*\n`;
-        
-        if (selectedPaymentMethod) {
-            msg += `*Metode Pembayaran:* ${selectedPaymentMethod}\n\n`;
-        } 
-        
-        if (d.keterangan) {
-            msg += `*Keterangan:* ${d.keterangan}\n\n`;
-        }
-        
-        msg += `\nAlamat Lengkap: ${d.alamat}`;
-        
-        if (hasShippingItems() && d.shippingMode === 'deliver' && destinationLat !== null && destinationLng !== null) {
-            msg += `\n\n*Lokasi Maps:* https://maps.google.com/?q=${destinationLat},${destinationLng}`;
-        }
+    }
+    
+    if (d.promoDiscount > 0 && d.promoCode) {
+        msg += `*Kode Promo:* ${d.promoCode}\n`;
+        msg += `*Diskon Promo:* -${formatRp(d.promoDiscount)}\n\n`;
+    }
+    
+    msg += `*Total Harga: ${formatRp(getGrandTotal())}*\n`;
+    
+    if (selectedPaymentMethod) {
+        msg += `*Metode Pembayaran:* ${selectedPaymentMethod}\n\n`;
+    } 
+    
+    if (d.keterangan) {
+        msg += `*Keterangan:* ${d.keterangan}\n\n`;
+    }
+    
+    msg += `\nAlamat Lengkap: ${d.alamat}`;
+    
+    if (hasShippingItems() && d.shippingMode === 'deliver' && destinationLat !== null && destinationLng !== null) {
+        msg += `\n\n*Lokasi Maps:* https://maps.google.com/?q=${destinationLat},${destinationLng}`;
+    }
 
-        window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-        
-        let defaultStatus = "Sedang Dalam Proses";
-        if (selectedPaymentMethod === 'QRIS Bank BCA') {
-            defaultStatus = "Menunggu Pembayaran";
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    let defaultStatus = "Sedang Dalam Proses";
+    if (selectedPaymentMethod === 'QRIS Bank BCA') {
+        defaultStatus = "Menunggu Pembayaran";
+    }
+    
+    const localTransaction = {
+        id: orderId,
+        data: {
+            orderId: orderId,
+            userName: d.nama,
+            userTelp: d.telp,
+            items: cart.map(item => ({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity
+            })),
+            subtotal: getCartTotal(),
+            shippingMode: d.shippingMode || null,
+            shippingCost: d.shippingCost || 0,
+            promoCode: d.promoCode || '',
+            promoDiscount: d.promoDiscount || 0,
+            total: getGrandTotal(),
+            paymentMethod: selectedPaymentMethod,
+            address: d.alamat || '-',
+            idPelanggan: d.idPelanggan || {},
+            namaPelanggan: d.namaPelanggan || {},
+            status: defaultStatus,
+            transactionDate: new Date().toLocaleString('id-ID', { 
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            })
         }
-        
-        const localTransaction = {
-            id: orderId,
-            data: {
-                orderId: orderId,
-                userName: d.nama,
-                userTelp: d.telp,
-                items: cart.map(item => ({
-                    name: item.name,
-                    price: item.price,
-                    quantity: item.quantity
-                })),
-                subtotal: getCartTotal(),
-                shippingMode: d.shippingMode || null,
-                shippingCost: d.shippingCost || 0,
-                promoCode: d.promoCode || '',
-                promoDiscount: d.promoDiscount || 0,
-                total: getGrandTotal(),
-                paymentMethod: selectedPaymentMethod,
-                address: d.alamat || '-',
-                idPelanggan: d.idPelanggan || {},
-                namaPelanggan: d.namaPelanggan || {},
-                status: defaultStatus,
-                transactionDate: new Date().toLocaleString('id-ID', { 
-                    timeZone: 'Asia/Jakarta',
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit',
-                    hour12: false
-                })
-            }
-        };
-        
-        if (!window._historyCache) window._historyCache = [];
-        window._historyCache.unshift(localTransaction);
-        saveTransactionToFirestore(d, orderId);
-        showTransactionDetail(orderId);
-        showLocalTransactionNotification(orderId, getGrandTotal());
+    };
+    
+    if (!window._historyCache) window._historyCache = [];
+    window._historyCache.unshift(localTransaction);
+    saveTransactionToFirestore(d, orderId);
+    resetCartState();
+    showTransactionDetail(orderId);
+    showLocalTransactionNotification(orderId, totalNotif);
 }
     async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -5494,8 +5511,6 @@ async function submitComplaint() {
                 window._historyCache[cacheIdx].data.idPelanggan = updatedIdPelanggan;
             }
         }
-        
-        console.log("Komplain berhasil diproses");
     } catch (err) {
         console.error("Gagal memperbarui data komplain:", err);
         showToast("Gagal menyimpan komplain ke server", "error");
@@ -5524,7 +5539,10 @@ async function submitComplaint() {
     }).join(', ');
 
     showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-    showTransactionDetail(currentComplaintId);
+    const tempComplaintId = currentComplaintId;
+    currentComplaintTransaction = null;
+    currentComplaintId = null;
+    showTransactionDetail(tempComplaintId);
 }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
@@ -5998,8 +6016,8 @@ async function submitServiceGadget() {
     const rand2 = Math.floor(10 + Math.random() * 90);
     const orderId = `${rand1}7777${rand2}`;
     let finalIssue = issue === 'Lainnya' ? customIssue : issue;
-    let finalPrice = document.getElementById('svc-total-price').innerText;
     const infoServiceText = document.getElementById('svc-detail')?.innerText.trim();
+    const totalNotif = isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0;
     
     let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
     
@@ -6017,7 +6035,7 @@ async function submitServiceGadget() {
         if (serviceAppliedPromoCode) {
             msg += `Kode Promo: ${serviceAppliedPromoCode}\nDiskon Ongkir: -${formatRp(servicePromoDiscount)}\n`;
         }
-        msg += `Total Ongkir: ${document.getElementById('svc-total-price').innerText}\n`;
+        msg += `Total Ongkir: ${formatRp(totalNotif)}\n`;
     }
     
     msg += `\n_(Catatan: Harga service/part ditentukan setelah pengecekan unit)_`;
@@ -6042,7 +6060,7 @@ async function submitServiceGadget() {
             shippingCost: isActiveAntar ? serviceShippingCost : 0,
             promoCode: isActiveAntar ? serviceAppliedPromoCode : '',
             promoDiscount: isActiveAntar ? servicePromoDiscount : 0,
-            total: isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
+            total: totalNotif,
             paymentMethod: 'Pending',
             address: isActiveAntar ? alamat : 'Datang ke Toko',
             status: defaultStatus,
@@ -6066,13 +6084,14 @@ async function submitServiceGadget() {
         body: JSON.stringify({
             orderId: orderId,
             userName: nama,
-            total: isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
+            total: totalNotif,
             items: [{ name: `Service: ${brand} ${model} (${finalIssue})`, quantity: 1 }]
         })
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
+    resetServiceGadgetForm();
     showTransactionDetail(orderId);
-    showLocalTransactionNotification(orderId, 0);
+    showLocalTransactionNotification(orderId, totalNotif);
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
     const user = window.firebaseAuth.auth.currentUser;
