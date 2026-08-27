@@ -4057,7 +4057,7 @@ async function saveQRISImage() {
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
 }
-        async function showLocalTransactionNotification(orderId, totalAmount) {
+    async function showLocalTransactionNotification(orderId, totalAmount) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
             return;
@@ -4079,11 +4079,7 @@ async function saveQRISImage() {
                     badge: './Gambar/PWA_512_M.png',
                     vibrate: [200, 100, 200, 100, 200],
                     tag: orderId,
-                    requireInteraction: false,
-                    data: {
-                        type: 'NAVIGATE_TO_DETAIL',
-                        transactionId: orderId
-                    }
+                    requireInteraction: false 
                 };
                 
                 registration.showNotification(title, options);
@@ -4561,20 +4557,20 @@ async function saveQRISImage() {
         });
         if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', event => {
-                if (event.data && event.data.type === 'NAVIGATE_TO_DETAIL' && event.data.transactionId) {
-                    const tid = event.data.transactionId;
-                    
-                    if (!window._historyCache) {
-                        showTransactionHistory();
-                        setTimeout(() => {
-                            showTransactionDetail(tid);
-                        }, 1500);
-                    } else {
-                        showTransactionDetail(tid);
-                    }
+            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                const tid = event.data.transactionId;
+                
+                if (!window._historyCache) {
+                    showTransactionHistory();
+                    setTimeout(() => {
+                        if (window._historyCache) showTransactionDetail(tid);
+                    }, 1500);
+                } else {
+                    showTransactionDetail(tid);
                 }
-            });
-        }
+            }
+        });
+    }
     setInterval(() => {
     if (currentView === 'view-home' && allBanners.length > 0) {
         const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
@@ -4583,7 +4579,7 @@ async function saveQRISImage() {
         }
     }
     }, 60000);
-}
+    }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
     let deferredPrompt = null;
@@ -5640,7 +5636,7 @@ async function submitComplaint() {
 
         updateCartUI();
     }
-        function checkAuthState() {
+    function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             hideLoading();
 
@@ -5676,26 +5672,6 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
-                
-                // === TAMBAHAN BAGIAN 4: CEK URL PARAMETER TID ===
-                const urlParams = new URLSearchParams(window.location.search);
-                const pendingTid = urlParams.get('tid');
-                if (pendingTid) {
-                    // Hapus parameter ?tid= dari link agar tidak nyangkut saat di-refresh
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    
-                    // Jika cache riwayat belum ada, muat dulu sebentar
-                    if (!window._historyCache) {
-                        showTransactionHistory();
-                        setTimeout(() => {
-                            showTransactionDetail(pendingTid);
-                        }, 1500);
-                    } else {
-                        showTransactionDetail(pendingTid);
-                    }
-                }
-                // ================================================
-
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 

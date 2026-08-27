@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.8';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.3.9';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,21 +52,19 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const tid = notifData.transactionId || '';
-    const targetUrl = tid ? `./index.html?tid=${tid}` : './';
+    const targetUrl = '/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
                 if (client.url.includes('/') && 'focus' in client) {
-                    client.focus();
-                    if (tid) {
+                    if (notifData.type === 'complaint' && notifData.transactionId) {
                         client.postMessage({ 
-                            type: 'NAVIGATE_TO_DETAIL', 
-                            transactionId: tid 
+                            type: 'NAVIGATE_TO_COMPLAINT', 
+                            transactionId: notifData.transactionId 
                         });
                     }
-                    return;
+                    return client.focus();
                 }
             }
             if (clients.openWindow) {
