@@ -104,11 +104,11 @@
             overflow: hidden;
             transition: filter 0.4s ease;
         }
-        #app.dimmed {
-            filter: brightness(0.7);
+        #app.brightened {
+            filter: brightness(1.7);
         }
         #qris-image {
-            filter: brightness(1.43);
+            filter: brightness(0.58);
         }
         .view > header.sticky {
             padding-top: env(safe-area-inset-top);
@@ -2113,10 +2113,10 @@ function stopBannerAutoScroll() {
         if (next) { next.classList.add('active'); next.scrollTop = 0; }
         const appEl = document.getElementById('app');
         if (viewId === 'view-qris') {
-            appEl.classList.add('dimmed');
+            appEl.classList.add('brightened');
             requestWakeLock();
         } else {
-            appEl.classList.remove('dimmed');
+            appEl.classList.remove('brightened');
             releaseWakeLock();
         }
 
@@ -4573,7 +4573,7 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-                document.addEventListener('visibilitychange', async () => {
+            document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 const activeView = document.querySelector('.view.active');
                 if (activeView) {
