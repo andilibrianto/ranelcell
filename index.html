@@ -259,50 +259,6 @@
 
         @keyframes pulsePk { 0%,100%{box-shadow:0 0 0 0 rgba(255,45,120,0.4)} 50%{box-shadow:0 0 0 12px rgba(255,45,120,0)} }
         .pulse-pk { animation:pulsePk 1.5s ease infinite; }
-
-        @keyframes popIn {
-            0% { opacity: 0; transform: scale(0.8); }
-            70% { transform: scale(1.05); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-
-        @keyframes checkPulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 45, 120, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(255, 45, 120, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 45, 120, 0); }
-        }
-        .animate-check-pulse { animation: checkPulse 1.5s ease-out infinite; }
-
-        @keyframes logoPop {
-            0% { transform: scale(0); opacity: 0; }
-            60% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .animate-logo-pop {
-            animation: logoPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        @keyframes logoPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-        .animate-pulse-logo {
-            animation: logoPulse 1.5s ease-in-out 0.5s infinite;
-        }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-up-delay-1 { animation: fadeUp 0.4s ease-out 0.1s forwards; opacity: 0; }
-        .animate-fade-up-delay-2 { animation: fadeUp 0.4s ease-out 0.2s forwards; opacity: 0; }
-        .animate-fade-up-delay-3 { animation: fadeUp 0.4s ease-out 0.3s forwards; opacity: 0; }
-
-        #thank-you-card {
-            border: 1px solid rgba(255, 45, 120, 0.3);
-            box-shadow: 0 10px 40px rgba(255, 45, 120, 0.15);
-        }
-
         .loading-dots::after {
             content: '';
             animation: dots 1.5s steps(4, end) infinite;
@@ -446,23 +402,6 @@
                 <button onclick="confirmMapLocation()" class="btn-pk flex-1 text-xs py-2"><i class="fas fa-check mr-1"></i> Konfirmasi Lokasi</button>
             </div>
             <button onclick="closeMapModal()" class="text-xs text-gray-400 hover:text-white mt-1">Batal</button>
-        </div>
-    </div>
-
-    <div id="thank-you-overlay" class="hidden fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div id="thank-you-card" class="card relative p-8 max-w-xs w-full text-center overflow-hidden animate-pop-in">
-            <div class="w-20 h-20 mx-auto mb-5 flex items-center justify-center animate-logo-pop">
-                <img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo Ranel Cell" class="w-14 h-14 object-contain animate-pulse-logo">
-            </div>
-            <h3 id="thank-you-title" class="text-lg font-bold mb-2 animate-fade-up-delay-1">Terima Kasih!</h3>
-            <p id="thank-you-message" class="text-xs text-gray-400 mb-6 animate-fade-up-delay-2">Terima Kasih Sudah Memilih Layanan di Ranel Cell</p>
-            <button onclick="location.reload()" class="btn-pk w-full text-sm py-3 animate-fade-up-delay-3">
-                Kembali ke Home
-            </button>
-
-            <div class="absolute bottom-0 left-0 w-full h-1 bg-dk-700">
-                <div id="timer-line" class="h-full bg-pk" style="transform: scaleX(1); transform-origin: left;"></div>
-            </div>
         </div>
     </div>
 
@@ -2032,36 +1971,6 @@
         document.getElementById('modal-overlay').classList.add('hidden');
         modalConfirmCallback = null;
         modalCancelCallback = null;
-    }
-        let thankYouTimerInterval = null;
-        function showThankYouOverlay(message = "Terima Kasih Sudah Memilih Layanan di Ranel Cell, Kami Tunggu Pembelian Anda Selanjutnya") {
-        const overlay = document.getElementById('thank-you-overlay');
-        const card = document.getElementById('thank-you-card');
-        const msgEl = document.getElementById('thank-you-message');
-        const timerLine = document.getElementById('timer-line');
-        
-        msgEl.textContent = message;
-        overlay.classList.remove('hidden');
-        card.style.animation = 'none';
-        void card.offsetWidth; 
-        card.style.animation = 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards';
-
-        let timeLeft = 15;
-        const totalTime = 15;
-        timerLine.style.transition = 'none';
-        timerLine.style.transform = 'scaleX(1)';
-        void timerLine.offsetWidth;
-        timerLine.style.transition = `transform ${totalTime}s linear`;
-        timerLine.style.transform = 'scaleX(0)';
-
-        clearInterval(thankYouTimerInterval);
-        thankYouTimerInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(thankYouTimerInterval);
-                location.reload();
-            }
-        }, 1000);
     }
     function toggleAnnouncement(event) {
         if (event) event.stopPropagation();
@@ -4089,7 +3998,7 @@ async function saveQRISImage() {
 
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         saveTransactionToFirestore(d, orderId);
-        showThankYouOverlay();
+        showTransactionDetail(orderId);
         showLocalTransactionNotification(orderId, getGrandTotal());
     }
     async function showLocalTransactionNotification(orderId, totalAmount) {
@@ -4232,7 +4141,7 @@ async function saveQRISImage() {
         if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
         if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`*RANEL CELL - Cek Tagihan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`)}`, '_blank');
-        showThankYouOverlay();
+        showTransactionDetail(orderId);
         showLocalTransactionNotification(orderId, getGrandTotal());
     }
     function renderProfil() {
@@ -5158,11 +5067,34 @@ async function showTransactionHistory() {
         contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
     }
 }
-function showTransactionDetail(transactionId) {
-    if (!window._historyCache) return;
+async function showTransactionDetail(transactionId) {
+    let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
     
-    const transactionObj = window._historyCache.find(t => t.id === transactionId);
-    if (!transactionObj) return;
+    // Jika tidak ada di cache (misal baru saja checkout), ambil langsung dari Firestore
+    if (!transactionObj) {
+        if (!window.firebaseAuth) return;
+        showLoading('Memuat detail transaksi...');
+        try {
+            const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", transactionId);
+            const docSnap = await window.firebaseAuth.getDoc(docRef);
+            hideLoading();
+            if (docSnap.exists()) {
+                transactionObj = { id: docSnap.id, data: docSnap.data() };
+                if (!window._historyCache) window._historyCache = [];
+                if (!window._historyCache.find(t => t.id === transactionId)) {
+                    window._historyCache.unshift(transactionObj);
+                }
+            } else {
+                showToast('Detail transaksi tidak ditemukan', 'error');
+                return;
+            }
+        } catch (error) {
+            hideLoading();
+            console.error("Gagal memuat detail transaksi:", error);
+            showToast('Gagal memuat detail transaksi', 'error');
+            return;
+        }
+    }
 
     const d = transactionObj.data;
     const el = document.getElementById('history-detail-content');
@@ -5280,7 +5212,6 @@ function showTransactionDetail(transactionId) {
 
         ${(() => {
             const isCompleted = (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau');
-            
             if (isCompleted) {
                 return `
                     <button onclick="showComplaintForm('${transactionObj.id}')" class="btn-pk w-full text-sm py-3 mb-3">
@@ -5544,7 +5475,7 @@ async function submitComplaint() {
         }).join(', ');
 
         showLocalComplaintNotification(currentComplaintId, complaintItemsText);
-        showThankYouOverlay("Pengaduan Anda Telah Diterima, Mohon Menunggu Respon Dari Admin");
+        showTransactionDetail(orderId);
     }
     function updateAuthUI() {
         const user = window.firebaseAuth.auth.currentUser;
@@ -6057,7 +5988,7 @@ function submitServiceGadget() {
         })
     }).catch(err => console.error("Gagal kirim notif service:", err));
     
-    showThankYouOverlay("Permintaan service Anda telah dikirim, mohon tunggu konfirmasi admin.");
+    showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, getGrandTotal());
 }
 async function saveServiceGadgetToFirestore(orderId, d) {
