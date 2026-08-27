@@ -102,6 +102,13 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden;
+            transition: filter 0.4s ease;
+        }
+        #app.dimmed {
+            filter: brightness(0.7);
+        }
+        #qris-image {
+            filter: brightness(1.43);
         }
         .view > header.sticky {
             padding-top: env(safe-area-inset-top);
@@ -2065,11 +2072,28 @@ function stopBannerAutoScroll() {
     }
     isAutoScrolling = false;
 }
-    function showView(viewId) {
-    const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan', 'view-service-gadget'];
-    if (restrictedViews.includes(viewId)) {
-        if (!checkTelpRequired()) return;
+    let wakeLock = null;
+    async function requestWakeLock() {
+        if (!('wakeLock' in navigator)) return;
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock aktif, layar tidak akan mati');
+        } catch (err) {
+            console.error('Gagal request Wake Lock:', err);
+        }
     }
+    function releaseWakeLock() {
+        if (wakeLock !== null) {
+            wakeLock.release();
+            wakeLock = null;
+            console.log('Wake Lock dilepas');
+        }
+    }
+    function showView(viewId) {
+        const restrictedViews = ['view-accessories', 'view-game', 'view-perdana', 'view-order', 'view-pricelist', 'view-cek-form', 'view-pengaduan', 'view-service-gadget'];
+        if (restrictedViews.includes(viewId)) {
+            if (!checkTelpRequired()) return;
+        }
         const cur = document.getElementById(currentView);
         if (cur) cur.classList.remove('active');
         document.getElementById('scroll-top-btn').classList.remove('visible');
@@ -2087,7 +2111,15 @@ function stopBannerAutoScroll() {
         viewHistory.push(viewId);
         const next = document.getElementById(viewId);
         if (next) { next.classList.add('active'); next.scrollTop = 0; }
-        
+        const appEl = document.getElementById('app');
+        if (viewId === 'view-qris') {
+            appEl.classList.add('dimmed');
+            requestWakeLock();
+        } else {
+            appEl.classList.remove('dimmed');
+            releaseWakeLock();
+        }
+
         if (viewId === 'view-order') {
             shouldRestoreForm = true;
             renderOrderForm(); 
@@ -4541,7 +4573,7 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-        document.addEventListener('visibilitychange', () => {
+                document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible') {
                 const activeView = document.querySelector('.view.active');
                 if (activeView) {
@@ -4552,6 +4584,9 @@ async function saveQRISImage() {
                         activeView.style.opacity = '';
                         activeView.scrollTop = scrollTop;
                     }, 50);
+                }
+                if (currentView === 'view-qris' && wakeLock === null) {
+                    await requestWakeLock();
                 }
             }
         });
