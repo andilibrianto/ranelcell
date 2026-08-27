@@ -5659,7 +5659,6 @@ async function submitComplaint() {
                     });
                     return;
                 }
-                
                 isUserLoggedIn = true;
                 updateAuthUI();
                 showView('view-home');
@@ -5679,10 +5678,12 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
+                
                 const urlParams = new URLSearchParams(window.location.search);
                 const pendingTid = urlParams.get('tid');
                 if (pendingTid) {
                     window.history.replaceState({}, document.title, window.location.pathname);
+                    
                     if (!window._historyCache) {
                         showTransactionHistory();
                         setTimeout(() => {
@@ -5692,6 +5693,7 @@ async function submitComplaint() {
                         showTransactionDetail(pendingTid);
                     }
                 }
+
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
