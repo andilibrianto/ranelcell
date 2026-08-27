@@ -15,12 +15,19 @@ const messaging = firebase.messaging();
 
 self.addEventListener('notificationclick', event => {
     event.notification.close();
+    
+    // Ambil URL dari data notifikasi FCM jika ada
+    const targetUrl = './index.html';
+    
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if ('focus' in client) return client.focus();
+                if ('focus' in client) {
+                    client.focus();
+                    return;
+                }
             }
-            if (clients.openWindow) return clients.openWindow('./index.html');
+            if (clients.openWindow) return clients.openWindow(targetUrl);
         })
     );
 });
