@@ -4618,17 +4618,21 @@ function handleNotificationColdStart() {
 function handleNotificationNavigation(transactionId) {
     if (!transactionId) return;
     
-    // Cek apakah user sudah login DAN aplikasi sudah selesai loading awal
-    if (window.firebaseAuth && window.firebaseAuth.auth.currentUser && !isProcessingAuth) {
-        // Langsung eksekusi karena ini dari foreground/background (bukan cold start)
+    // Jika Firebase siap, user sudah login, dan tidak sedang proses login manual
+    if (isAuthReady && !isProcessingAuth && window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
         showTransactionDetail(transactionId);
-    } else {
-        // Simpan untuk dieksekusi nanti oleh checkAuthState setelah login selesai
+    } else if (!isAuthReady || isProcessingAuth) {
+        // Simpan dulu jika Firebase belum siap
         _pendingNotificationNavigation = transactionId;
+    } else {
+        // Jika Firebase siap tapi user belum login
+        showToast('Silakan login terlebih dahulu untuk melihat detail', 'info');
+        showView('view-login');
     }
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
+    let isAuthReady = false; // TAMBAHKAN INI
     let deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -5683,7 +5687,11 @@ async function submitComplaint() {
 
         updateCartUI();
     }
-        function checkAuthState() {
+            function checkAuthState() {
+        // Pencegah pemanggilan ganda (Double Execution)
+        if (window._authStateListenerAdded) return;
+        window._authStateListenerAdded = true;
+
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             hideLoading();
 
@@ -5720,7 +5728,9 @@ async function submitComplaint() {
                 initPresenceSystem(user);
                 setupCustomerFCM();
                 
-                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA (COLD START FIX)
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
+
+                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
                 if (_pendingNotificationNavigation) {
                     const targetId = _pendingNotificationNavigation;
                     _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
@@ -5732,6 +5742,7 @@ async function submitComplaint() {
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
                 updateAuthUI();
                 showView('view-login');
 
@@ -6360,17 +6371,16 @@ function serviceGadgetBack() {
                 console.error('Gagal setup FCM Pelanggan:', err);
             }
         }
-        function init() { 
+    function init() { 
         setupPWA(); 
         updateCartUI();
-        const checkFirebaseReady = setInterval(() => {
+    }
+            window.addEventListener('firebase-ready', function() {
             if (window.firebaseAuth) {
-                clearInterval(checkFirebaseReady);
                 checkAuthState();
                 loadBanners();
             }
-        }, 50);
-    }
+        });
     let allBanners = [];
 
 async function loadBanners() {
