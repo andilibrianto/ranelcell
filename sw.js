@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.5';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.6';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,40 +52,36 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
+    const fcmMsg = notifData.FCM_MSG || {};
+    const payloadData = fcmMsg.data || (notifData.payload && notifData.payload.data) || {};
+    
+    const transactionId = notifData.transactionId || payloadData.transactionId || payloadData.id || null;
+    const actionType = notifData.type || payloadData.type || 'transaction';
+
     const targetUrl = './index.html';
+    let urlToOpen = targetUrl;
+
+    if (transactionId) {
+        urlToOpen = `${targetUrl}?action=${actionType}&id=${transactionId}`;
+    }
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Jika tidak ada window yang terbuka, buka window baru dengan parameter URL
-            if (clientList.length === 0) {
-                let urlToOpen = targetUrl;
-                if (notifData.type === 'transaction' && notifData.transactionId) {
-                    urlToOpen = `${targetUrl}?action=transaction&id=${notifData.transactionId}`;
-                } else if (notifData.type === 'complaint' && notifData.transactionId) {
-                    urlToOpen = `${targetUrl}?action=complaint&id=${notifData.transactionId}`;
-                }
-                if (clients.openWindow) return clients.openWindow(urlToOpen);
-            }
-
             // Jika ada window yang sudah terbuka, kirim perintah untuk navigasi
             for (const client of clientList) {
-                if (client.url.includes('/') && 'focus' in client) {
-                    if (notifData.type === 'transaction' && notifData.transactionId) {
+                if ('focus' in client) {
+                    if (transactionId) {
                         client.postMessage({ 
-                            type: 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: notifData.transactionId 
-                        });
-                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: notifData.transactionId 
+                            type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
+                            transactionId: transactionId 
                         });
                     }
                     return client.focus();
                 }
             }
             
-            if (clients.openWindow) return clients.openWindow(targetUrl);
+            // Jika tidak ada window yang terbuka, buka window baru dengan parameter URL
+            if (clients.openWindow) return clients.openWindow(urlToOpen);
         })
     );
 });

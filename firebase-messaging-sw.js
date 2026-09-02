@@ -18,22 +18,21 @@ self.addEventListener('notificationclick', event => {
     
     // Ambil data dari notifikasi (support untuk payload FCM dan notifikasi lokal)
     const notifData = event.notification.data || {};
-    const payloadData = (notifData.payload && notifData.payload.data) ? notifData.payload.data : {};
+    const fcmMsg = notifData.FCM_MSG || {};
+    const payloadData = fcmMsg.data || (notifData.payload && notifData.payload.data) || {};
     
-    let transactionId = notifData.transactionId || payloadData.transactionId || null;
+    let transactionId = notifData.transactionId || payloadData.transactionId || payloadData.id || null;
     let actionType = notifData.type || payloadData.type || 'transaction';
+
+    const targetUrl = './index.html';
+    let urlToOpen = targetUrl;
+
+    if (transactionId) {
+        urlToOpen = `${targetUrl}?action=${actionType}&id=${transactionId}`;
+    }
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Jika tidak ada aplikasi yang terbuka
-            if (clientList.length === 0) {
-                let urlToOpen = './index.html';
-                if (transactionId) {
-                    urlToOpen = `./index.html?action=${actionType}&id=${transactionId}`;
-                }
-                if (clients.openWindow) return clients.openWindow(urlToOpen);
-            }
-
             // Jika aplikasi sedang berjalan di background
             for (const client of clientList) {
                 if ('focus' in client) {
@@ -46,7 +45,9 @@ self.addEventListener('notificationclick', event => {
                     return client.focus();
                 }
             }
-            if (clients.openWindow) return clients.openWindow('./index.html');
+            
+            // Jika tidak ada aplikasi yang terbuka
+            if (clients.openWindow) return clients.openWindow(urlToOpen);
         })
     );
 });

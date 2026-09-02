@@ -4561,13 +4561,13 @@ async function saveQRISImage() {
         }
     });
 
-    if ('serviceWorker' in navigator) {
+        if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', event => {
             // Tangani pesan dari Service Worker untuk navigasi
             if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                showTransactionDetail(event.data.transactionId);
+                handleNotificationNavigation(event.data.transactionId);
             } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
-                showTransactionDetail(event.data.transactionId);
+                handleNotificationNavigation(event.data.transactionId);
             }
         });
     }
@@ -4592,20 +4592,23 @@ function handleNotificationColdStart() {
     const id = urlParams.get('id');
 
     if (action && id) {
-        const waitForFirebase = setInterval(() => {
-            if (window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
-                clearInterval(waitForFirebase);
-                setTimeout(() => {
-                    showTransactionDetail(id);
-                    // Bersihkan URL agar tidak trigger lagi saat refresh
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                }, 1500);
-            }
-        }, 500);
-
-        // Fallback timeout jika gagal
-        setTimeout(() => clearInterval(waitForFirebase), 10000);
+        handleNotificationNavigation(id);
+        // Bersihkan URL agar tidak trigger lagi saat refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
+}
+
+// FUNGSI PENGHUBUNG (WAITER) - Menunggu Firebase siap sebelum navigasi
+function handleNotificationNavigation(transactionId) {
+    if (!transactionId) return;
+    const tryNavigate = setInterval(() => {
+        if (window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
+            clearInterval(tryNavigate);
+            showTransactionDetail(transactionId);
+        }
+    }, 500);
+    // Fallback timeout 15 detik jika gagal (misal user belum login)
+    setTimeout(() => clearInterval(tryNavigate), 15000);
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
@@ -6295,7 +6298,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.7');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.8');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
