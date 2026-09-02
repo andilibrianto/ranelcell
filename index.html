@@ -4541,74 +4541,91 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-    function setupPWA() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .catch((err) => console.error('SW registration failed: ', err));
-    }
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            const activeView = document.querySelector('.view.active');
-            if (activeView) {
-                const scrollTop = activeView.scrollTop;
-                activeView.style.opacity = '0.99';
-                setTimeout(() => {
-                    activeView.style.opacity = '';
-                    activeView.scrollTop = scrollTop;
-                }, 50);
-            }
-        }
-    });
-
+        function setupPWA() {
         if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('message', event => {
-            // Tangani pesan dari Service Worker untuk navigasi
-            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                handleNotificationNavigation(event.data.transactionId);
-            } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
-                handleNotificationNavigation(event.data.transactionId);
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                // Paksa update Service Worker jika ada versi baru
+                if (registration.waiting) {
+                    registration.waiting.postMessage('SKIP_WAITING');
+                }
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                newWorker.postMessage('SKIP_WAITING');
+                            }
+                        });
+                    }
+                });
+            }).catch((err) => console.error('SW registration failed: ', err));
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const activeView = document.querySelector('.view.active');
+                if (activeView) {
+                    const scrollTop = activeView.scrollTop;
+                    activeView.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeView.style.opacity = '';
+                        activeView.scrollTop = scrollTop;
+                    }, 50);
+                }
             }
         });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                // Tangani pesan dari Service Worker untuk navigasi
+                if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                    handleNotificationNavigation(event.data.transactionId);
+                } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
+                    handleNotificationNavigation(event.data.transactionId);
+                }
+            });
+        }
+
+        // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
+        handleNotificationColdStart();
+
+        setInterval(() => {
+            if (currentView === 'view-home' && allBanners.length > 0) {
+                const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
+                if (hasScheduled) {
+                    renderBanners();
+                }
+            }
+        }, 60000);
     }
 
-    // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
-    handleNotificationColdStart();
+// Variabel global untuk menyimpan navigasi yang tertunda
+let _pendingNotificationNavigation = null;
 
-    setInterval(() => {
-        if (currentView === 'view-home' && allBanners.length > 0) {
-            const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
-            if (hasScheduled) {
-                renderBanners();
-            }
-        }
-    }, 60000);
-}
-
-// FUNGSI BARU UNTUK COLD START
 function handleNotificationColdStart() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     const id = urlParams.get('id');
 
     if (action && id) {
-        handleNotificationNavigation(id);
+        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
+        _pendingNotificationNavigation = id;
         // Bersihkan URL agar tidak trigger lagi saat refresh
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
 
-// FUNGSI PENGHUBUNG (WAITER) - Menunggu Firebase siap sebelum navigasi
 function handleNotificationNavigation(transactionId) {
     if (!transactionId) return;
-    const tryNavigate = setInterval(() => {
-        if (window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
-            clearInterval(tryNavigate);
-            showTransactionDetail(transactionId);
-        }
-    }, 500);
-    // Fallback timeout 15 detik jika gagal (misal user belum login)
-    setTimeout(() => clearInterval(tryNavigate), 15000);
+    
+    // Cek apakah user sudah login DAN aplikasi sudah selesai loading awal
+    if (window.firebaseAuth && window.firebaseAuth.auth.currentUser && !isProcessingAuth) {
+        // Langsung eksekusi karena ini dari foreground/background (bukan cold start)
+        showTransactionDetail(transactionId);
+    } else {
+        // Simpan untuk dieksekusi nanti oleh checkAuthState setelah login selesai
+        _pendingNotificationNavigation = transactionId;
+    }
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
@@ -5666,7 +5683,7 @@ async function submitComplaint() {
 
         updateCartUI();
     }
-    function checkAuthState() {
+        function checkAuthState() {
         window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
             hideLoading();
 
@@ -5702,6 +5719,16 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
+                
+                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA (COLD START FIX)
+                if (_pendingNotificationNavigation) {
+                    const targetId = _pendingNotificationNavigation;
+                    _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
+                    // Beri sedikit delay agar showView('view-home') di atas selesai merender
+                    setTimeout(() => {
+                        showTransactionDetail(targetId);
+                    }, 600);
+                }
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
@@ -6298,7 +6325,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.8');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.9');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
