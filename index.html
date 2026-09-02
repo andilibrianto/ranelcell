@@ -4053,36 +4053,41 @@ async function saveQRISImage() {
     showLocalTransactionNotification(orderId, totalNotif);
 }
     async function showLocalTransactionNotification(orderId, totalAmount) {
-        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            console.log("Browser tidak mendukung Web Notifications");
-            return;
-        }
-
-        try {
-            if (Notification.permission !== 'granted') {
-                if (Notification.permission !== 'denied') {
-                    await Notification.requestPermission();
-                }
-            }
-
-            if (Notification.permission === 'granted') {
-                const registration = await navigator.serviceWorker.ready;
-                const title = "Pesanan Diproses! 🎉";
-                const options = {
-                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
-                    icon: './Gambar/PWA_512_M.png',
-                    badge: './Gambar/PWA_512_M.png',
-                    vibrate: [200, 100, 200, 100, 200],
-                    tag: orderId,
-                    requireInteraction: false 
-                };
-                
-                registration.showNotification(title, options);
-            }
-        } catch (err) {
-            console.error("Gagal menampilkan notifikasi lokal:", err);
-        }
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        console.log("Browser tidak mendukung Web Notifications");
+        return;
     }
+
+    try {
+        if (Notification.permission !== 'granted') {
+            if (Notification.permission !== 'denied') {
+                await Notification.requestPermission();
+            }
+        }
+
+        if (Notification.permission === 'granted') {
+            const registration = await navigator.serviceWorker.ready;
+            const title = "Pesanan Diproses! 🎉";
+            const options = {
+                body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                icon: './Gambar/PWA_512_M.png',
+                badge: './Gambar/PWA_512_M.png',
+                vibrate: [200, 100, 200, 100, 200],
+                tag: orderId,
+                requireInteraction: false,
+                // TAMBAHKAN DATA INI AGAR BISA DIKLIK DAN DIARAHKAN
+                data: {
+                    type: 'transaction',
+                    transactionId: orderId
+                }
+            };
+            
+            registration.showNotification(title, options);
+        }
+    } catch (err) {
+        console.error("Gagal menampilkan notifikasi lokal:", err);
+    }
+}
     async function showLocalComplaintNotification(transactionId, itemsText) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
@@ -4542,45 +4547,66 @@ async function saveQRISImage() {
             .catch((err) => console.error('SW registration failed: ', err));
     }
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                const activeView = document.querySelector('.view.active');
-                if (activeView) {
-                    const scrollTop = activeView.scrollTop;
-                    
-                    activeView.style.opacity = '0.99';
-                    setTimeout(() => {
-                        activeView.style.opacity = '';
-                        activeView.scrollTop = scrollTop;
-                    }, 50);
-                }
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            const activeView = document.querySelector('.view.active');
+            if (activeView) {
+                const scrollTop = activeView.scrollTop;
+                activeView.style.opacity = '0.99';
+                setTimeout(() => {
+                    activeView.style.opacity = '';
+                    activeView.scrollTop = scrollTop;
+                }, 50);
             }
-        });
-        if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                const tid = event.data.transactionId;
-                
-                if (!window._historyCache) {
-                    showTransactionHistory();
-                    setTimeout(() => {
-                        if (window._historyCache) showTransactionDetail(tid);
-                    }, 1500);
-                } else {
-                    showTransactionDetail(tid);
-                }
-            }
-        });
-    }
-    setInterval(() => {
-    if (currentView === 'view-home' && allBanners.length > 0) {
-        const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
-        if (hasScheduled) {
-            renderBanners();
         }
+    });
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', event => {
+            // Tangani pesan dari Service Worker untuk navigasi
+            if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                showTransactionDetail(event.data.transactionId);
+            } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
+                showTransactionDetail(event.data.transactionId);
+            }
+        });
     }
+
+    // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
+    handleNotificationColdStart();
+
+    setInterval(() => {
+        if (currentView === 'view-home' && allBanners.length > 0) {
+            const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
+            if (hasScheduled) {
+                renderBanners();
+            }
+        }
     }, 60000);
+}
+
+// FUNGSI BARU UNTUK COLD START
+function handleNotificationColdStart() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const id = urlParams.get('id');
+
+    if (action && id) {
+        const waitForFirebase = setInterval(() => {
+            if (window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
+                clearInterval(waitForFirebase);
+                setTimeout(() => {
+                    showTransactionDetail(id);
+                    // Bersihkan URL agar tidak trigger lagi saat refresh
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 1500);
+            }
+        }, 500);
+
+        // Fallback timeout jika gagal
+        setTimeout(() => clearInterval(waitForFirebase), 10000);
     }
+}
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
     let deferredPrompt = null;
@@ -6269,7 +6295,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.6');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.7');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();

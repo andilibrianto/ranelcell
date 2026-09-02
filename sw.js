@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.4';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.5';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,13 +52,30 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const targetUrl = '/';
+    const targetUrl = './index.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+            // Jika tidak ada window yang terbuka, buka window baru dengan parameter URL
+            if (clientList.length === 0) {
+                let urlToOpen = targetUrl;
+                if (notifData.type === 'transaction' && notifData.transactionId) {
+                    urlToOpen = `${targetUrl}?action=transaction&id=${notifData.transactionId}`;
+                } else if (notifData.type === 'complaint' && notifData.transactionId) {
+                    urlToOpen = `${targetUrl}?action=complaint&id=${notifData.transactionId}`;
+                }
+                if (clients.openWindow) return clients.openWindow(urlToOpen);
+            }
+
+            // Jika ada window yang sudah terbuka, kirim perintah untuk navigasi
             for (const client of clientList) {
                 if (client.url.includes('/') && 'focus' in client) {
-                    if (notifData.type === 'complaint' && notifData.transactionId) {
+                    if (notifData.type === 'transaction' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_TRANSACTION', 
+                            transactionId: notifData.transactionId 
+                        });
+                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
                         client.postMessage({ 
                             type: 'NAVIGATE_TO_COMPLAINT', 
                             transactionId: notifData.transactionId 
@@ -67,9 +84,8 @@ self.addEventListener('notificationclick', (event) => {
                     return client.focus();
                 }
             }
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
+            
+            if (clients.openWindow) return clients.openWindow(targetUrl);
         })
     );
 });
