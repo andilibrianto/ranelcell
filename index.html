@@ -4602,15 +4602,29 @@ async function saveQRISImage() {
 // Variabel global untuk menyimpan navigasi yang tertunda
 let _pendingNotificationNavigation = null;
 
-function handleNotificationColdStart() {
+async function handleNotificationColdStart() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-    const id = urlParams.get('id');
+    let id = urlParams.get('id');
 
-    if (action && id) {
-        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
+    // Jika tidak ada parameter URL, cek cache (terjadi saat PWA mengabaikan query string)
+    if (!id) {
+        try {
+            const cache = await caches.open('notif-data');
+            const response = await cache.match('./pending-notif');
+            if (response) {
+                const data = await response.json();
+                id = data.transactionId;
+                // Hapus cache agar tidak trigger lagi saat refresh
+                await cache.delete('./pending-notif');
+            }
+        } catch(e) {
+            console.error("Gagal cek cache notif:", e);
+        }
+    }
+
+    if (id) {
         _pendingNotificationNavigation = id;
-        // Bersihkan URL agar tidak trigger lagi saat refresh
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
@@ -5730,14 +5744,14 @@ async function submitComplaint() {
                 
                 isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
 
-                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
+                                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA (COLD START FIX)
                 if (_pendingNotificationNavigation) {
                     const targetId = _pendingNotificationNavigation;
                     _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
                     // Beri sedikit delay agar showView('view-home') di atas selesai merender
                     setTimeout(() => {
                         showTransactionDetail(targetId);
-                    }, 600);
+                    }, 1000); // Naikkan dari 600 ke 1000
                 }
             } else {
                 isUserLoggedIn = false;
@@ -6336,7 +6350,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=1.9');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.0');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();

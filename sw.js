@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.4.9';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.0';
 const urlsToCache = [
     './',
     './index.html',
@@ -66,22 +66,33 @@ self.addEventListener('notificationclick', (event) => {
     }
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Jika ada window yang sudah terbuka, kirim perintah untuk navigasi
+        (async () => {
+            // SIMPAN ID KE CACHE AGAR TIDAK HILANG JIKA URL PARAMETER DIABAIKAN PWA
+            if (transactionId) {
+                const cache = await caches.open('notif-data');
+                const response = new Response(JSON.stringify({ transactionId: transactionId }));
+                await cache.put('./pending-notif', response);
+            }
+
+            const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+            
+            // Jika ada window yang sudah terbuka (Background)
             for (const client of clientList) {
                 if ('focus' in client) {
-                    if (transactionId) {
-                        client.postMessage({ 
-                            type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: transactionId 
-                        });
-                    }
-                    return client.focus();
+                    return client.focus().then(() => {
+                        // KIRIM PESAN SETELAH FOCUS BERHASIL
+                        if (transactionId) {
+                            client.postMessage({ 
+                                type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
+                                transactionId: transactionId 
+                            });
+                        }
+                    });
                 }
             }
             
-            // Jika tidak ada window yang terbuka, buka window baru dengan parameter URL
+            // Jika tidak ada window yang terbuka (Force Close)
             if (clients.openWindow) return clients.openWindow(urlToOpen);
-        })
+        })()
     );
 });

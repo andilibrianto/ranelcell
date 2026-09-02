@@ -16,7 +16,6 @@ const messaging = firebase.messaging();
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     
-    // Ambil data dari notifikasi (support untuk payload FCM dan notifikasi lokal)
     const notifData = event.notification.data || {};
     const fcmMsg = notifData.FCM_MSG || {};
     const payloadData = fcmMsg.data || (notifData.payload && notifData.payload.data) || {};
@@ -32,22 +31,29 @@ self.addEventListener('notificationclick', event => {
     }
 
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Jika aplikasi sedang berjalan di background
+        (async () => {
+            if (transactionId) {
+                const cache = await caches.open('notif-data');
+                const response = new Response(JSON.stringify({ transactionId: transactionId }));
+                await cache.put('./pending-notif', response);
+            }
+
+            const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+            
             for (const client of clientList) {
                 if ('focus' in client) {
-                    if (transactionId) {
-                        client.postMessage({ 
-                            type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: transactionId 
-                        });
-                    }
-                    return client.focus();
+                    return client.focus().then(() => {
+                        if (transactionId) {
+                            client.postMessage({ 
+                                type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
+                                transactionId: transactionId 
+                            });
+                        }
+                    });
                 }
             }
             
-            // Jika tidak ada aplikasi yang terbuka
             if (clients.openWindow) return clients.openWindow(urlToOpen);
-        })
+        })()
     );
 });
