@@ -6375,12 +6375,6 @@ function serviceGadgetBack() {
         setupPWA(); 
         updateCartUI();
     }
-            window.addEventListener('firebase-ready', function() {
-            if (window.firebaseAuth) {
-                checkAuthState();
-                loadBanners();
-            }
-        });
     let allBanners = [];
 
 async function loadBanners() {
@@ -6509,12 +6503,12 @@ function showPromoDetail(bannerId) {
     }
     showView('view-promo-detail');
 }
-        window.addEventListener('firebase-ready', function() {
+    window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
             loadBanners();
         }
-    });;
+    });
     </script>
 </body>
 </html>
