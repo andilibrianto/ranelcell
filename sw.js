@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.0';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.1';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,47 +52,24 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const fcmMsg = notifData.FCM_MSG || {};
-    const payloadData = fcmMsg.data || (notifData.payload && notifData.payload.data) || {};
-    
-    const transactionId = notifData.transactionId || payloadData.transactionId || payloadData.id || null;
-    const actionType = notifData.type || payloadData.type || 'transaction';
-
-    const targetUrl = './index.html';
-    let urlToOpen = targetUrl;
-
-    if (transactionId) {
-        urlToOpen = `${targetUrl}?action=${actionType}&id=${transactionId}`;
-    }
+    const targetUrl = '/';
 
     event.waitUntil(
-        (async () => {
-            // SIMPAN ID KE CACHE AGAR TIDAK HILANG JIKA URL PARAMETER DIABAIKAN PWA
-            if (transactionId) {
-                const cache = await caches.open('notif-data');
-                const response = new Response(JSON.stringify({ transactionId: transactionId }));
-                await cache.put('./pending-notif', response);
-            }
-
-            const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-            
-            // Jika ada window yang sudah terbuka (Background)
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if ('focus' in client) {
-                    return client.focus().then(() => {
-                        // KIRIM PESAN SETELAH FOCUS BERHASIL
-                        if (transactionId) {
-                            client.postMessage({ 
-                                type: actionType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION', 
-                                transactionId: transactionId 
-                            });
-                        }
-                    });
+                if (client.url.includes('/') && 'focus' in client) {
+                    if (notifData.type === 'complaint' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_COMPLAINT', 
+                            transactionId: notifData.transactionId 
+                        });
+                    }
+                    return client.focus();
                 }
             }
-            
-            // Jika tidak ada window yang terbuka (Force Close)
-            if (clients.openWindow) return clients.openWindow(urlToOpen);
-        })()
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
     );
 });
