@@ -4576,15 +4576,16 @@ async function saveQRISImage() {
         });
 
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', event => {
-                // Tangani pesan dari Service Worker untuk navigasi
-                if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
-                    handleNotificationNavigation(event.data.transactionId);
-                } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
-                    handleNotificationNavigation(event.data.transactionId);
-                }
-            });
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (!event.data) return;
+        
+        if (event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+            handleNotificationNavigation(event.data.transactionId, 'complaint');
+        } else if (event.data.type === 'NAVIGATE_TO_TRANSACTION') {
+            handleNotificationNavigation(event.data.transactionId, 'transaction');
         }
+    });
+}
 
         // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
         handleNotificationColdStart();
@@ -4606,26 +4607,34 @@ function handleNotificationColdStart() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     const id = urlParams.get('id');
+    const type = urlParams.get('type');
 
-    if (action && id) {
-        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
-        _pendingNotificationNavigation = id;
+    if (action === 'notif' && id) {
+        _pendingNotificationNavigation = { id: id, type: type || 'transaction' };
         // Bersihkan URL agar tidak trigger lagi saat refresh
-        window.history.replaceState({}, document.title, window.location.pathname);
+        const cleanUrl = window.location.pathname + (window.location.hash || '');
+        window.history.replaceState({}, document.title, cleanUrl);
     }
 }
 
-function handleNotificationNavigation(transactionId) {
+function handleNotificationNavigation(transactionId, notifType) {
     if (!transactionId) return;
-    
-    // Jika Firebase siap, user sudah login, dan tidak sedang proses login manual
+    notifType = notifType || 'transaction';
+
+    // Skenario A: Firebase siap & user sudah login → navigasi langsung
     if (isAuthReady && !isProcessingAuth && window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
-        showTransactionDetail(transactionId);
-    } else if (!isAuthReady || isProcessingAuth) {
-        // Simpan dulu jika Firebase belum siap
-        _pendingNotificationNavigation = transactionId;
-    } else {
-        // Jika Firebase siap tapi user belum login
+        // Beri sedikit delay agar tidak bentrok dengan render view lain
+        setTimeout(() => {
+            showTransactionDetail(transactionId);
+        }, 100);
+    }
+    // Skenario B: Firebase belum siap atau sedang proses auth → simpan dulu
+    else if (!isAuthReady || isProcessingAuth) {
+        _pendingNotificationNavigation = { id: transactionId, type: notifType };
+    }
+    // Skenario C: User belum login → simpan, arahkan ke login, jalankan setelah login
+    else {
+        _pendingNotificationNavigation = { id: transactionId, type: notifType };
         showToast('Silakan login terlebih dahulu untuk melihat detail', 'info');
         showView('view-login');
     }
@@ -5730,15 +5739,15 @@ async function submitComplaint() {
                 
                 isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
 
-                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
-                if (_pendingNotificationNavigation) {
-                    const targetId = _pendingNotificationNavigation;
-                    _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
-                    // Beri sedikit delay agar showView('view-home') di atas selesai merender
-                    setTimeout(() => {
-                        showTransactionDetail(targetId);
-                    }, 600);
-                }
+                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA (Cold Start / Setelah Login)
+if (_pendingNotificationNavigation) {
+    const pending = _pendingNotificationNavigation;
+    _pendingNotificationNavigation = null;
+    // Tunggu 700ms agar selesai render view-home sebelum pindah ke detail
+    setTimeout(() => {
+        showTransactionDetail(pending.id);
+    }, 700);
+}
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
@@ -6336,7 +6345,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.1');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.2');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
@@ -6509,6 +6518,7 @@ function showPromoDetail(bannerId) {
             loadBanners();
         }
     });
+    init();
     </script>
 </body>
 </html>
