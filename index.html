@@ -3936,6 +3936,7 @@ async function saveQRISImage() {
     paketMode = 'isi_ulang';
     savedFormData = null;
     shouldRestoreForm = false;
+    document.getElementById('svc-alamat').value = '';
     shippingMode = null;
     shippingCost = 0;
     appliedPromoCode = '';
@@ -3944,7 +3945,6 @@ async function saveQRISImage() {
     destinationLng = null;
     selectedPaymentMethod = '';
     updateCartUI();
-    shouldRestoreForm = false;
 }
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
