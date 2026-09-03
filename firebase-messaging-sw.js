@@ -13,54 +13,32 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Aktifkan kontrol langsung ke client
-self.addEventListener('activate', event => {
-    event.waitUntil(self.clients.claim());
-});
-
-// Handler untuk pesan FCM data-only (tanpa notification payload)
-messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Background message:', payload);
-    const title = payload.notification?.title || payload.data?.title || 'RANEL CELL';
-    const body = payload.notification?.body || payload.data?.body || 'Pesan baru masuk';
-    const notifType = payload.data?.type || 'transaction';
-    const transactionId = payload.data?.transactionId || payload.data?.orderId || '';
-
-    const options = {
-        body: body,
-        icon: './Gambar/PWA_512_M.png',
-        badge: './Gambar/PWA_512_M.png',
-        vibrate: [200, 100, 200, 100, 200],
-        tag: notifType + '_' + transactionId,
-        data: {
-            type: notifType,
-            transactionId: transactionId
-        }
-    };
-    return self.registration.showNotification(title, options);
-});
-
-// ==========================================================
-// NOTIFICATION CLICK HANDLER (FCM + Local Notifications)
-// ==========================================================
-self.addEventListener('notificationclick', (event) => {
+// Tangani klik notifikasi dari Firebase
+self.addEventListener('notificationclick', event => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const txId = notifData.transactionId || '';
-    const notifType = notifData.type || '';
+    let targetUrl = './index.html';
 
-    const targetUrl = './index.html?action=notif&type=' + encodeURIComponent(notifType) + '&id=' + encodeURIComponent(txId);
+    if (notifData.type === 'transaction' && notifData.transactionId) {
+        targetUrl = `./index.html?action=transaction_detail&id=${notifData.transactionId}`;
+    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+        targetUrl = `./index.html?action=complaint_detail&id=${notifData.transactionId}`;
+    }
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-                    if (notifType && txId) {
-                        client.postMessage({
-                            type: notifType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION',
-                            transactionId: txId,
-                            notifType: notifType
+                if (client.url.includes('index.html') && 'focus' in client) {
+                    if (notifData.type === 'transaction' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_TRANSACTION', 
+                            transactionId: notifData.transactionId 
+                        });
+                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_COMPLAINT', 
+                            transactionId: notifData.transactionId 
                         });
                     }
                     return client.focus();

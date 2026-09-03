@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.2';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.3';
 const urlsToCache = [
     './',
     './index.html',
@@ -12,7 +12,9 @@ const urlsToCache = [
 
 self.addEventListener('install', event => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+        caches.open(CACHE_NAME).then(cache => {
+            return cache.addAll(urlsToCache);
+        })
     );
     self.skipWaiting();
 });
@@ -28,15 +30,18 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        }).then(() => self.clients.claim())
+        })
     );
+    self.clients.claim();
 });
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
+
     if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
         return;
     }
+
     event.respondWith(
         caches.match(event.request).then(response => {
             return response || fetch(event.request).catch(() => caches.match('./index.html'));
@@ -44,36 +49,40 @@ self.addEventListener('fetch', event => {
     );
 });
 
-// ==========================================================
-// NOTIFICATION CLICK HANDLER (Versi Lengkap & Terverifikasi)
-// ==========================================================
+// PERUBahan UTAMA: Menangani klik notifikasi
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const txId = notifData.transactionId || '';
-    const notifType = notifData.type || '';
+    let targetUrl = './index.html';
 
-    // URL fallback untuk cold-start (PWA tertutup total)
-    const targetUrl = './index.html?action=notif&type=' + encodeURIComponent(notifType) + '&id=' + encodeURIComponent(txId);
+    // Cek tipe notifikasi untuk menentukan URL tujuan
+    if (notifData.type === 'transaction' && notifData.transactionId) {
+        targetUrl = `./index.html?action=transaction_detail&id=${notifData.transactionId}`;
+    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+        targetUrl = `./index.html?action=complaint_detail&id=${notifData.transactionId}`;
+    }
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Prioritas 1: Cari window PWA yang sudah terbuka
+            // Jika aplikasi PWA sedang terbuka di background
             for (const client of clientList) {
-                // Pastikan ini window milik PWA kita (same-origin)
-                if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-                    if (notifType && txId) {
-                        client.postMessage({
-                            type: notifType === 'complaint' ? 'NAVIGATE_TO_COMPLAINT' : 'NAVIGATE_TO_TRANSACTION',
-                            transactionId: txId,
-                            notifType: notifType
+                if (client.url.includes('index.html') && 'focus' in client) {
+                    if (notifData.type === 'transaction' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_TRANSACTION', 
+                            transactionId: notifData.transactionId 
+                        });
+                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+                        client.postMessage({ 
+                            type: 'NAVIGATE_TO_COMPLAINT', 
+                            transactionId: notifData.transactionId 
                         });
                     }
                     return client.focus();
                 }
             }
-            // Prioritas 2: Tidak ada window → buka window baru dengan URL params
+            // Jika aplikasi PWA tertutup (force close), buat jendela baru dengan parameter URL
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
