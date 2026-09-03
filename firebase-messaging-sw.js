@@ -13,44 +13,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Tangani klik notifikasi dari Firebase
 self.addEventListener('notificationclick', event => {
     event.notification.close();
-
-    const notifData = event.notification.data || {};
-    let targetUrl = './index.html';
-
-    // Data Firebase seringkali bersarang di dalam .data
-    let transId = notifData.transactionId || (notifData.data ? notifData.data.transactionId : null);
-    let type = notifData.type || (notifData.data ? notifData.data.type : null);
-
-    if (type === 'transaction' && transId) {
-        targetUrl = `./index.html?action=transaction_detail&id=${transId}`;
-    } else if (type === 'complaint' && transId) {
-        targetUrl = `./index.html?action=complaint_detail&id=${transId}`;
-    }
-
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if (client.url.includes('index.html') && 'focus' in client) {
-                    if (type === 'transaction' && transId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: transId 
-                        });
-                    } else if (type === 'complaint' && transId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: transId 
-                        });
-                    }
-                    return client.focus();
-                }
+                if ('focus' in client) return client.focus();
             }
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
+            if (clients.openWindow) return clients.openWindow('./index.html');
         })
     );
 });

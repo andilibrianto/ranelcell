@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.4';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.5';
 const urlsToCache = [
     './',
     './index.html',
@@ -38,11 +38,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
-    // PENTING: Jangan intercept request untuk file Service Worker lain
-    if (event.request.url.includes('firebase-messaging-sw.js') || event.request.url.includes('sw.js')) {
-        return; 
-    }
-
     if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
         return;
     }
@@ -53,32 +48,17 @@ self.addEventListener('fetch', event => {
         })
     );
 });
-
-// PERUBahan UTAMA: Menangani klik notifikasi
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    let targetUrl = './index.html';
-
-    // Cek tipe notifikasi untuk menentukan URL tujuan
-    if (notifData.type === 'transaction' && notifData.transactionId) {
-        targetUrl = `./index.html?action=transaction_detail&id=${notifData.transactionId}`;
-    } else if (notifData.type === 'complaint' && notifData.transactionId) {
-        targetUrl = `./index.html?action=complaint_detail&id=${notifData.transactionId}`;
-    }
+    const targetUrl = '/';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-            // Jika aplikasi PWA sedang terbuka di background
             for (const client of clientList) {
-                if (client.url.includes('index.html') && 'focus' in client) {
-                    if (notifData.type === 'transaction' && notifData.transactionId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: notifData.transactionId 
-                        });
-                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+                if (client.url.includes('/') && 'focus' in client) {
+                    if (notifData.type === 'complaint' && notifData.transactionId) {
                         client.postMessage({ 
                             type: 'NAVIGATE_TO_COMPLAINT', 
                             transactionId: notifData.transactionId 
@@ -87,7 +67,6 @@ self.addEventListener('notificationclick', (event) => {
                     return client.focus();
                 }
             }
-            // Jika aplikasi PWA tertutup (force close), buat jendela baru dengan parameter URL
             if (clients.openWindow) {
                 return clients.openWindow(targetUrl);
             }
