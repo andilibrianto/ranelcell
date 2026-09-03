@@ -3944,7 +3944,7 @@ async function saveQRISImage() {
     destinationLng = null;
     selectedPaymentMethod = '';
     updateCartUI();
-    location.reload();
+    shouldRestoreForm = false;
 }
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
@@ -4053,9 +4053,9 @@ async function saveQRISImage() {
     if (!window._historyCache) window._historyCache = [];
     window._historyCache.unshift(localTransaction);
     saveTransactionToFirestore(d, orderId);
+    resetCartState();
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
-    resetCartState();
 }
     async function showLocalTransactionNotification(orderId, totalAmount) {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
