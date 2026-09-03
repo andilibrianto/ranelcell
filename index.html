@@ -4052,43 +4052,43 @@ async function saveQRISImage() {
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
 }
-        async function showLocalTransactionNotification(orderId, totalAmount) {
-        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-            console.log("Browser tidak mendukung Web Notifications");
-            return;
-        }
-
-        try {
-            if (Notification.permission !== 'granted') {
-                if (Notification.permission !== 'denied') {
-                    await Notification.requestPermission();
-                }
-            }
-
-            if (Notification.permission === 'granted') {
-                const registration = await navigator.serviceWorker.ready;
-                const title = "Pesanan Diproses! 🎉";
-                const options = {
-                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
-                    icon: './Gambar/PWA_512_M.png',
-                    badge: './Gambar/PWA_512_M.png',
-                    vibrate: [200, 100, 200, 100, 200],
-                    tag: orderId,
-                    requireInteraction: false,
-                    data: {
-                        type: 'transaction',
-                        transactionId: orderId,
-                        url: './index.html?action=transaction_detail&id=' + orderId
-                    }
-                };
-                
-                registration.showNotification(title, options);
-            }
-        } catch (err) {
-            console.error("Gagal menampilkan notifikasi lokal:", err);
-        }
+    async function showLocalTransactionNotification(orderId, totalAmount) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+        console.log("Browser tidak mendukung Web Notifications");
+        return;
     }
-        async function showLocalComplaintNotification(transactionId, itemsText) {
+
+    try {
+        if (Notification.permission !== 'granted') {
+            if (Notification.permission !== 'denied') {
+                await Notification.requestPermission();
+            }
+        }
+
+        if (Notification.permission === 'granted') {
+            const registration = await navigator.serviceWorker.ready;
+            const title = "Pesanan Diproses! 🎉";
+            const options = {
+                body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                icon: './Gambar/PWA_512_M.png',
+                badge: './Gambar/PWA_512_M.png',
+                vibrate: [200, 100, 200, 100, 200],
+                tag: orderId,
+                requireInteraction: false,
+                // TAMBAHKAN DATA INI AGAR BISA DIKLIK DAN DIARAHKAN
+                data: {
+                    type: 'transaction',
+                    transactionId: orderId
+                }
+            };
+            
+            registration.showNotification(title, options);
+        }
+    } catch (err) {
+        console.error("Gagal menampilkan notifikasi lokal:", err);
+    }
+}
+    async function showLocalComplaintNotification(transactionId, itemsText) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
             return;
@@ -4107,8 +4107,7 @@ async function saveQRISImage() {
                     silent: false,
                     data: { 
                         type: 'complaint', 
-                        transactionId: transactionId,
-                        url: './index.html?action=transaction_detail&id=' + transactionId
+                        transactionId: transactionId 
                     }
                 };
                 
@@ -4542,49 +4541,98 @@ async function saveQRISImage() {
         if (pagehideHandler) window.removeEventListener('pagehide', pagehideHandler);
         currentTrackedUserRef = null;
     }
-    function setupPWA() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js')
-            .catch((err) => console.error('SW registration failed: ', err));
-    }
-
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            const activeView = document.querySelector('.view.active');
-            if (activeView) {
-                const scrollTop = activeView.scrollTop;
-                activeView.style.opacity = '0.99';
-                setTimeout(() => {
-                    activeView.style.opacity = '';
-                    activeView.scrollTop = scrollTop;
-                }, 50);
-            }
+        function setupPWA() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(registration => {
+                // Paksa update Service Worker jika ada versi baru
+                if (registration.waiting) {
+                    registration.waiting.postMessage('SKIP_WAITING');
+                }
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                newWorker.postMessage('SKIP_WAITING');
+                            }
+                        });
+                    }
+                });
+            }).catch((err) => console.error('SW registration failed: ', err));
         }
-    });
-    
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.addEventListener('message', event => {
-            // Tangani jika notifikasi diklik saat aplikasi sedang terbuka di background
-            if (event.data && event.data.type === 'OPEN_TRANSACTION_DETAIL') {
-                const tid = String(event.data.transactionId || '');
-                if (tid) {
-                    showTransactionDetail(tid);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                const activeView = document.querySelector('.view.active');
+                if (activeView) {
+                    const scrollTop = activeView.scrollTop;
+                    activeView.style.opacity = '0.99';
+                    setTimeout(() => {
+                        activeView.style.opacity = '';
+                        activeView.scrollTop = scrollTop;
+                    }, 50);
                 }
             }
         });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', event => {
+                // Tangani pesan dari Service Worker untuk navigasi
+                if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
+                    handleNotificationNavigation(event.data.transactionId);
+                } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
+                    handleNotificationNavigation(event.data.transactionId);
+                }
+            });
+        }
+
+        // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
+        handleNotificationColdStart();
+
+        setInterval(() => {
+            if (currentView === 'view-home' && allBanners.length > 0) {
+                const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
+                if (hasScheduled) {
+                    renderBanners();
+                }
+            }
+        }, 60000);
     }
 
-    setInterval(() => {
-        if (currentView === 'view-home' && allBanners.length > 0) {
-            const hasScheduled = allBanners.some(b => b.data.scheduleStartTime || b.data.scheduleEndTime);
-            if (hasScheduled) {
-                renderBanners();
-            }
-        }
-    }, 60000);
+// Variabel global untuk menyimpan navigasi yang tertunda
+let _pendingNotificationNavigation = null;
+
+function handleNotificationColdStart() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    const id = urlParams.get('id');
+
+    if (action && id) {
+        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
+        _pendingNotificationNavigation = id;
+        // Bersihkan URL agar tidak trigger lagi saat refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
+function handleNotificationNavigation(transactionId) {
+    if (!transactionId) return;
+    
+    // Jika Firebase siap, user sudah login, dan tidak sedang proses login manual
+    if (isAuthReady && !isProcessingAuth && window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
+        showTransactionDetail(transactionId);
+    } else if (!isAuthReady || isProcessingAuth) {
+        // Simpan dulu jika Firebase belum siap
+        _pendingNotificationNavigation = transactionId;
+    } else {
+        // Jika Firebase siap tapi user belum login
+        showToast('Silakan login terlebih dahulu untuk melihat detail', 'info');
+        showView('view-login');
+    }
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
+    let isAuthReady = false; // TAMBAHKAN INI
     let deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -5639,70 +5687,78 @@ async function submitComplaint() {
 
         updateCartUI();
     }
-    function checkAuthState() {
-    window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
-        hideLoading();
+            function checkAuthState() {
+        // Pencegah pemanggilan ganda (Double Execution)
+        if (window._authStateListenerAdded) return;
+        window._authStateListenerAdded = true;
 
-        if (isProcessingAuth) return;
+        window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, async (user) => {
+            hideLoading();
 
-        if (user) {
-            const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
-            if (!user.emailVerified && !isGoogleUser) {
-                showToast('Silakan verifikasi email Anda terlebih dahulu.', 'info', 3000);
-                window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
-                    isUserLoggedIn = false;
-                    updateAuthUI();
-                    showView('view-login');
-                });
-                return;
-            }
-            isUserLoggedIn = true;
-            updateAuthUI();
-            showView('view-home');
-            try {
-                const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
-                const docSnap = await window.firebaseAuth.getDoc(docRef);
-                if (docSnap.exists()) {
-                    window.currentUserTelp = docSnap.data().telp; 
-                } else {
+            if (isProcessingAuth) return;
+
+            if (user) {
+                const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
+                if (!user.emailVerified && !isGoogleUser) {
+                    showToast('Silakan verifikasi email Anda terlebih dahulu.', 'info', 3000);
+                    window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
+                        isUserLoggedIn = false;
+                        updateAuthUI();
+                        showView('view-login');
+                    });
+                    return;
+                }
+                isUserLoggedIn = true;
+                updateAuthUI();
+                showView('view-home');
+                try {
+                    const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+                    const docSnap = await window.firebaseAuth.getDoc(docRef);
+                    if (docSnap.exists()) {
+                        window.currentUserTelp = docSnap.data().telp; 
+                    } else {
+                        window.currentUserTelp = '';
+                    }
+                } catch (err) {
+                    console.error("Gagal ambil data Firestore:", err);
                     window.currentUserTelp = '';
                 }
-            } catch (err) {
-                console.error("Gagal ambil data Firestore:", err);
-                window.currentUserTelp = '';
-            }
-            renderUserProfile();
-            updateHomeGreeting();
-            initPresenceSystem(user);
-            setupCustomerFCM();
-            
-            // TAMBAHKAN BLOK INI: Cek apakah ada perintah buka detail transaksi dari URL
-            if (pendingTransactionId) {
-                const tid = pendingTransactionId;
-                pendingTransactionId = null; // Hapus agar tidak terulang
-                setTimeout(() => {
-                    showTransactionDetail(tid);
-                }, 1500); // Delay 1.5 detik agar data pengguna & Firestore sempat dimuat
-            }
-        } else {
-            isUserLoggedIn = false;
-            window.currentUserTelp = ''; 
-            updateAuthUI();
-            showView('view-login');
+                renderUserProfile();
+                updateHomeGreeting();
+                initPresenceSystem(user);
+                setupCustomerFCM();
+                
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
 
-            setTimeout(() => {
-                showInstallPwaModal();
-            }, 1500);
-        }
-    });
-    setTimeout(() => {
-        const loadingEl = document.getElementById('loading-overlay');
-        if (loadingEl && !loadingEl.classList.contains('hidden')) {
-            hideLoading();
-            if (!isUserLoggedIn) showView('view-login');
-        }
-    }, 5000);
-}
+                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
+                if (_pendingNotificationNavigation) {
+                    const targetId = _pendingNotificationNavigation;
+                    _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
+                    // Beri sedikit delay agar showView('view-home') di atas selesai merender
+                    setTimeout(() => {
+                        showTransactionDetail(targetId);
+                    }, 600);
+                }
+            } else {
+                isUserLoggedIn = false;
+                window.currentUserTelp = ''; 
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
+                updateAuthUI();
+                showView('view-login');
+
+                setTimeout(() => {
+                    showInstallPwaModal();
+                }, 1500);
+            }
+        });
+        setTimeout(() => {
+            const loadingEl = document.getElementById('loading-overlay');
+            if (loadingEl && !loadingEl.classList.contains('hidden')) {
+                hideLoading();
+                if (!isUserLoggedIn) showView('view-login');
+            }
+        }, 5000);
+    }
     function checkTelpRequired() {
         if (isUserLoggedIn && !window.currentUserTelp) {
             showConfirmModal(
@@ -6280,7 +6336,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.7');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.8');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
@@ -6315,32 +6371,10 @@ function serviceGadgetBack() {
                 console.error('Gagal setup FCM Pelanggan:', err);
             }
         }
-        let pendingTransactionId = null;
-
-function checkUrlForTransactionAction() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action');
-    const id = urlParams.get('id');
-    
-    if (action && id) {
-        pendingTransactionId = id;
-        // Bersihkan URL agar terlihat rapi
-        window.history.replaceState({}, document.title, window.location.pathname);
+    function init() { 
+        setupPWA(); 
+        updateCartUI();
     }
-}
-
-function init() { 
-    checkUrlForTransactionAction(); // Panggil fungsi deteksi URL
-    setupPWA(); 
-    updateCartUI();
-    const checkFirebaseReady = setInterval(() => {
-        if (window.firebaseAuth) {
-            clearInterval(checkFirebaseReady);
-            checkAuthState();
-            loadBanners();
-        }
-    }, 50);
-}
     let allBanners = [];
 
 async function loadBanners() {
@@ -6469,12 +6503,12 @@ function showPromoDetail(bannerId) {
     }
     showView('view-promo-detail');
 }
-        window.addEventListener('firebase-ready', function() {
+    window.addEventListener('firebase-ready', function() {
         if (window.firebaseAuth) {
             checkAuthState();
             loadBanners();
         }
-    });
+    })
     </script>
 </body>
 </html>
