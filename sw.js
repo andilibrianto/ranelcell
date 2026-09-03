@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.5';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.6';
 const urlsToCache = [
     './',
     './index.html',
@@ -52,23 +52,24 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
     const notifData = event.notification.data || {};
-    const targetUrl = '/';
+    const transId = String(notifData.transactionId || '');
+    const urlToOpen = notifData.url || './index.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if (client.url.includes('/') && 'focus' in client) {
-                    if (notifData.type === 'complaint' && notifData.transactionId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: notifData.transactionId 
-                        });
-                    }
+                if (client.url.includes('index.html') && 'focus' in client) {
+                    // Jika PWA sedang terbuka di latar belakang, kirim perintah ke halaman
+                    client.postMessage({ 
+                        type: 'OPEN_TRANSACTION_DETAIL', 
+                        transactionId: transId 
+                    });
                     return client.focus();
                 }
             }
+            // Jika PWA tertutup (force close), buka URL dengan parameter
             if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
+                return clients.openWindow(urlToOpen);
             }
         })
     );

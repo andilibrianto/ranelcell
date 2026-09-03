@@ -13,14 +13,40 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// Tangani notifikasi background dari server
+messaging.onBackgroundMessage((payload) => {
+    const notificationTitle = payload.notification?.title || 'RANEL CELL';
+    const notificationOptions = {
+        body: payload.notification?.body || '',
+        icon: './Gambar/PWA_512_M.png',
+        badge: './Gambar/PWA_512_M.png',
+        data: payload.data || {}
+    };
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Tangani klik notifikasi
 self.addEventListener('notificationclick', event => {
     event.notification.close();
+    
+    const notifData = event.notification.data || {};
+    const transId = String(notifData.transactionId || '');
+    const urlToOpen = notifData.url || './index.html';
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
-                if ('focus' in client) return client.focus();
+                if (client.url.includes('index.html') && 'focus' in client) {
+                    client.postMessage({ 
+                        type: 'OPEN_TRANSACTION_DETAIL', 
+                        transactionId: transId 
+                    });
+                    return client.focus();
+                }
             }
-            if (clients.openWindow) return clients.openWindow('./index.html');
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
         })
     );
 });
