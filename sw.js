@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.3';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.5.4';
 const urlsToCache = [
     './',
     './index.html',
@@ -37,6 +37,11 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
+
+    // PENTING: Jangan intercept request untuk file Service Worker lain
+    if (event.request.url.includes('firebase-messaging-sw.js') || event.request.url.includes('sw.js')) {
+        return; 
+    }
 
     if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
         return;

@@ -20,25 +20,29 @@ self.addEventListener('notificationclick', event => {
     const notifData = event.notification.data || {};
     let targetUrl = './index.html';
 
-    if (notifData.type === 'transaction' && notifData.transactionId) {
-        targetUrl = `./index.html?action=transaction_detail&id=${notifData.transactionId}`;
-    } else if (notifData.type === 'complaint' && notifData.transactionId) {
-        targetUrl = `./index.html?action=complaint_detail&id=${notifData.transactionId}`;
+    // Data Firebase seringkali bersarang di dalam .data
+    let transId = notifData.transactionId || (notifData.data ? notifData.data.transactionId : null);
+    let type = notifData.type || (notifData.data ? notifData.data.type : null);
+
+    if (type === 'transaction' && transId) {
+        targetUrl = `./index.html?action=transaction_detail&id=${transId}`;
+    } else if (type === 'complaint' && transId) {
+        targetUrl = `./index.html?action=complaint_detail&id=${transId}`;
     }
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
             for (const client of clientList) {
                 if (client.url.includes('index.html') && 'focus' in client) {
-                    if (notifData.type === 'transaction' && notifData.transactionId) {
+                    if (type === 'transaction' && transId) {
                         client.postMessage({ 
                             type: 'NAVIGATE_TO_TRANSACTION', 
-                            transactionId: notifData.transactionId 
+                            transactionId: transId 
                         });
-                    } else if (notifData.type === 'complaint' && notifData.transactionId) {
+                    } else if (type === 'complaint' && transId) {
                         client.postMessage({ 
                             type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: notifData.transactionId 
+                            transactionId: transId 
                         });
                     }
                     return client.focus();

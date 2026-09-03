@@ -4047,6 +4047,7 @@ async function saveQRISImage() {
     
     if (!window._historyCache) window._historyCache = [];
     window._historyCache.unshift(localTransaction);
+        localStorage.setItem('lastTransaction', JSON.stringify(localTransaction));
     saveTransactionToFirestore(d, orderId);
     resetCartState();
     showTransactionDetail(orderId);
@@ -5229,7 +5230,20 @@ async function showTransactionHistory() {
 async function showTransactionDetail(transactionId) {
     let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
     
-    // Jika tidak ada di cache (misal baru saja checkout), ambil langsung dari Firestore
+    // Jika tidak ada di cache, coba ambil dari localStorage
+    if (!transactionObj) {
+        const lastTrans = localStorage.getItem('lastTransaction');
+        if (lastTrans) {
+            try {
+                const parsed = JSON.parse(lastTrans);
+                if (parsed.id === transactionId) {
+                    transactionObj = parsed;
+                }
+            } catch(e) {}
+        }
+    }
+    
+    // Jika masih tidak ada, ambil langsung dari Firestore
     if (!transactionObj) {
         if (!window.firebaseAuth) return;
         showLoading('Memuat detail transaksi...');
@@ -6294,7 +6308,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.3');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.4');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
