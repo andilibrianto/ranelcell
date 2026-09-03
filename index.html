@@ -4052,42 +4052,43 @@ async function saveQRISImage() {
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
 }
-    async function showLocalTransactionNotification(orderId, totalAmount) {
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-        console.log("Browser tidak mendukung Web Notifications");
-        return;
-    }
-
-    try {
-        if (Notification.permission !== 'granted') {
-            if (Notification.permission !== 'denied') {
-                await Notification.requestPermission();
-            }
+        async function showLocalTransactionNotification(orderId, totalAmount) {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            console.log("Browser tidak mendukung Web Notifications");
+            return;
         }
 
-        if (Notification.permission === 'granted') {
-            const registration = await navigator.serviceWorker.ready;
-            const title = "Pesanan Diproses! 🎉";
-            const options = {
-                body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
-                icon: './Gambar/PWA_512_M.png',
-                badge: './Gambar/PWA_512_M.png',
-                vibrate: [200, 100, 200, 100, 200],
-                tag: orderId,
-                requireInteraction: false,
-                data: {
-                    type: 'transaction',
-                    transactionId: orderId,
-                    url: './index.html?action=transaction_detail&id=' + orderId // TAMBAHKAN INI
+        try {
+            if (Notification.permission !== 'granted') {
+                if (Notification.permission !== 'denied') {
+                    await Notification.requestPermission();
                 }
-            };
-            registration.showNotification(title, options);
+            }
+
+            if (Notification.permission === 'granted') {
+                const registration = await navigator.serviceWorker.ready;
+                const title = "Pesanan Diproses! 🎉";
+                const options = {
+                    body: `Terima kasih telah berbelanja.\nTotal: ${formatRp(totalAmount)}\nID: ${orderId}\nMohon tunggu pesanan dalam proses!`,
+                    icon: './Gambar/PWA_512_M.png',
+                    badge: './Gambar/PWA_512_M.png',
+                    vibrate: [200, 100, 200, 100, 200],
+                    tag: orderId,
+                    requireInteraction: false,
+                    data: {
+                        type: 'transaction',
+                        transactionId: orderId,
+                        url: './index.html?action=transaction_detail&id=' + orderId
+                    }
+                };
+                
+                registration.showNotification(title, options);
+            }
+        } catch (err) {
+            console.error("Gagal menampilkan notifikasi lokal:", err);
         }
-    } catch (err) {
-        console.error("Gagal menampilkan notifikasi lokal:", err);
     }
-}
-    async function showLocalComplaintNotification(transactionId, itemsText) {
+        async function showLocalComplaintNotification(transactionId, itemsText) {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
             console.log("Browser tidak mendukung Web Notifications");
             return;
@@ -4106,8 +4107,8 @@ async function saveQRISImage() {
                     silent: false,
                     data: { 
                         type: 'complaint', 
-                        transactionId: transactionId 
-                        url: './index.html?action=transaction_detail&id=' + orderId // TAMBAHKAN INI
+                        transactionId: transactionId,
+                        url: './index.html?action=transaction_detail&id=' + transactionId
                     }
                 };
                 
@@ -6279,7 +6280,7 @@ function serviceGadgetBack() {
                     return;
                 }
 
-                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.6');
+                await navigator.serviceWorker.register('firebase-messaging-sw.js?v=2.7');
                 await navigator.serviceWorker.ready;
 
                 const permission = await Notification.requestPermission();
