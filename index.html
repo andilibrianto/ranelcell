@@ -1204,7 +1204,8 @@ function loadCatalogs() {
             if (!grouped[d.category]) grouped[d.category] = { category: d.category, items: [] };
             grouped[d.category].items.push({ name: d.name, price: d.price });
         });
-        aksesorisData = Object.values(grouped);
+        // URUTKAN KATEGORI AKSESORIS SESUAI ABJAD (A-Z)
+        aksesorisData = Object.values(grouped).sort((a, b) => a.category.localeCompare(b.category, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-accessories') renderAccessories();
     });
 
@@ -1214,7 +1215,8 @@ function loadCatalogs() {
             if (!grouped[d.game]) grouped[d.game] = { game: d.game, items: [] };
             grouped[d.game].items.push({ name: d.name, price: d.price });
         });
-        gameData = Object.values(grouped);
+        // URUTKAN NAMA GAME SESUAI ABJAD (A-Z)
+        gameData = Object.values(grouped).sort((a, b) => a.game.localeCompare(b.game, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-game') renderGame();
     });
 
