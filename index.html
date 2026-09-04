@@ -3351,6 +3351,7 @@ async function saveQRISImage() {
     destinationLng = null;
     selectedPaymentMethod = '';
     updateCartUI();
+    renderOrderForm(); 
 }
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
