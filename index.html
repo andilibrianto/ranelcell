@@ -30,10 +30,10 @@
         appId: "1:267696476787:web:5fda181cfdaeec413e5006"
     };
     const app = initializeApp(firebaseConfig);
-    //const appCheck = initializeAppCheck(app, {
-    //    provider: new ReCaptchaV3Provider('6Le6GHotAAAAANiAaJBAx3UoO3DY8EfPVush6jAs'),
-    //    isTokenAutoRefreshEnabled: true
-    //});
+    const appCheck = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6Le6GHotAAAAANiAaJBAx3UoO3DY8EfPVush6jAs'),
+        isTokenAutoRefreshEnabled: true
+    });
     const auth = getAuth(app);
     const db = getFirestore(app);
     setPersistence(auth, browserLocalPersistence);
