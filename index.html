@@ -4956,11 +4956,11 @@ function showComplaintForm(transactionId) {
             <div class="flex justify-between items-start mb-3 pb-3 border-b border-dk-500/50">
                 <div>
                     <p class="text-[10px] text-gray-500 uppercase tracking-wider">ID Transaksi</p>
-                    <p class="text-xs text-white mt-1">${transactionId}</p>
+                    <p class="text-xs text-white mt-1">${escapeHtml(transactionId)}</p>
                 </div>
                 <div class="text-right">
                     <p class="text-[10px] text-gray-500 uppercase tracking-wider">Waktu Transaksi</p>
-                    <p class="text-xs text-white mt-1">${d.transactionDate || '-'}</p>
+                    <p class="text-xs text-white mt-1">${escapeHtml(d.transactionDate || '-')}</p>
                 </div>
             </div>
             
@@ -4968,11 +4968,11 @@ function showComplaintForm(transactionId) {
             <div class="text-xs space-y-2 mb-4">
                 <div class="flex justify-between">
                     <span class="text-gray-500">Nama</span>
-                    <span class="text-white font-medium uppercase">${d.userName || '-'}</span>
+                    <span class="text-white font-medium uppercase">${escapeHtml(d.userName || '-')}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">No. Telepon</span>
-                    <span class="text-white font-medium">${d.userTelp || '-'}</span>
+                    <span class="text-white font-medium">${escapeHtml(d.userTelp || '-')}</span>
                 </div>
             </div>
 
