@@ -359,7 +359,6 @@
         .autocomplete-item:last-child { border-bottom: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* MODE GELAP UNTUK OPENSTREETMAP ASLI */
         .leaflet-tile-pane {
             filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.7);
         }
@@ -1180,7 +1179,6 @@ const biometrikData = [
 ];
 const cekTagihanList = ["PLN","PDAM","GAS PGN","INDIHOME","MY REPUBLIC","FIRST MEDIA","BPJS","ADIRA FINANCE","FIF FINANCE","OTTO FINANCE","WOM FINANCE", "PBB JATIM", "BIZNET HOME", "ICONNET PLN", "HOME CREDIT"];
 
-// KATALOG DATABASE (DARI FIRESTORE)
 let paketData = [];
 let perdanaData = [];
 let pulsaData = [];
@@ -1217,7 +1215,6 @@ let modalConfirmCallback = null;
 let modalCancelCallback = null;
 let serverTimeIsOpen = null;
 
-// FUNGSI LOAD KATALOG DARI FIRESTORE
 function loadCatalogs() {
     if (!window.firebaseAuth) return;
     const { db, collection, query, onSnapshot } = window.firebaseAuth;
@@ -1268,7 +1265,6 @@ function loadCatalogs() {
             if (!grouped[d.category]) grouped[d.category] = { category: d.category, items: [] };
             grouped[d.category].items.push({ name: d.name, price: d.price });
         });
-        // URUTKAN KATEGORI AKSESORIS SESUAI ABJAD (A-Z)
         aksesorisData = Object.values(grouped).sort((a, b) => a.category.localeCompare(b.category, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-accessories') renderAccessories();
     });
@@ -1279,7 +1275,6 @@ function loadCatalogs() {
             if (!grouped[d.game]) grouped[d.game] = { game: d.game, items: [] };
             grouped[d.game].items.push({ name: d.name, price: d.price });
         });
-        // URUTKAN NAMA GAME SESUAI ABJAD (A-Z)
         gameData = Object.values(grouped).sort((a, b) => a.game.localeCompare(b.game, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-game') renderGame();
     });
@@ -1321,7 +1316,6 @@ function loadCatalogs() {
     }, { passive: true });
 
     document.body.addEventListener('touchmove', function(e) {
-        // Abaikan pemblokiran scroll jika jari menyentuh area Popover, Modal, atau Peta
         if (e.target.closest('.autocomplete-list') || 
             e.target.closest('#announcement-popover') || 
             e.target.closest('#modal-overlay') || 
@@ -3341,7 +3335,7 @@ async function generateCompositeQRIS(totalNominal) {
             
             ctx.fillStyle = '#444444';
             ctx.font = '14px Arial, sans-serif';
-            const instruction = "Harap Simpan Bukti Pembayaran Pada Saat Kirim Data ke WhatsApp";
+            const instruction = "Harap Simpan Bukti Pembayaran dan Kirimkan Bukti Pembayaran ke WhatsApp";
             wrapText(ctx, instruction, baseWidth / 2, currentY, baseWidth - 40, 20);
             
             canvas.toBlob(function(blob) {
@@ -3563,7 +3557,6 @@ async function saveQRISImage() {
                 vibrate: [200, 100, 200, 100, 200],
                 tag: orderId,
                 requireInteraction: false,
-                // TAMBAHKAN DATA INI AGAR BISA DIKLIK DAN DIARAHKAN
                 data: {
                     type: 'transaction',
                     transactionId: orderId
@@ -3630,7 +3623,7 @@ async function saveQRISImage() {
             userId: user.uid,
             userName: d.nama,
             userTelp: d.telp,
-            items: cartItems, // Gunakan variabel yang dikunci
+            items: cartItems,
             subtotal: subtotalProduk,
             shippingMode: d.shippingMode || null,
             shippingCost: d.shippingCost || 0,
@@ -4032,7 +4025,6 @@ async function saveQRISImage() {
         function setupPWA() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(registration => {
-                // Paksa update Service Worker jika ada versi baru
                 if (registration.waiting) {
                     registration.waiting.postMessage('SKIP_WAITING');
                 }
@@ -4065,7 +4057,6 @@ async function saveQRISImage() {
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', event => {
-                // Tangani pesan dari Service Worker untuk navigasi
                 if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
                     handleNotificationNavigation(event.data.transactionId);
                 } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
@@ -4074,7 +4065,6 @@ async function saveQRISImage() {
             });
         }
 
-        // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
         handleNotificationColdStart();
 
         setInterval(() => {
@@ -4087,7 +4077,6 @@ async function saveQRISImage() {
         }, 60000);
     }
 
-// Variabel global untuk menyimpan navigasi yang tertunda
 let _pendingNotificationNavigation = null;
 
 function handleNotificationColdStart() {
@@ -4096,9 +4085,7 @@ function handleNotificationColdStart() {
     const id = urlParams.get('id');
 
     if (action && id) {
-        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
         _pendingNotificationNavigation = id;
-        // Bersihkan URL agar tidak trigger lagi saat refresh
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
@@ -4106,21 +4093,18 @@ function handleNotificationColdStart() {
 function handleNotificationNavigation(transactionId) {
     if (!transactionId) return;
     
-    // Jika Firebase siap, user sudah login, dan tidak sedang proses login manual
     if (isAuthReady && !isProcessingAuth && window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
         showTransactionDetail(transactionId);
     } else if (!isAuthReady || isProcessingAuth) {
-        // Simpan dulu jika Firebase belum siap
         _pendingNotificationNavigation = transactionId;
     } else {
-        // Jika Firebase siap tapi user belum login
         showToast('Silakan login terlebih dahulu untuk melihat detail', 'info');
         showView('view-login');
     }
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
-    let isAuthReady = false; // TAMBAHKAN INI
+    let isAuthReady = false;
     let deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -4751,7 +4735,6 @@ async function showTransactionHistory() {
 async function showTransactionDetail(transactionId) {
     let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
     
-    // Jika tidak ada di cache (misal baru saja checkout), ambil langsung dari Firestore
     if (!transactionObj) {
         if (!window.firebaseAuth) return;
         showLoading('Memuat detail transaksi...');
@@ -5176,7 +5159,6 @@ async function submitComplaint() {
         updateCartUI();
     }
             function checkAuthState() {
-        // Pencegah pemanggilan ganda (Double Execution)
         if (window._authStateListenerAdded) return;
         window._authStateListenerAdded = true;
 
@@ -5216,13 +5198,11 @@ async function submitComplaint() {
                 initPresenceSystem(user);
                 setupCustomerFCM();
                 
-                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
+                isAuthReady = true;
 
-                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
                 if (_pendingNotificationNavigation) {
                     const targetId = _pendingNotificationNavigation;
-                    _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
-                    // Beri sedikit delay agar showView('view-home') di atas selesai merender
+                    _pendingNotificationNavigation = null;
                     setTimeout(() => {
                         showTransactionDetail(targetId);
                     }, 600);
@@ -5230,7 +5210,7 @@ async function submitComplaint() {
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
-                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
+                isAuthReady = true;
                 updateAuthUI();
                 showView('view-login');
 

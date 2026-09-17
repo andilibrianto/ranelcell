@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.7.9';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.8.0';
 const urlsToCache = [
     './',
     './index.html',
@@ -49,7 +49,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Network-first untuk navigasi (HTML) agar selalu dapat versi terbaru
     if (event.request.mode === 'navigate') {
         event.respondWith(
             fetch(event.request)
@@ -63,7 +62,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Cache-first untuk asset statis
     event.respondWith(
         caches.match(event.request).then(response => {
             return response || fetch(event.request).catch(() => caches.match('./index.html'));
