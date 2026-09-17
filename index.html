@@ -4894,6 +4894,18 @@ async function showTransactionDetail(transactionId) {
     showView('view-history-detail');
 }
 let currentComplaintTransaction = null;
+function getNormalizedIdPels(d, idx) {
+    let ids = [];
+    if (d.idPelanggan) {
+        const idData = Array.isArray(d.idPelanggan) ? d.idPelanggan[idx] : (d.idPelanggan[String(idx)] || d.idPelanggan[idx]);
+        if (Array.isArray(idData)) {
+            ids = idData;
+        } else if (typeof idData === 'string' && idData.trim() !== '') {
+            ids = [idData];
+        }
+    }
+    return ids;
+}
 let currentComplaintId = null;
 function showComplaintForm(transactionId) {
     if (!window._historyCache) return;
@@ -4907,32 +4919,10 @@ function showComplaintForm(transactionId) {
     const d = currentComplaintTransaction;
     const el = document.getElementById('complaint-content');
 
-    // NORMALISASI DATA: Menyesuaikan format dari Firestore agar checkbox selalu terbaca
+    // Hitung total target menggunakan fungsi normalisasi
     let totalTargets = 0;
-    let normalizedIdPelanggan = {};
-    
     d.items.forEach((item, idx) => {
-        let ids = [];
-        if (d.idPelanggan) {
-            if (Array.isArray(d.idPelanggan)) {
-                // Jika Firestore mengubahnya menjadi Array
-                if (Array.isArray(d.idPelanggan[idx])) {
-                    ids = d.idPelanggan[idx];
-                } else if (typeof d.idPelanggan[idx] === 'string') {
-                    ids = [d.idPelanggan[idx]];
-                }
-            } else if (d.idPelanggan[idx]) {
-                // Jika berbentuk Object
-                if (Array.isArray(d.idPelanggan[idx])) {
-                    ids = d.idPelanggan[idx];
-                } else if (typeof d.idPelanggan[idx] === 'string') {
-                    ids = [d.idPelanggan[idx]];
-                }
-            }
-        }
-        
-        normalizedIdPelanggan[idx] = ids;
-        
+        const ids = getNormalizedIdPels(d, idx);
         if (ids.length > 0) {
             totalTargets += ids.length;
         } else {
@@ -4944,7 +4934,7 @@ function showComplaintForm(transactionId) {
 
     let itemsHtml = '';
     d.items.forEach((item, idx) => {
-        const idPels = normalizedIdPelanggan[idx] || [];
+        const idPels = getNormalizedIdPels(d, idx);
         const hasIdPels = idPels.length > 0;
 
         itemsHtml += `
@@ -5054,10 +5044,12 @@ async function submitComplaint() {
         return; 
     }
 
+    // Normalisasi total target sama seperti di showComplaintForm
     let totalTargets = 0;
     d.items.forEach((item, idx) => {
-        if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
-            totalTargets += d.idPelanggan[idx].length;
+        const ids = getNormalizedIdPels(d, idx);
+        if (ids.length > 0) {
+            totalTargets += ids.length;
         } else {
             totalTargets++;
         }
@@ -5080,8 +5072,9 @@ async function submitComplaint() {
         }
     } else {
         d.items.forEach((item, idx) => {
-            if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
-                d.idPelanggan[idx].forEach((idPel, idIdx) => {
+            const ids = getNormalizedIdPels(d, idx);
+            if (ids.length > 0) {
+                ids.forEach((idPel, idIdx) => {
                     selectedTargets.push({ type: 'idpel', idx: idx, idIdx: idIdx });
                 });
             } else {
