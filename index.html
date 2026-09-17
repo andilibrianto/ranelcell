@@ -4907,10 +4907,34 @@ function showComplaintForm(transactionId) {
     const d = currentComplaintTransaction;
     const el = document.getElementById('complaint-content');
 
+    // NORMALISASI DATA: Menyesuaikan format dari Firestore agar checkbox selalu terbaca
     let totalTargets = 0;
+    let normalizedIdPelanggan = {};
+    
     d.items.forEach((item, idx) => {
-        if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
-            totalTargets += d.idPelanggan[idx].length;
+        let ids = [];
+        if (d.idPelanggan) {
+            if (Array.isArray(d.idPelanggan)) {
+                // Jika Firestore mengubahnya menjadi Array
+                if (Array.isArray(d.idPelanggan[idx])) {
+                    ids = d.idPelanggan[idx];
+                } else if (typeof d.idPelanggan[idx] === 'string') {
+                    ids = [d.idPelanggan[idx]];
+                }
+            } else if (d.idPelanggan[idx]) {
+                // Jika berbentuk Object
+                if (Array.isArray(d.idPelanggan[idx])) {
+                    ids = d.idPelanggan[idx];
+                } else if (typeof d.idPelanggan[idx] === 'string') {
+                    ids = [d.idPelanggan[idx]];
+                }
+            }
+        }
+        
+        normalizedIdPelanggan[idx] = ids;
+        
+        if (ids.length > 0) {
+            totalTargets += ids.length;
         } else {
             totalTargets++;
         }
@@ -4920,7 +4944,8 @@ function showComplaintForm(transactionId) {
 
     let itemsHtml = '';
     d.items.forEach((item, idx) => {
-        const hasIdPels = d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0;
+        const idPels = normalizedIdPelanggan[idx] || [];
+        const hasIdPels = idPels.length > 0;
 
         itemsHtml += `
             <div class="flex justify-between items-start text-xs mb-3 p-2 rounded-lg ${showCheckbox ? 'bg-dk-700' : ''}">
@@ -4935,7 +4960,7 @@ function showComplaintForm(transactionId) {
                         <p class="text-gray-500 mt-0.5">${item.quantity} x ${formatRp(item.price)}</p>`;
 
         if (hasIdPels) {
-            d.idPelanggan[idx].forEach((idPel, idIdx) => {
+            idPels.forEach((idPel, idIdx) => {
                 itemsHtml += `<div class="flex items-start gap-2 mt-1">`;
                 if (showCheckbox) {
                     itemsHtml += `<input type="checkbox" class="complaint-target-check mt-0.5 w-4 h-4 accent-[#FF2D78]" data-type="idpel" data-idx="${idx}" data-ididx="${idIdx}">`;
