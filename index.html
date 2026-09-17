@@ -359,6 +359,10 @@
         .autocomplete-item:last-child { border-bottom: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                /* TRIK MAGIC: Memaksa peta Esri menjadi gelap seperti CARTO */
+        .leaflet-tile-pane {
+            filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.95) saturate(0.8);
+        }
     </style>
 </head>
 <body>
@@ -2841,11 +2845,10 @@ async function applyPromoCode() {
         
         if (!mapInstance) {
             mapInstance = L.map('map').setView([storeLat, storeLng], 14);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?api_key=eyJhbGciOiJIUzI1NiJ9.eyJhIjoiYWNfaHc3eGIzdXUiLCJqdGkiOiJmZDVmMGQzYyJ9._kemikQqTJap46f643L3h4vQShPcGWG2q5VnbkH4qJo', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(mapInstance);
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri',
+                maxZoom: 19
+            }).addTo(mapInstance);
             
             const storeIcon = L.divIcon({className: 'custom-div-icon', html: '<i class="fas fa-store" style="color:#FF2D78;font-size:28px;text-shadow:0 0 5px #000;"></i>', iconSize:[28,28], iconAnchor:[14,14]});
             L.marker([storeLat, storeLng], {icon: storeIcon}).addTo(mapInstance).bindPopup(`<b>Ranel Cell (Toko)</b><br>${storeAddress1}`).openPopup();
