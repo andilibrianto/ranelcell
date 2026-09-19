@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="referrer" content="no-referrer">
+    <meta name="referrer" content="origin-when-cross-origin">
     <title>RANEL CELL</title>
     <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
@@ -359,6 +359,9 @@
         .autocomplete-item:last-child { border-bottom: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .leaflet-tile-pane {
+        filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.7);
+        }
     </style>
 </head>
 <body>
@@ -2776,7 +2779,8 @@ async function applyPromoCode() {
         if (!mapInstance) {
             mapInstance = L.map('map').setView([storeLat, storeLng], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
             }).addTo(mapInstance);
             
             const storeIcon = L.divIcon({className: 'custom-div-icon', html: '<i class="fas fa-store" style="color:#FF2D78;font-size:28px;text-shadow:0 0 5px #000;"></i>', iconSize:[28,28], iconAnchor:[14,14]});
