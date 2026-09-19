@@ -1107,6 +1107,10 @@ function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
+function sanitizeText(text) {
+    if (!text) return '';
+    return String(text).replace(/[<>]/g, '');
+}
 function sanitizeUrl(url) {
     if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
@@ -2941,9 +2945,9 @@ async function applyPromoCode() {
         renderOrderForm();
     }
     async function submitOrder() {
-        const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
+        const nama = sanitizeText(document.getElementById('cust-nama').value.trim().toUpperCase());
         const telp = document.getElementById('cust-telp').value.trim();
-        const alamat = document.getElementById('cust-alamat') ? document.getElementById('cust-alamat').value.trim() : '';
+        const alamat = document.getElementById('cust-alamat') ? sanitizeText(document.getElementById('cust-alamat').value.trim()) : '';
         const keterangan = document.getElementById('cust-keterangan').value.trim();
         
         let errors = [];
@@ -3027,15 +3031,15 @@ async function applyPromoCode() {
         window._orderData = { nama, telp, alamat, keterangan };
         const idMap = {};
         document.querySelectorAll('.id-pel-input').forEach(inp => {
-            const idx = parseInt(inp.dataset.idx);
-            if (!idMap[idx]) idMap[idx] = [];
-            idMap[idx].push(inp.value.trim());
+        const idx = parseInt(inp.dataset.idx);
+        if (!idMap[idx]) idMap[idx] = [];
+        idMap[idx].push(sanitizeText(inp.value.trim()));
         });
         const namaMap = {};
         document.querySelectorAll('.nama-pelanggan-input').forEach(inp => {
             const idx = parseInt(inp.dataset.idx);
             if (!namaMap[idx]) namaMap[idx] = [];
-            namaMap[idx].push(inp.value.trim().toUpperCase());
+            namaMap[idx].push(sanitizeText(inp.value.trim().toUpperCase()));
         });
         window._orderData.namaPelanggan = namaMap;
         window._orderData.idPelanggan = idMap;
@@ -3043,8 +3047,10 @@ async function applyPromoCode() {
         window._orderData.shippingCost = shippingCost;
         window._orderData.promoCode = appliedPromoCode;
         window._orderData.promoDiscount = promoDiscount;
+        window._orderData.destinationLat = destinationLat;
+        window._orderData.destinationLng = destinationLng;
         showView('view-preview');
-    }
+        }
         function renderPreview() {
         const el = document.getElementById('preview-content');
         const d = window._orderData;
@@ -3462,6 +3468,35 @@ async function saveQRISImage() {
     appliedPromoCode = verifiedPromoCode;
     promoDiscount = verifiedPromoDiscount;
 
+    shippingCost = d.shippingCost || 0;
+    if (d.destinationLat !== undefined && d.destinationLat !== null) {
+        destinationLat = d.destinationLat;
+        destinationLng = d.destinationLng;
+    }
+
+    const priceCheck = verifyCartPrices();
+    if (!priceCheck.valid) {
+        showToast('Data pesanan tidak valid! Transaksi dibatalkan.', 'error', 4000);
+        resetCartState();
+        showView('view-home');
+        return;
+    }
+
+    if (d.shippingMode === 'deliver' && d.shippingCost > 0 && destinationLat !== null && destinationLng !== null) {
+        const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
+        if (dist > 10) {
+            showToast('Lokasi pengiriman tidak valid! Transaksi dibatalkan.', 'error', 4000);
+            resetCartState();
+            showView('view-home');
+            return;
+        }
+        const expectedShippingCost = calculateShippingCost(dist);
+        if (shippingCost !== expectedShippingCost) {
+            shippingCost = expectedShippingCost;
+            d.shippingCost = expectedShippingCost;
+        }
+    }
+
     const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
     const now = new Date();
     const options = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
@@ -3714,7 +3749,7 @@ async function saveQRISImage() {
             <button onclick="submitCekTagihan('${jenis}')" class="btn-pk w-full text-center"><i class="fa-brands fa-whatsapp mr-2"></i> Kirim via WhatsApp</button>`;
     }
     async function submitCekTagihan(jenis) {
-    const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
+    const nama = sanitizeText(document.getElementById('cek-nama').value.trim().toUpperCase());
     const telp = document.getElementById('cek-telp').value.trim();
     const idpel = document.getElementById('cek-idpel').value.trim();
     
@@ -4166,7 +4201,7 @@ function handleNotificationNavigation(transactionId) {
             showToast('Terima kasih telah memasang aplikasi!', 'success');
     });
     function handleSignup() {
-        const nama = document.getElementById('signup-nama').value.trim();
+        const nama = sanitizeText(document.getElementById('signup-nama').value.trim());
         const telp = document.getElementById('signup-telp') ? document.getElementById('signup-telp').value.trim() : '';
         const email = document.getElementById('signup-email').value.trim();
         const password = document.getElementById('signup-password').value.trim();
@@ -4528,7 +4563,7 @@ function togglePasswordSection() {
         return;
     }
 
-    const nama = document.getElementById('edit-nama').value.trim();
+    const nama = sanitizeText(document.getElementById('edit-nama').value.trim());
     const telp = document.getElementById('edit-telp').value.trim();
     const oldPass = document.getElementById('edit-old-password').value;
     const newPass = document.getElementById('edit-new-password').value;
@@ -5673,14 +5708,14 @@ async function applyServicePromo() {
     }
 }
 async function submitServiceGadget() {
-    const nama = document.getElementById('svc-nama').value.trim().toUpperCase();
+    const nama = sanitizeText(document.getElementById('svc-nama').value.trim().toUpperCase());
     const telp = document.getElementById('svc-telp').value.trim();
     const os = document.getElementById('svc-os').value;
     const brand = document.getElementById('svc-brand').value;
     const model = document.getElementById('svc-model').value;
     const issue = document.getElementById('svc-issue').value;
-    const customIssue = document.getElementById('svc-custom-issue').value.trim();
-    const alamat = document.getElementById('svc-alamat').value.trim();
+    const customIssue = sanitizeText(document.getElementById('svc-custom-issue').value.trim());
+    const alamat = sanitizeText(document.getElementById('svc-alamat').value.trim());
     const date = document.getElementById('svc-date').value;
     const time = document.getElementById('svc-time').value;
     const isActiveAntar = document.getElementById('btn-antar').classList.contains('active');
@@ -5693,15 +5728,16 @@ async function submitServiceGadget() {
             if (!date || !time) { showToast('Pilih jadwal jemput', 'error'); return; }
             if (serviceShippingCost === 0) { showToast('Klik "Cek Ongkir" terlebih dahulu', 'error'); return; }
             if (destinationLat !== null && destinationLng !== null) {
-                const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
-                if (dist > 10) {
-                    showToast('Maaf, jarak melebihi batas maksimal (10km)', 'error');
-                    return;
-                }
-                const expectedServiceShippingCost = calculateShippingCost(dist);
-                if (serviceShippingCost !== expectedServiceShippingCost) {
-                    serviceShippingCost = expectedServiceShippingCost;
-                }
+            const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
+            if (dist > 10) {
+                showToast('Maaf, jarak melebihi batas maksimal (10km)', 'error');
+                return;
+            }
+            const expectedServiceShippingCost = calculateShippingCost(dist);
+            if (serviceShippingCost !== expectedServiceShippingCost) {
+                showToast('Data ongkir tidak valid! Silakan cek ongkir kembali.', 'error', 4000);
+                return;
+            }
             } else {
                 showToast('Lokasi belum dipilih di peta', 'error');
                 return;
