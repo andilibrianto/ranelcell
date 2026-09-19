@@ -1337,7 +1337,7 @@ function loadCatalogs() {
             serverDate.setHours(hour, minute, 0);
             serverTimeOffset = serverDate.getTime() - Date.now();
             const currentTime = hour + (minute / 60);            
-            const isOpen = currentTime >= 7 && currentTime < 23; 
+            const isOpen = currentTime >= 7 && currentTime < 22; 
             serverTimeIsOpen = isOpen;
             return isOpen;
 
