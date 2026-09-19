@@ -3620,24 +3620,16 @@ async function saveQRISImage() {
                 hour12: false
             })
         });
-        // [FIX] Ambil token Firebase user untuk autentikasi
-const _user = window.firebaseAuth.auth.currentUser;
-if (_user) {
-    const _idToken = await _user.getIdToken();
-    fetch('https://adminranel.vercel.app/api/send-notif', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + _idToken
-        },
-        body: JSON.stringify({
-            orderId: orderId,
-            userName: d.nama,
-            total: grandTotal,
-            items: cartItems
-        })
-    }).catch(err => console.error("Gagal kirim notif ke admin:", err));
-}
+        fetch('https://adminranel.vercel.app/api/send-notif', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: orderId,
+                userName: d.nama,
+                total: grandTotal,
+                items: cartItems
+            })
+        }).catch(err => console.error("Gagal kirim notif ke admin:", err));
         
         console.log("Transaksi berhasil disimpan ke Firestore");
     } catch (err) {
@@ -3734,23 +3726,16 @@ if (_user) {
                 transactionDate: transactionDate
             });
             
-            const _user2 = window.firebaseAuth.auth.currentUser;
-if (_user2) {
-    const _idToken2 = await _user2.getIdToken();
-    fetch('https://adminranel.vercel.app/api/send-notif', {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + _idToken2
-        },
-        body: JSON.stringify({
-            orderId: orderId,
-            userName: nama,
-            total: 0,
-            items: [{ name: `Cek Tagihan: ${jenis}`, quantity: 1 }]
-        })
-    }).catch(err => console.error("Gagal kirim notif cek tagihan:", err));
-}
+            fetch('https://adminranel.vercel.app/api/send-notif', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    userName: nama,
+                    total: 0,
+                    items: [{ name: `Cek Tagihan: ${jenis}`, quantity: 1 }]
+                })
+            }).catch(err => console.error("Gagal kirim notif cek tagihan:", err));
             
         } catch (err) {
             console.error("Gagal menyimpan cek tagihan ke Firestore:", err);
@@ -5128,15 +5113,9 @@ async function submitComplaint() {
         showToast("Gagal menyimpan komplain ke server", "error");
     }
 
-    const _user3 = window.firebaseAuth.auth.currentUser;
-if (_user3) {
-    const _idToken3 = await _user3.getIdToken();
     fetch('https://adminranel.vercel.app/api/send-notif', {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + _idToken3
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             orderId: currentComplaintId,
             userName: d.userName || 'Pelanggan',
@@ -5144,7 +5123,6 @@ if (_user3) {
             items: [{ name: `Pengaduan: ${category}`, quantity: 1 }]
         })
     }).catch(err => console.error("Gagal kirim notif pengaduan:", err));
-}
     
     let complaintItemsText = selectedTargets.map(sel => {
         const item = d.items[sel.idx];
@@ -5753,15 +5731,9 @@ async function submitServiceGadget() {
     
     await saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
 
-    const _user4 = window.firebaseAuth.auth.currentUser;
-if (_user4) {
-    const _idToken4 = await _user4.getIdToken();
     fetch('https://adminranel.vercel.app/api/send-notif', {
         method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + _idToken4
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             orderId: orderId,
             userName: nama,
@@ -5769,7 +5741,6 @@ if (_user4) {
             items: [{ name: `Service: ${brand} ${model} (${finalIssue})`, quantity: 1 }]
         })
     }).catch(err => console.error("Gagal kirim notif service:", err));
-}
     
     resetServiceGadgetForm();
     showTransactionDetail(orderId);
