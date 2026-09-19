@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="referrer" content="origin-when-cross-origin">
+    <meta name="referrer" content="no-referrer">
     <title>RANEL CELL</title>
     <link rel="icon" type="image/png" href="./Gambar/PWA_512_M.png" />
     <link rel="apple-touch-icon" href="./Gambar/PWA_512.png" />
@@ -359,9 +359,6 @@
         .autocomplete-item:last-child { border-bottom: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .leaflet-tile-pane {
-            filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.7);
-        }
     </style>
 </head>
 <body>
@@ -1107,66 +1104,6 @@ function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return String(text).replace(/[&<>"']/g, m => map[m]);
 }
-function sanitizeUrl(url) {
-    if (!url || typeof url !== 'string') return '';
-    const trimmed = url.trim();
-    if (trimmed.startsWith('https://') || trimmed.startsWith('data:image/')) {
-        return escapeHtml(trimmed);
-    }
-    return '';
-}
-
-function verifyCartPrices() {
-    for (const item of cart) {
-        let expectedPrice = null;
-        
-        if (item.type === 'paket_data') {
-            const provider = paketData.find(p => p.provider === item.provider);
-            if (!provider) return { valid: false, error: 'Provider tidak ditemukan' };
-            const duration = provider.durations.find(d => d.name === item.duration);
-            if (!duration) return { valid: false, error: 'Durasi tidak ditemukan' };
-            const itemData = duration.items.find(i => i[0] === item.quota);
-            if (!itemData) return { valid: false, error: 'Kuota tidak ditemukan' };
-            expectedPrice = itemData[1];
-        } else if (item.type === 'pulsa') {
-            const itemData = pulsaData.find(i => i[0] === item.nominal);
-            if (!itemData) return { valid: false, error: 'Pulsa tidak ditemukan' };
-            expectedPrice = itemData[1];
-        } else if (item.type === 'token_pln') {
-            const itemData = tokenPLNData.find(i => i[0] === item.nominal);
-            if (!itemData) return { valid: false, error: 'Token PLN tidak ditemukan' };
-            expectedPrice = itemData[1];
-        } else if (item.type === 'aksesoris') {
-            for (const cat of aksesorisData) {
-                const found = cat.items.find(i => `${cat.category} ${i.name}` === item.name);
-                if (found) { expectedPrice = found.price; break; }
-            }
-            if (expectedPrice === null) return { valid: false, error: 'Aksesoris tidak ditemukan' };
-        } else if (item.type === 'game') {
-            const game = gameData.find(g => g.game === item.game);
-            if (!game) return { valid: false, error: 'Game tidak ditemukan' };
-            const itemData = game.items.find(i => `${game.game} ${i.name}` === item.name);
-            if (!itemData) return { valid: false, error: 'Item game tidak ditemukan' };
-            expectedPrice = itemData.price;
-        } else if (item.type === 'perdana') {
-            const provider = perdanaData.find(p => p.provider === item.provider);
-            if (!provider) return { valid: false, error: 'Provider perdana tidak ditemukan' };
-            const duration = provider.durations.find(d => d.name === item.duration);
-            if (!duration) return { valid: false, error: 'Durasi perdana tidak ditemukan' };
-            const itemData = duration.items.find(i => i[0] === item.quota);
-            if (!itemData) return { valid: false, error: 'Kuota perdana tidak ditemukan' };
-            expectedPrice = itemData[1];
-        }
-        
-        if (expectedPrice === null) {
-            return { valid: false, error: `Produk tidak ditemukan: ${item.name}` };
-        }
-        if (Number(expectedPrice) !== Number(item.price)) {
-            return { valid: false, error: `Harga tidak valid untuk: ${item.name}` };
-        }
-    }
-    return { valid: true };
-}
 let selectedPaymentMethod = '';
 const storeLat = -7.236680103235302;
 const storeLng = 112.75812108517019;
@@ -1179,6 +1116,7 @@ const biometrikData = [
 ];
 const cekTagihanList = ["PLN","PDAM","GAS PGN","INDIHOME","MY REPUBLIC","FIRST MEDIA","BPJS","ADIRA FINANCE","FIF FINANCE","OTTO FINANCE","WOM FINANCE", "PBB JATIM", "BIZNET HOME", "ICONNET PLN", "HOME CREDIT"];
 
+// KATALOG DATABASE (DARI FIRESTORE)
 let paketData = [];
 let perdanaData = [];
 let pulsaData = [];
@@ -1215,6 +1153,7 @@ let modalConfirmCallback = null;
 let modalCancelCallback = null;
 let serverTimeIsOpen = null;
 
+// FUNGSI LOAD KATALOG DARI FIRESTORE
 function loadCatalogs() {
     if (!window.firebaseAuth) return;
     const { db, collection, query, onSnapshot } = window.firebaseAuth;
@@ -1265,6 +1204,7 @@ function loadCatalogs() {
             if (!grouped[d.category]) grouped[d.category] = { category: d.category, items: [] };
             grouped[d.category].items.push({ name: d.name, price: d.price });
         });
+        // URUTKAN KATEGORI AKSESORIS SESUAI ABJAD (A-Z)
         aksesorisData = Object.values(grouped).sort((a, b) => a.category.localeCompare(b.category, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-accessories') renderAccessories();
     });
@@ -1275,6 +1215,7 @@ function loadCatalogs() {
             if (!grouped[d.game]) grouped[d.game] = { game: d.game, items: [] };
             grouped[d.game].items.push({ name: d.name, price: d.price });
         });
+        // URUTKAN NAMA GAME SESUAI ABJAD (A-Z)
         gameData = Object.values(grouped).sort((a, b) => a.game.localeCompare(b.game, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-game') renderGame();
     });
@@ -1316,6 +1257,7 @@ function loadCatalogs() {
     }, { passive: true });
 
     document.body.addEventListener('touchmove', function(e) {
+        // Abaikan pemblokiran scroll jika jari menyentuh area Popover, Modal, atau Peta
         if (e.target.closest('.autocomplete-list') || 
             e.target.closest('#announcement-popover') || 
             e.target.closest('#modal-overlay') || 
@@ -1684,7 +1626,7 @@ function stopBannerAutoScroll() {
     const user = window.firebaseAuth.auth.currentUser;
     let profilePicHtml = '';
     if (user && user.photoURL) {
-        profilePicHtml = `<img src="${sanitizeUrl(user.photoURL)}" referrerpolicy="no-referrer" class="w-full h-full object-cover rounded-xl">`;
+        profilePicHtml = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover rounded-xl">`;
     } else {
         profilePicHtml = `<img src="./Gambar/PWA_512_M.png" alt="Logo" class="w-full h-full object-contain p-1.5">`;
     }
@@ -2393,7 +2335,7 @@ function stopBannerAutoScroll() {
             <div class="card p-3 mb-2">
                 <div class="flex items-start gap-3">
                     <div class="flex-1 min-w-0">
-                        <input type="text" value="${escapeHtml(item.name)}" readonly class="form-input text-xs font-semibold mb-2" style="padding:8px 10px;">
+                        <input type="text" value="${item.name}" readonly class="form-input text-xs font-semibold mb-2" style="padding:8px 10px;">
                         <input type="text" value="${formatRp(item.price)} / item" readonly class="form-input text-xs text-pk" style="padding:8px 10px;">
                     </div>
                     <button onclick="confirmRemoveItem(${idx})" class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 flex-shrink-0 mt-1 active:scale-90 transition-transform" aria-label="Hapus">
@@ -2709,12 +2651,6 @@ async function applyPromoCode() {
         const docSnap = await window.firebaseAuth.getDoc(docRef);
 
         if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
-                        const cartTotal = getCartTotal();
-            if (docSnap.data().discount > cartTotal) {
-                showToast('Diskon promo melebihi total pesanan', 'error');
-                input.value = '';
-                return;
-            }
             appliedPromoCode = code;
             promoDiscount = docSnap.data().discount; 
             showToast(`Kode promo berhasil diterapkan! Anda hemat ${formatRp(promoDiscount)}`, 'success');
@@ -2840,8 +2776,7 @@ async function applyPromoCode() {
         if (!mapInstance) {
             mapInstance = L.map('map').setView([storeLat, storeLng], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors',
-                maxZoom: 19
+                attribution: '© OpenStreetMap contributors'
             }).addTo(mapInstance);
             
             const storeIcon = L.divIcon({className: 'custom-div-icon', html: '<i class="fas fa-store" style="color:#FF2D78;font-size:28px;text-shadow:0 0 5px #000;"></i>', iconSize:[28,28], iconAnchor:[14,14]});
@@ -2977,11 +2912,6 @@ async function applyPromoCode() {
             shippingCost = 0;
         }
         if (errors.length > 0) { showToast(errors[0], 'error'); return; }
-                const priceCheck = verifyCartPrices();
-        if (!priceCheck.valid) {
-            showToast(priceCheck.error, 'error', 4000);
-            return;
-        }
         if (hasPhysicalItems) {
             showLoading('');
             const isOpen = await isAccessoryServiceOpen();
@@ -3335,7 +3265,7 @@ async function generateCompositeQRIS(totalNominal) {
             
             ctx.fillStyle = '#444444';
             ctx.font = '14px Arial, sans-serif';
-            const instruction = "Harap Simpan Bukti Pembayaran dan Kirimkan Bukti Pembayaran ke WhatsApp";
+            const instruction = "Harap Simpan Bukti Pembayaran Pada Saat Kirim Data ke WhatsApp";
             wrapText(ctx, instruction, baseWidth / 2, currentY, baseWidth - 40, 20);
             
             canvas.toBlob(function(blob) {
@@ -3557,6 +3487,7 @@ async function saveQRISImage() {
                 vibrate: [200, 100, 200, 100, 200],
                 tag: orderId,
                 requireInteraction: false,
+                // TAMBAHKAN DATA INI AGAR BISA DIKLIK DAN DIARAHKAN
                 data: {
                     type: 'transaction',
                     transactionId: orderId
@@ -3623,7 +3554,7 @@ async function saveQRISImage() {
             userId: user.uid,
             userName: d.nama,
             userTelp: d.telp,
-            items: cartItems,
+            items: cartItems, // Gunakan variabel yang dikunci
             subtotal: subtotalProduk,
             shippingMode: d.shippingMode || null,
             shippingCost: d.shippingCost || 0,
@@ -4025,6 +3956,7 @@ async function saveQRISImage() {
         function setupPWA() {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').then(registration => {
+                // Paksa update Service Worker jika ada versi baru
                 if (registration.waiting) {
                     registration.waiting.postMessage('SKIP_WAITING');
                 }
@@ -4057,6 +3989,7 @@ async function saveQRISImage() {
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', event => {
+                // Tangani pesan dari Service Worker untuk navigasi
                 if (event.data && event.data.type === 'NAVIGATE_TO_COMPLAINT') {
                     handleNotificationNavigation(event.data.transactionId);
                 } else if (event.data && event.data.type === 'NAVIGATE_TO_TRANSACTION') {
@@ -4065,6 +3998,7 @@ async function saveQRISImage() {
             });
         }
 
+        // Tangani Cold Start (Jika notifikasi diklik saat aplikasi sedang tertutup total)
         handleNotificationColdStart();
 
         setInterval(() => {
@@ -4077,6 +4011,7 @@ async function saveQRISImage() {
         }, 60000);
     }
 
+// Variabel global untuk menyimpan navigasi yang tertunda
 let _pendingNotificationNavigation = null;
 
 function handleNotificationColdStart() {
@@ -4085,7 +4020,9 @@ function handleNotificationColdStart() {
     const id = urlParams.get('id');
 
     if (action && id) {
+        // Simpan dulu, jangan langsung eksekusi agar tidak bentrok dengan checkAuthState
         _pendingNotificationNavigation = id;
+        // Bersihkan URL agar tidak trigger lagi saat refresh
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
@@ -4093,18 +4030,21 @@ function handleNotificationColdStart() {
 function handleNotificationNavigation(transactionId) {
     if (!transactionId) return;
     
+    // Jika Firebase siap, user sudah login, dan tidak sedang proses login manual
     if (isAuthReady && !isProcessingAuth && window.firebaseAuth && window.firebaseAuth.auth.currentUser) {
         showTransactionDetail(transactionId);
     } else if (!isAuthReady || isProcessingAuth) {
+        // Simpan dulu jika Firebase belum siap
         _pendingNotificationNavigation = transactionId;
     } else {
+        // Jika Firebase siap tapi user belum login
         showToast('Silakan login terlebih dahulu untuk melihat detail', 'info');
         showView('view-login');
     }
 }
     let isUserLoggedIn = false;
     let isProcessingAuth = false;
-    let isAuthReady = false;
+    let isAuthReady = false; // TAMBAHKAN INI
     let deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -4401,7 +4341,7 @@ function handleNotificationNavigation(transactionId) {
     document.getElementById('detail-user-telp').textContent = window.currentUserTelp || '-';
     const detailPic = document.getElementById('detail-profile-pic');
     if (user.photoURL) {
-        detailPic.innerHTML = `<img src="${sanitizeUrl(user.photoURL)}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+        detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
     } else {
         detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2">`;
     }
@@ -4735,6 +4675,7 @@ async function showTransactionHistory() {
 async function showTransactionDetail(transactionId) {
     let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
     
+    // Jika tidak ada di cache (misal baru saja checkout), ambil langsung dari Firestore
     if (!transactionObj) {
         if (!window.firebaseAuth) return;
         showLoading('Memuat detail transaksi...');
@@ -4894,18 +4835,6 @@ async function showTransactionDetail(transactionId) {
     showView('view-history-detail');
 }
 let currentComplaintTransaction = null;
-function getNormalizedIdPels(d, idx) {
-    let ids = [];
-    if (d.idPelanggan) {
-        const idData = Array.isArray(d.idPelanggan) ? d.idPelanggan[idx] : (d.idPelanggan[String(idx)] || d.idPelanggan[idx]);
-        if (Array.isArray(idData)) {
-            ids = idData;
-        } else if (typeof idData === 'string' && idData.trim() !== '') {
-            ids = [idData];
-        }
-    }
-    return ids;
-}
 let currentComplaintId = null;
 function showComplaintForm(transactionId) {
     if (!window._historyCache) return;
@@ -4919,12 +4848,10 @@ function showComplaintForm(transactionId) {
     const d = currentComplaintTransaction;
     const el = document.getElementById('complaint-content');
 
-    // Hitung total target menggunakan fungsi normalisasi
     let totalTargets = 0;
     d.items.forEach((item, idx) => {
-        const ids = getNormalizedIdPels(d, idx);
-        if (ids.length > 0) {
-            totalTargets += ids.length;
+        if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
+            totalTargets += d.idPelanggan[idx].length;
         } else {
             totalTargets++;
         }
@@ -4934,8 +4861,7 @@ function showComplaintForm(transactionId) {
 
     let itemsHtml = '';
     d.items.forEach((item, idx) => {
-        const idPels = getNormalizedIdPels(d, idx);
-        const hasIdPels = idPels.length > 0;
+        const hasIdPels = d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0;
 
         itemsHtml += `
             <div class="flex justify-between items-start text-xs mb-3 p-2 rounded-lg ${showCheckbox ? 'bg-dk-700' : ''}">
@@ -4946,16 +4872,16 @@ function showComplaintForm(transactionId) {
         }
 
         itemsHtml += `<div>
-                        <p class="font-medium text-white">${escapeHtml(item.name)}</p>
+                        <p class="font-medium text-white">${item.name}</p>
                         <p class="text-gray-500 mt-0.5">${item.quantity} x ${formatRp(item.price)}</p>`;
 
         if (hasIdPels) {
-            idPels.forEach((idPel, idIdx) => {
+            d.idPelanggan[idx].forEach((idPel, idIdx) => {
                 itemsHtml += `<div class="flex items-start gap-2 mt-1">`;
                 if (showCheckbox) {
                     itemsHtml += `<input type="checkbox" class="complaint-target-check mt-0.5 w-4 h-4 accent-[#FF2D78]" data-type="idpel" data-idx="${idx}" data-ididx="${idIdx}">`;
                 }
-                itemsHtml += `<p class="text-[10px] text-pk">ID Pelanggan: ${escapeHtml(idPel)}</p>`;
+                itemsHtml += `<p class="text-[10px] text-pk">ID Pelanggan: ${idPel}</p>`;
                 itemsHtml += `</div>`;
             });
         }
@@ -4971,11 +4897,11 @@ function showComplaintForm(transactionId) {
             <div class="flex justify-between items-start mb-3 pb-3 border-b border-dk-500/50">
                 <div>
                     <p class="text-[10px] text-gray-500 uppercase tracking-wider">ID Transaksi</p>
-                    <p class="text-xs text-white mt-1">${escapeHtml(transactionId)}</p>
+                    <p class="text-xs text-white mt-1">${transactionId}</p>
                 </div>
                 <div class="text-right">
                     <p class="text-[10px] text-gray-500 uppercase tracking-wider">Waktu Transaksi</p>
-                    <p class="text-xs text-white mt-1">${escapeHtml(d.transactionDate || '-')}</p>
+                    <p class="text-xs text-white mt-1">${d.transactionDate || '-'}</p>
                 </div>
             </div>
             
@@ -4983,11 +4909,11 @@ function showComplaintForm(transactionId) {
             <div class="text-xs space-y-2 mb-4">
                 <div class="flex justify-between">
                     <span class="text-gray-500">Nama</span>
-                    <span class="text-white font-medium uppercase">${escapeHtml(d.userName || '-')}</span>
+                    <span class="text-white font-medium uppercase">${d.userName || '-'}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-500">No. Telepon</span>
-                    <span class="text-white font-medium">${escapeHtml(d.userTelp || '-')}</span>
+                    <span class="text-white font-medium">${d.userTelp || '-'}</span>
                 </div>
             </div>
 
@@ -5044,12 +4970,10 @@ async function submitComplaint() {
         return; 
     }
 
-    // Normalisasi total target sama seperti di showComplaintForm
     let totalTargets = 0;
     d.items.forEach((item, idx) => {
-        const ids = getNormalizedIdPels(d, idx);
-        if (ids.length > 0) {
-            totalTargets += ids.length;
+        if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
+            totalTargets += d.idPelanggan[idx].length;
         } else {
             totalTargets++;
         }
@@ -5072,9 +4996,8 @@ async function submitComplaint() {
         }
     } else {
         d.items.forEach((item, idx) => {
-            const ids = getNormalizedIdPels(d, idx);
-            if (ids.length > 0) {
-                ids.forEach((idPel, idIdx) => {
+            if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
+                d.idPelanggan[idx].forEach((idPel, idIdx) => {
                     selectedTargets.push({ type: 'idpel', idx: idx, idIdx: idIdx });
                 });
             } else {
@@ -5177,6 +5100,7 @@ async function submitComplaint() {
         updateCartUI();
     }
             function checkAuthState() {
+        // Pencegah pemanggilan ganda (Double Execution)
         if (window._authStateListenerAdded) return;
         window._authStateListenerAdded = true;
 
@@ -5216,11 +5140,13 @@ async function submitComplaint() {
                 initPresenceSystem(user);
                 setupCustomerFCM();
                 
-                isAuthReady = true;
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
 
+                // EKSEKUSI NAVIGASI NOTIFIKASI YANG TERTUNDA
                 if (_pendingNotificationNavigation) {
                     const targetId = _pendingNotificationNavigation;
-                    _pendingNotificationNavigation = null;
+                    _pendingNotificationNavigation = null; // Bersihkan agar tidak dobel
+                    // Beri sedikit delay agar showView('view-home') di atas selesai merender
                     setTimeout(() => {
                         showTransactionDetail(targetId);
                     }, 600);
@@ -5228,7 +5154,7 @@ async function submitComplaint() {
             } else {
                 isUserLoggedIn = false;
                 window.currentUserTelp = ''; 
-                isAuthReady = true;
+                isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
                 updateAuthUI();
                 showView('view-login');
 
@@ -5608,11 +5534,6 @@ async function applyServicePromo() {
         const docSnap = await window.firebaseAuth.getDoc(docRef);
 
         if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
-                        if (docSnap.data().discount > serviceShippingCost) {
-                showToast('Diskon promo melebihi ongkir', 'error');
-                input.value = '';
-                return;
-            }
             serviceAppliedPromoCode = code;
             servicePromoDiscount = docSnap.data().discount;
             
@@ -5930,7 +5851,7 @@ function renderBanners() {
 
     slider.innerHTML = activeBanners.map(b => `
         <div onclick="showPromoDetail('${b.id}')" class="flex-shrink-0 rounded-xl overflow-hidden cursor-pointer active:scale-95 transition-transform" style="width: 85%; aspect-ratio: 2 / 1; scroll-snap-align: center; flex-shrink: 0; background-color: #1A1A1A;">
-            <img src="${sanitizeUrl(b.data.imageUrl)}" alt="${escapeHtml(b.data.title)}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
+            <img src="${b.data.imageUrl}" alt="${b.data.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
         </div>
     `).join('');
 }
@@ -5942,10 +5863,10 @@ function showPromoDetail(bannerId) {
     const d = b.data;
     const el = document.getElementById('promo-detail-content');
     
-        if (d.type === 'info') {
-        const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;"><img src="${sanitizeUrl(d.imageUrl)}" alt="${escapeHtml(d.title)}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer"></div>` : '';
-        const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${escapeHtml(d.title)}</h3>` : '';
-        const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${escapeHtml(d.isiPesan)}</p>` : '';
+    if (d.type === 'info') {
+        const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;"><img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer"></div>` : '';
+        const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${d.title}</h3>` : '';
+        const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${d.isiPesan}</p>` : '';
         
         el.innerHTML = `
             ${imgHtml}
@@ -5954,35 +5875,36 @@ function showPromoDetail(bannerId) {
                 ${pesanHtml}
             </div>
         `;
-    } else {
+        } else {
+        // Format Konten Promosi (Dengan Label Custom)
         const labelPeriode = d.labelPeriode || 'Periode';
         const labelHadiah = d.labelHadiah || 'Total Hadiah / Keuntungan';
         const labelPengumuman = d.labelPengumuman || 'Pemenang / Pengumuman';
         const labelCaraIkut = d.labelCaraIkut || 'Cara Mengikuti';
-        const caraIkutHtml = (d.caraIkut || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
+        const caraIkutHtml = (d.caraIkut || []).map(c => `<li>${c}</li>`).join('');
         
         el.innerHTML = `
             <div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;">
-                <img src="${sanitizeUrl(d.imageUrl)}" alt="${escapeHtml(d.title)}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
+                <img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer">
             </div>
             <div class="card p-6 fade-up">
-                <h3 class="text-lg font-bold text-pk mb-2">${escapeHtml(d.title || '')}</h3>
-                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-calendar-days mr-2"></i> ${escapeHtml(labelPeriode)}: ${escapeHtml(d.periode || '-')}</p>
+                <h3 class="text-lg font-bold text-pk mb-2">${d.title || ''}</h3>
+                <p class="text-xs text-gray-400 mb-4"><i class="fa-solid fa-calendar-days mr-2"></i> ${labelPeriode}: ${d.periode || '-'}</p>
                 
                 <div class="space-y-4 text-sm text-gray-300">
                     ${d.hadiah ? `
                     <div>
-                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${escapeHtml(labelHadiah)}</h4>
-                        <p class="text-base font-bold text-white">${escapeHtml(d.hadiah)}</p>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${labelHadiah}</h4>
+                        <p class="text-base font-bold text-white">${d.hadiah}</p>
                     </div>` : ''}
                     ${d.pengumuman ? `
                     <div>
-                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${escapeHtml(labelPengumuman)}</h4>
-                        <p class="text-base text-white">${escapeHtml(d.pengumuman)}</p>
+                        <h4 class="text-xs font-bold text-pk mb-1 uppercase tracking-wider">${labelPengumuman}</h4>
+                        <p class="text-base text-white">${d.pengumuman}</p>
                     </div>` : ''}
                     ${caraIkutHtml ? `
                     <div class="pt-4 border-t border-dk-500/50">
-                        <h4 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">${escapeHtml(labelCaraIkut)}</h4>
+                        <h4 class="text-xs font-bold text-pk mb-2 uppercase tracking-wider">${labelCaraIkut}</h4>
                         <ol class="list-decimal list-inside space-y-1 text-gray-400 text-xs leading-relaxed">
                             ${caraIkutHtml}
                         </ol>

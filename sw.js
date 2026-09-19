@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.2.8.9';
+const CACHE_NAME = 'ranel-cell-cache-v.0.2.9.0';
 const urlsToCache = [
     './',
     './index.html',
@@ -38,27 +38,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
-    const url = new URL(event.request.url);
-
-    // Jangan intercept API calls
-    if (url.hostname.includes('nominatim.openstreetmap.org') || 
-        url.hostname.includes('vercel.app') ||
-        url.hostname.includes('timeapi.io') ||
-        url.hostname.includes('firestore.googleapis.com') ||
-        url.hostname.includes('fcm.googleapis.com')) {
-        return;
-    }
-
-    if (event.request.mode === 'navigate') {
-        event.respondWith(
-            fetch(event.request)
-                .then(response => {
-                    const cloned = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
-                    return response;
-                })
-                .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
-        );
+    if (event.request.url.includes('nominatim.openstreetmap.org') || event.request.url.includes('vercel.app')) {
         return;
     }
 
@@ -68,7 +48,6 @@ self.addEventListener('fetch', event => {
         })
     );
 });
-
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
@@ -82,11 +61,6 @@ self.addEventListener('notificationclick', (event) => {
                     if (notifData.type === 'complaint' && notifData.transactionId) {
                         client.postMessage({ 
                             type: 'NAVIGATE_TO_COMPLAINT', 
-                            transactionId: notifData.transactionId 
-                        });
-                    } else if (notifData.type === 'transaction' && notifData.transactionId) {
-                        client.postMessage({ 
-                            type: 'NAVIGATE_TO_TRANSACTION', 
                             transactionId: notifData.transactionId 
                         });
                     }
