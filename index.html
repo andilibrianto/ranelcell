@@ -2885,85 +2885,15 @@ async function applyPromoCode() {
         }
         renderOrderForm();
     }
-    async function verifyCartPrices() {
-    if (cart.length === 0) return { valid: true };
-    
-    const { db, collection, getDocs } = window.firebaseAuth;
-    const cartTypes = [...new Set(cart.map(item => item.type))];
-    const catalogData = {};
-    
-    for (const type of cartTypes) {
-        const colName = `katalog_${type}`;
-        try {
-            const snapshot = await getDocs(collection(db, colName));
-            catalogData[type] = [];
-            snapshot.forEach(doc => catalogData[type].push(doc.data()));
-        } catch (e) {
-            console.error(`Gagal verifikasi ${colName}:`, e);
-            return { valid: false, error: 'Gagal akses katalog' };
-        }
-    }
-    
-    for (const item of cart) {
-        let validPrice = null;
-        const docs = catalogData[item.type] || [];
-        
-        if (item.type === 'paket_data') {
-            for (const d of docs) {
-                if (d.provider === item.provider && d.duration === item.duration && d.quota === item.quota) {
-                    validPrice = d.price;
-                    break;
-                }
-            }
-        } else if (item.type === 'pulsa' || item.type === 'token_pln') {
-            for (const d of docs) {
-                if (d.nominal === item.nominal) {
-                    validPrice = d.price;
-                    break;
-                }
-            }
-        } else if (item.type === 'aksesoris') {
-            for (const d of docs) {
-                if (d.category && d.name && `${d.category} ${d.name}` === item.name) {
-                    validPrice = d.price;
-                    break;
-                }
-            }
-        } else if (item.type === 'game') {
-            for (const d of docs) {
-                if (d.game && d.name && `${d.game} ${d.name}` === item.name) {
-                    validPrice = d.price;
-                    break;
-                }
-            }
-        } else if (item.type === 'perdana') {
-            for (const d of docs) {
-                if (d.provider === item.provider && d.duration === item.duration && d.quota === item.quota) {
-                    validPrice = d.price;
-                    break;
-                }
-            }
-        }
-        
-        if (validPrice === null || validPrice !== item.price) {
-            return { valid: false, itemName: item.name };
-        }
-    }
-    
-    return { valid: true };
-}
-        async function submitOrder() {
+    async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
-        const telp = onlyDigits(document.getElementById('cust-telp').value.trim());
+        const telp = document.getElementById('cust-telp').value.trim();
         const alamat = document.getElementById('cust-alamat') ? document.getElementById('cust-alamat').value.trim() : '';
         const keterangan = document.getElementById('cust-keterangan').value.trim();
         
         let errors = [];
         if (!nama) errors.push('Nama lengkap wajib diisi');
-        if (!telp || telp.length < 8 || telp.length > 15) errors.push('Nomor telepon tidak valid (hanya angka 8-15 digit)');
-        if (nama.length > 100) errors.push('Nama terlalu panjang (maksimal 100 karakter)');
-        if (alamat.length > 500) errors.push('Alamat terlalu panjang (maksimal 500 karakter)');
-        if (keterangan.length > 500) errors.push('Keterangan terlalu panjang (maksimal 500 karakter)');
+        if (!telp || telp.length < 8) errors.push('Nomor telepon tidak valid');
         
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
@@ -3020,7 +2950,7 @@ async function applyPromoCode() {
             } else {
                 showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
             }
-            } else {
+        } else {
             if (isVoucherOutsideHours) {
                 shippingMode = null;
                 shippingCost = 0;
@@ -3030,15 +2960,7 @@ async function applyPromoCode() {
             showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
         }
 
-    showLoading('Memverifikasi pesanan...');
-    const priceVerification = await verifyCartPrices();
-    hideLoading();
-    if (!priceVerification.valid) {
-        showToast('Terjadi kesalahan pada harga item. Silakan refresh halaman.', 'error', 4000);
-        return;
-    }
-
-    savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
+        savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
         document.querySelectorAll('.id-pel-input').forEach(inp => {
             savedFormData.idPelanggan[inp.dataset.idx + '_' + inp.dataset.num] = inp.value;
         });
@@ -3458,15 +3380,6 @@ async function saveQRISImage() {
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
     
-    showLoading('Memverifikasi pesanan...');
-    const finalVerification = await verifyCartPrices();
-    hideLoading();
-    if (!finalVerification.valid) {
-        showToast('Data pesanan tidak valid. Silakan ulangi transaksi.', 'error', 4000);
-        showView('view-home');
-        return;
-    }
-    
     let verifiedPromoDiscount = 0;
     let verifiedPromoCode = '';
     if (d.promoCode) {
@@ -3749,13 +3662,13 @@ async function saveQRISImage() {
             <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label><input type="tel" id="cek-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}></div>
             <button onclick="submitCekTagihan('${jenis}')" class="btn-pk w-full text-center"><i class="fa-brands fa-whatsapp mr-2"></i> Kirim via WhatsApp</button>`;
     }
-        async function submitCekTagihan(jenis) {
+    async function submitCekTagihan(jenis) {
     const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
-    const telp = onlyDigits(document.getElementById('cek-telp').value.trim());
+    const telp = document.getElementById('cek-telp').value.trim();
     const idpel = document.getElementById('cek-idpel').value.trim();
     
-    if (!nama || nama.length > 100) { showToast('Nama lengkap wajib diisi (maks 100 karakter)','error'); return; }
-    if (!telp || telp.length < 8 || telp.length > 15) { showToast('Nomor telepon tidak valid (hanya angka 8-15 digit)','error'); return; }
+    if (!nama) { showToast('Nama lengkap wajib diisi','error'); return; }
+    if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
     if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
     
     const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
@@ -5714,7 +5627,7 @@ async function applyServicePromo() {
 }
 async function submitServiceGadget() {
     const nama = document.getElementById('svc-nama').value.trim().toUpperCase();
-    const telp = onlyDigits(document.getElementById('svc-telp').value.trim());
+    const telp = document.getElementById('svc-telp').value.trim();
     const os = document.getElementById('svc-os').value;
     const brand = document.getElementById('svc-brand').value;
     const model = document.getElementById('svc-model').value;
@@ -5725,8 +5638,7 @@ async function submitServiceGadget() {
     const time = document.getElementById('svc-time').value;
     const isActiveAntar = document.getElementById('btn-antar').classList.contains('active');
 
-    if (!nama || nama.length > 100) { showToast('Nama lengkap wajib diisi (maks 100 karakter)', 'error'); return; }
-    if (!telp || telp.length < 8 || telp.length > 15) { showToast('Nomor telepon tidak valid (hanya angka 8-15 digit)', 'error'); return; }
+    if (!nama || !telp || telp.length < 8) { showToast('Lengkapi data diri', 'error'); return; }
     if (!os || !brand || !model || !issue) { showToast('Lengkapi data gadget', 'error'); return; }
     if (issue === 'Lainnya' && !customIssue) { showToast('Jelaskan masalah lainnya', 'error'); return; }
             if (isActiveAntar) {
