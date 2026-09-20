@@ -1337,7 +1337,7 @@ function loadCatalogs() {
             serverDate.setHours(hour, minute, 0);
             serverTimeOffset = serverDate.getTime() - Date.now();
             const currentTime = hour + (minute / 60);            
-            const isOpen = currentTime >= 7 && currentTime < 22; 
+            const isOpen = currentTime >= 7 && currentTime < 23; 
             serverTimeIsOpen = isOpen;
             return isOpen;
 
@@ -2885,6 +2885,73 @@ async function applyPromoCode() {
         }
         renderOrderForm();
     }
+    async function verifyCartPrices() {
+    if (cart.length === 0) return { valid: true };
+    
+    const { db, collection, getDocs } = window.firebaseAuth;
+    const cartTypes = [...new Set(cart.map(item => item.type))];
+    const catalogData = {};
+    
+    for (const type of cartTypes) {
+        const colName = `katalog_${type}`;
+        try {
+            const snapshot = await getDocs(collection(db, colName));
+            catalogData[type] = [];
+            snapshot.forEach(doc => catalogData[type].push(doc.data()));
+        } catch (e) {
+            console.error(`Gagal verifikasi ${colName}:`, e);
+            return { valid: false, error: 'Gagal akses katalog' };
+        }
+    }
+    
+    for (const item of cart) {
+        let validPrice = null;
+        const docs = catalogData[item.type] || [];
+        
+        if (item.type === 'paket_data') {
+            for (const d of docs) {
+                if (d.provider === item.provider && d.duration === item.duration && d.quota === item.quota) {
+                    validPrice = d.price;
+                    break;
+                }
+            }
+        } else if (item.type === 'pulsa' || item.type === 'token_pln') {
+            for (const d of docs) {
+                if (d.nominal === item.nominal) {
+                    validPrice = d.price;
+                    break;
+                }
+            }
+        } else if (item.type === 'aksesoris') {
+            for (const d of docs) {
+                if (d.category && d.name && `${d.category} ${d.name}` === item.name) {
+                    validPrice = d.price;
+                    break;
+                }
+            }
+        } else if (item.type === 'game') {
+            for (const d of docs) {
+                if (d.game && d.name && `${d.game} ${d.name}` === item.name) {
+                    validPrice = d.price;
+                    break;
+                }
+            }
+        } else if (item.type === 'perdana') {
+            for (const d of docs) {
+                if (d.provider === item.provider && d.duration === item.duration && d.quota === item.quota) {
+                    validPrice = d.price;
+                    break;
+                }
+            }
+        }
+        
+        if (validPrice === null || validPrice !== item.price) {
+            return { valid: false, itemName: item.name };
+        }
+    }
+    
+    return { valid: true };
+}
     async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
         const telp = document.getElementById('cust-telp').value.trim();
@@ -2894,6 +2961,10 @@ async function applyPromoCode() {
         let errors = [];
         if (!nama) errors.push('Nama lengkap wajib diisi');
         if (!telp || telp.length < 8) errors.push('Nomor telepon tidak valid');
+        if (nama.length > 100) errors.push('Nama terlalu panjang (maksimal 100 karakter)');
+        if (telp.length > 15) errors.push('Nomor telepon tidak valid');
+        if (alamat.length > 500) errors.push('Alamat terlalu panjang (maksimal 500 karakter)');
+        if (keterangan.length > 500) errors.push('Keterangan terlalu panjang (maksimal 500 karakter)');
         
         const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
         const isVoucherOutsideHours = (serverTimeIsOpen === false && !hasPhysicalItems);
@@ -2950,7 +3021,7 @@ async function applyPromoCode() {
             } else {
                 showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
             }
-        } else {
+            } else {
             if (isVoucherOutsideHours) {
                 shippingMode = null;
                 shippingCost = 0;
@@ -2960,7 +3031,15 @@ async function applyPromoCode() {
             showToast("Silahkan Periksa Kembali Data Anda", "success", 2000);
         }
 
-        savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
+    showLoading('Memverifikasi pesanan...');
+    const priceVerification = await verifyCartPrices();
+    hideLoading();
+    if (!priceVerification.valid) {
+        showToast('Terjadi kesalahan pada harga item. Silakan refresh halaman.', 'error', 4000);
+        return;
+    }
+
+    savedFormData = { nama, telp, alamat, keterangan, idPelanggan: {} };
         document.querySelectorAll('.id-pel-input').forEach(inp => {
             savedFormData.idPelanggan[inp.dataset.idx + '_' + inp.dataset.num] = inp.value;
         });
@@ -3379,6 +3458,15 @@ async function saveQRISImage() {
 }
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
+    
+    showLoading('Memverifikasi pesanan...');
+    const finalVerification = await verifyCartPrices();
+    hideLoading();
+    if (!finalVerification.valid) {
+        showToast('Data pesanan tidak valid. Silakan ulangi transaksi.', 'error', 4000);
+        showView('view-home');
+        return;
+    }
     
     let verifiedPromoDiscount = 0;
     let verifiedPromoCode = '';
