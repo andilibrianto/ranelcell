@@ -2952,17 +2952,16 @@ async function applyPromoCode() {
     
     return { valid: true };
 }
-    async function submitOrder() {
+        async function submitOrder() {
         const nama = document.getElementById('cust-nama').value.trim().toUpperCase();
-        const telp = document.getElementById('cust-telp').value.trim();
+        const telp = onlyDigits(document.getElementById('cust-telp').value.trim());
         const alamat = document.getElementById('cust-alamat') ? document.getElementById('cust-alamat').value.trim() : '';
         const keterangan = document.getElementById('cust-keterangan').value.trim();
         
         let errors = [];
         if (!nama) errors.push('Nama lengkap wajib diisi');
-        if (!telp || telp.length < 8) errors.push('Nomor telepon tidak valid');
+        if (!telp || telp.length < 8 || telp.length > 15) errors.push('Nomor telepon tidak valid (hanya angka 8-15 digit)');
         if (nama.length > 100) errors.push('Nama terlalu panjang (maksimal 100 karakter)');
-        if (telp.length > 15) errors.push('Nomor telepon tidak valid');
         if (alamat.length > 500) errors.push('Alamat terlalu panjang (maksimal 500 karakter)');
         if (keterangan.length > 500) errors.push('Keterangan terlalu panjang (maksimal 500 karakter)');
         
@@ -3750,13 +3749,13 @@ async function saveQRISImage() {
             <div class="mb-4"><label class="text-[11px] text-gray-500 mb-1 block">Nomor Telepon</label><input type="tel" id="cek-telp" inputmode="numeric" class="form-input" placeholder="Contoh: 081234567890" oninput="this.value=onlyDigits(this.value)" value="${autoTelp}" ${isReadOnly}></div>
             <button onclick="submitCekTagihan('${jenis}')" class="btn-pk w-full text-center"><i class="fa-brands fa-whatsapp mr-2"></i> Kirim via WhatsApp</button>`;
     }
-    async function submitCekTagihan(jenis) {
+        async function submitCekTagihan(jenis) {
     const nama = document.getElementById('cek-nama').value.trim().toUpperCase();
-    const telp = document.getElementById('cek-telp').value.trim();
+    const telp = onlyDigits(document.getElementById('cek-telp').value.trim());
     const idpel = document.getElementById('cek-idpel').value.trim();
     
-    if (!nama) { showToast('Nama lengkap wajib diisi','error'); return; }
-    if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
+    if (!nama || nama.length > 100) { showToast('Nama lengkap wajib diisi (maks 100 karakter)','error'); return; }
+    if (!telp || telp.length < 8 || telp.length > 15) { showToast('Nomor telepon tidak valid (hanya angka 8-15 digit)','error'); return; }
     if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
     
     const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
@@ -5715,7 +5714,7 @@ async function applyServicePromo() {
 }
 async function submitServiceGadget() {
     const nama = document.getElementById('svc-nama').value.trim().toUpperCase();
-    const telp = document.getElementById('svc-telp').value.trim();
+    const telp = onlyDigits(document.getElementById('svc-telp').value.trim());
     const os = document.getElementById('svc-os').value;
     const brand = document.getElementById('svc-brand').value;
     const model = document.getElementById('svc-model').value;
@@ -5726,7 +5725,8 @@ async function submitServiceGadget() {
     const time = document.getElementById('svc-time').value;
     const isActiveAntar = document.getElementById('btn-antar').classList.contains('active');
 
-    if (!nama || !telp || telp.length < 8) { showToast('Lengkapi data diri', 'error'); return; }
+    if (!nama || nama.length > 100) { showToast('Nama lengkap wajib diisi (maks 100 karakter)', 'error'); return; }
+    if (!telp || telp.length < 8 || telp.length > 15) { showToast('Nomor telepon tidak valid (hanya angka 8-15 digit)', 'error'); return; }
     if (!os || !brand || !model || !issue) { showToast('Lengkapi data gadget', 'error'); return; }
     if (issue === 'Lainnya' && !customIssue) { showToast('Jelaskan masalah lainnya', 'error'); return; }
             if (isActiveAntar) {
