@@ -5138,10 +5138,10 @@ async function submitComplaint() {
     selectedTargets.forEach(sel => {
         const item = d.items[sel.idx];
         if (sel.type === 'item') {
-            msg += `- ${escapeHtml(item.name)} (${item.quantity}x)\n`;
+            msg += `- ${item.name} (${item.quantity}x)\n`;
         } else if (sel.type === 'idpel') {
             const idPel = d.idPelanggan[sel.idx][sel.idIdx];
-            msg += `- ${escapeHtml(item.name)} (ID: ${idPel})\n`;
+            msg += `- ${item.name} (ID: ${idPel})\n`;
         }
     });
     
@@ -5151,40 +5151,30 @@ async function submitComplaint() {
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     try {
-    let updatedItems = JSON.parse(JSON.stringify(d.items || []));
-    let updatedIdPelanggan = JSON.parse(JSON.stringify(d.idPelanggan || {}));
-
-    selectedTargets.forEach(sel => {
-        if (sel.type === 'item') {
-            if (updatedItems[sel.idx] && !updatedItems[sel.idx].name.includes(' - Komplain')) {
-                updatedItems[sel.idx].name += ' - Komplain';
-            }
-            updatedItems[sel.idx].price = d.items[sel.idx].price;
-            updatedItems[sel.idx].quantity = d.items[sel.idx].quantity;
-        } else if (sel.type === 'idpel') {
-            if (updatedIdPelanggan[sel.idx] && updatedIdPelanggan[sel.idx][sel.idIdx] && !updatedIdPelanggan[sel.idx][sel.idIdx].includes(' - Komplain')) {
-                updatedIdPelanggan[sel.idx][sel.idIdx] += ' - Komplain';
-            }
-        }
-    });
-
-    let isDataValid = true;
-    for (let i = 0; i < updatedItems.length; i++) {
-        if (updatedItems[i].price !== d.items[i].price) { updatedItems[i].price = d.items[i].price; }
-        if (updatedItems[i].quantity !== d.items[i].quantity) { updatedItems[i].quantity = d.items[i].quantity; }
-    }
+        // === KEAMANAN: Pastikan hanya field 'name' yang berubah (hanya tambah suffix " - Komplain") ===
+        let updatedItems = JSON.parse(JSON.stringify(d.items || []));
+        let updatedIdPelanggan = JSON.parse(JSON.stringify(d.idPelanggan || {}));
 
         selectedTargets.forEach(sel => {
             if (sel.type === 'item') {
                 if (updatedItems[sel.idx] && !updatedItems[sel.idx].name.includes(' - Komplain')) {
                     updatedItems[sel.idx].name += ' - Komplain';
                 }
+                // === KEAMANAN: Paksa harga dan qty tetap sama dengan data asli ===
+                updatedItems[sel.idx].price = d.items[sel.idx].price;
+                updatedItems[sel.idx].quantity = d.items[sel.idx].quantity;
             } else if (sel.type === 'idpel') {
                 if (updatedIdPelanggan[sel.idx] && updatedIdPelanggan[sel.idx][sel.idIdx] && !updatedIdPelanggan[sel.idx][sel.idIdx].includes(' - Komplain')) {
                     updatedIdPelanggan[sel.idx][sel.idIdx] += ' - Komplain';
                 }
             }
         });
+
+        // === KEAMANAN: Validasi semua item hanya berubah pada field 'name' ===
+        for (let i = 0; i < updatedItems.length; i++) {
+            if (updatedItems[i].price !== d.items[i].price) { updatedItems[i].price = d.items[i].price; }
+            if (updatedItems[i].quantity !== d.items[i].quantity) { updatedItems[i].quantity = d.items[i].quantity; }
+        }
 
         const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", currentComplaintId);
         await window.firebaseAuth.setDoc(orderRef, {
@@ -5230,7 +5220,7 @@ async function submitComplaint() {
             return item.name;
         } else if (sel.type === 'idpel') {
             const idPel = d.idPelanggan[sel.idx][sel.idIdx];
-            return `${escapeHtml(item.name)} (ID: ${idPel})`;
+            return `${item.name} (ID: ${idPel})`;
         }
         return '';
     }).join(', ');
@@ -5720,38 +5710,141 @@ async function submitServiceGadget() {
     if (!nama || !telp || telp.length < 8) { showToast('Lengkapi data diri', 'error'); return; }
     if (!os || !brand || !model || !issue) { showToast('Lengkapi data gadget', 'error'); return; }
     if (issue === 'Lainnya' && !customIssue) { showToast('Jelaskan masalah lainnya', 'error'); return; }
-            if (isActiveAntar) {
-            if (!alamat) { showToast('Alamat wajib diisi', 'error'); return; }
-            if (!date || !time) { showToast('Pilih jadwal jemput', 'error'); return; }
-            if (destinationLat !== null && destinationLng !== null) {
+    
+    if (isActiveAntar) {
+        if (!alamat) { showToast('Alamat wajib diisi', 'error'); return; }
+        if (!date || !time) { showToast('Pilih jadwal jemput', 'error'); return; }
+        
+        // === KEAMANAN: Hitung ulang ongkir dari koordinat asli ===
+        if (destinationLat !== null && destinationLng !== null) {
             const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
             if (dist > 10) {
                 showToast('Maaf, jarak melebihi batas maksimal (10km)', 'error');
                 return;
             }
             serviceShippingCost = calculateShippingCost(dist);
+        } else {
+            showToast('Lokasi belum dipilih di peta', 'error');
+            return;
+        }
+    }
+
+    // === KEAMANAN: Order ID Aman ===
+    const orderId = 'SVG-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    let finalIssue = issue === 'Lainnya' ? customIssue : issue;
+    
+    // === KEAMANAN: Verifikasi ulang promo dari Firestore ===
+    if (isActiveAntar && serviceAppliedPromoCode) {
+        try {
+            const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "promo_codes", serviceAppliedPromoCode);
+            const docSnap = await window.firebaseAuth.getDoc(docRef);
+            if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
+                if (docSnap.data().discount > serviceShippingCost) {
+                    showToast('Diskon promo melebihi ongkir! Promo dibatalkan.', 'error', 3000);
+                    serviceAppliedPromoCode = '';
+                    servicePromoDiscount = 0;
                 } else {
-                    showToast('Lokasi belum dipilih di peta', 'error');
-                    return;
-                }
-            }
-            if (serviceShippingCost === 0) { showToast('Klik "Cek Ongkir" terlebih dahulu', 'error'); return; }
-            
-            if (destinationLat !== null && destinationLng !== null) {
-                const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
-                if (dist > 10) {
-                    showToast('Maaf, jarak melebihi batas maksimal (10km)', 'error');
-                    return;
-                }
-                const expectedServiceShippingCost = calculateShippingCost(dist);
-                if (serviceShippingCost !== expectedServiceShippingCost) {
-                    serviceShippingCost = expectedServiceShippingCost;
+                    servicePromoDiscount = docSnap.data().discount;
                 }
             } else {
-                showToast('Lokasi belum dipilih di peta', 'error');
-                return;
+                serviceAppliedPromoCode = '';
+                servicePromoDiscount = 0;
             }
+        } catch (error) {
+            console.error("Gagal verifikasi promo service:", error);
+            serviceAppliedPromoCode = '';
+            servicePromoDiscount = 0;
         }
+    } else if (!isActiveAntar) {
+        serviceShippingCost = 0;
+        servicePromoDiscount = 0;
+        serviceAppliedPromoCode = '';
+    }
+    
+    const infoServiceText = document.getElementById('svc-detail')?.innerText.trim();
+    const totalNotif = isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0;
+    
+    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
+    
+    if (infoServiceText) {
+        msg += `\n*Informasi Service:*\n${infoServiceText}\n`;
+    }
+    
+    msg += `\nLayanan: ${isActiveAntar ? 'Antar Jemput Unit' : 'Datang ke Toko'}\n`;
+    
+    if (isActiveAntar) {
+        msg += `Alamat: ${alamat}\nJadwal: ${date} (${time})\nOngkir: ${formatRp(serviceShippingCost)}\n`;
+        if (destinationLat !== null) {
+            msg += `Lokasi Maps: https://maps.google.com/?q=${destinationLat},${destinationLng}\n`;
+        }
+        if (serviceAppliedPromoCode) {
+            msg += `Kode Promo: ${serviceAppliedPromoCode}\nDiskon Ongkir: -${formatRp(servicePromoDiscount)}\n`;
+        }
+        msg += `Total Ongkir: ${formatRp(totalNotif)}\n`;
+    }
+    
+    msg += `\n_(Catatan: Harga service/part ditentukan setelah pengecekan unit)_`;
+    
+    window.open(`https://wa.me/${WA_NUMBER1}?text=${encodeURIComponent(msg)}`, '_blank');
+    
+    let defaultStatus = isActiveAntar ? "Sedang Ditinjau" : "Unit Belum Diserahkan";
+    
+    const localTransaction = {
+        id: orderId,
+        data: {
+            orderId: orderId,
+            userName: nama,
+            userTelp: telp,
+            items: [{
+                name: `${brand} ${model} (${finalIssue})`,
+                price: 0,
+                quantity: 1
+            }],
+            subtotal: 0,
+            shippingMode: isActiveAntar ? 'deliver' : 'pickup',
+            shippingCost: isActiveAntar ? serviceShippingCost : 0,
+            promoCode: isActiveAntar ? serviceAppliedPromoCode : '',
+            promoDiscount: isActiveAntar ? servicePromoDiscount : 0,
+            total: totalNotif,
+            paymentMethod: 'Pending',
+            address: isActiveAntar ? alamat : 'Datang ke Toko',
+            status: defaultStatus,
+            transactionDate: new Date().toLocaleString('id-ID', { 
+                timeZone: 'Asia/Jakarta',
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            })
+        }
+    };
+    
+    if (!window._historyCache) window._historyCache = [];
+    window._historyCache.unshift(localTransaction);
+    
+    await saveServiceGadgetToFirestore(orderId, { nama, telp, os, brand, model, finalIssue, isActiveAntar, alamat, date, time });
+
+    const _user4 = window.firebaseAuth.auth.currentUser;
+    if (_user4) {
+        const _idToken4 = await _user4.getIdToken();
+        fetch('https://adminranel.vercel.app/api/send-notif', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + _idToken4
+            },
+            body: JSON.stringify({
+                orderId: orderId,
+                userName: nama,
+                total: totalNotif,
+                items: [{ name: `Service: ${brand} ${model} (${finalIssue})`, quantity: 1 }]
+            })
+        }).catch(err => console.error("Gagal kirim notif service:", err));
+    }
+    
+    resetServiceGadgetForm();
+    showTransactionDetail(orderId);
+    showLocalTransactionNotification(orderId, totalNotif);
+}
 
     const rand1 = Math.floor(100 + Math.random() * 900);
     const rand2 = Math.floor(10 + Math.random() * 90);
