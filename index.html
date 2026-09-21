@@ -3638,9 +3638,9 @@ async function saveQRISImage() {
         }).catch(err => console.error("Gagal kirim notif ke admin:", err));
     }
         
-        console.log("Transaksi berhasil disimpan ke Firestore");
+        console.log("Transaksi berhasil disimpan ke Database");
     } catch (err) {
-        console.error("Gagal menyimpan transaksi ke Firestore:", err);
+        console.error("Gagal menyimpan transaksi ke Database:", err);
     }
 }
     function openCekTagihanForm(jenis) {
@@ -4369,7 +4369,6 @@ function handleNotificationNavigation(transactionId) {
     function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
-        console.log("User profile data loaded for: ", user.displayName || user.email);
     }
     function updateHomeGreeting() {
         const greetingEl = document.getElementById('greeting-banner');
@@ -5816,9 +5815,9 @@ async function saveServiceGadgetToFirestore(orderId, d) {
                 schedule: d.isActiveAntar ? `${d.date} (${d.time})` : '-'
             }
         });
-        console.log("Transaksi Service Gadget berhasil disimpan ke Firestore");
+        console.log("Transaksi Service Gadget berhasil disimpan ke Database");
     } catch (err) {
-        console.error("Gagal menyimpan transaksi ke Firestore:", err);
+        console.error("Gagal menyimpan transaksi ke Database:", err);
     }
 }
 function resetServiceGadgetForm() {
@@ -5877,8 +5876,6 @@ function serviceGadgetBack() {
                 });
 
                 if (currentToken) {
-                    console.log('Token Pelanggan berhasil didapat:', currentToken);
-
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
                         createdAt: new Date().toISOString()
