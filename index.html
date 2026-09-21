@@ -1337,7 +1337,7 @@ function loadCatalogs() {
             serverDate.setHours(hour, minute, 0);
             serverTimeOffset = serverDate.getTime() - Date.now();
             const currentTime = hour + (minute / 60);            
-            const isOpen = currentTime >= 7 && currentTime < 23; 
+            const isOpen = currentTime >= 7 && currentTime < 22; 
             serverTimeIsOpen = isOpen;
             return isOpen;
 
@@ -1775,7 +1775,7 @@ function stopBannerAutoScroll() {
     function confirmRemoveItem(idx) {
         const item = cart[idx];
         if (!item) return;
-        showConfirmModal("Hapus Barang?", `Apakah anda yakin ingin mengapus ${item.name}?`, () => {
+        showConfirmModal("Hapus Barang?", `Apakah anda yakin ingin mengapus ${escapeHtml(item.name)}?`, () => {
             cart.splice(idx, 1);
             
             const hasPhysicalItems = cart.some(i => i.type === 'aksesoris' || i.type === 'perdana');
@@ -1936,13 +1936,13 @@ function stopBannerAutoScroll() {
         const cat = aksesorisData.find(c => c.category === accessoriesState.category);
         const sortedItems = [...cat.items].sort((a, b) => a.price - b.price);
         el.innerHTML = sortedItems.map((item, i) => {
-            const name = `${cat.category} ${item.name}`;
+            const name = `${cat.category} ${escapeHtml(item.name)}`;
             const data = JSON.stringify({type:"aksesoris", name:name, price:item.price}).replace(/'/g, "&#39;");
             return `
             <button onclick='addToCart(${data})' class="card price-add p-4 flex items-center justify-between w-full text-left item-stagger" style="animation-delay:${i*0.05}s">
                 <div>
-                    <p class="font-semibold text-sm">${item.name}</p>
-                    <p class="text-[11px] text-gray-500 mt-0.5">${cat.category}</p>
+                    <p class="font-semibold text-sm">${escapeHtml(item.name)}</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">${escapeHtml(cat.category)}</p>
                 </div>
                 <div class="text-right flex-shrink-0 ml-3">
                     <p class="font-bold text-pk text-sm">${formatRp(item.price)}</p>
@@ -1978,13 +1978,13 @@ function stopBannerAutoScroll() {
         const game = gameData.find(g => g.game === gameState.game);
         const sortedItems = [...game.items].sort((a, b) => a.price - b.price);
         el.innerHTML = sortedItems.map((item, i) => {
-            const name = `${game.game} ${item.name}`;
+            const name = `${game.game} ${escapeHtml(item.name)}`;
             const data = JSON.stringify({type:"game",name:name,game:game.game,price:item.price}).replace(/'/g, "&#39;");
             return `
             <button onclick='addToCart(${data})' class="card price-add p-4 flex items-center justify-between w-full text-left item-stagger" style="animation-delay:${i*0.05}s">
                 <div>
-                    <p class="font-semibold text-sm">${item.name}</p>
-                    <p class="text-[11px] text-gray-500 mt-0.5">${game.game}</p>
+                    <p class="font-semibold text-sm">${escapeHtml(item.name)}</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">${escapeHtml(game.game)}</p>
                 </div>
                 <div class="text-right flex-shrink-0 ml-3">
                     <p class="font-bold text-pk text-sm">${formatRp(item.price)}</p>
@@ -2051,8 +2051,8 @@ function stopBannerAutoScroll() {
                 return `
                 <button onclick='addToCart(${data})' class="card price-add p-4 flex items-center justify-between w-full text-left item-stagger" style="animation-delay:${i*0.05}s">
                     <div>
-                        <p class="font-semibold text-sm">${item[0]}</p>
-                        <p class="text-[11px] text-gray-500 mt-0.5">${prov.provider}</p>
+                        <p class="font-semibold text-sm">${escapeHtml(item[0])}</p>
+                        <p class="text-[11px] text-gray-500 mt-0.5">${escapeHtml(prov.provider)}</p>
                     </div>
                     <div class="text-right flex-shrink-0 ml-3">
                         <p class="font-bold text-pk text-sm">${formatRp(item[1])}</p>
@@ -2168,7 +2168,7 @@ function stopBannerAutoScroll() {
                 return `
                 <button onclick='addToCart(${data})' class="card price-add p-4 flex items-center justify-between w-full text-left item-stagger" style="animation-delay:${i*0.05}s">
                     <div>
-                        <p class="font-semibold text-sm">${item[0]}</p>
+                        <<p class="font-semibold text-sm">${item[0]}</p>
                         <p class="text-[11px] text-gray-500 mt-0.5">${prov.provider}</p>
                     </div>
                     <div class="text-right flex-shrink-0 ml-3">
@@ -2263,6 +2263,56 @@ function stopBannerAutoScroll() {
     function getCartTotal() { return cart.reduce((s,i) => s + i.price * i.quantity, 0); }
     function getTotalItems() { return cart.reduce((s,i) => s + i.quantity, 0); }
     function hasPaketData() { return cart.some(i => i.type === 'paket_data'); }
+    function validateAndFixCartPrices() {
+    let priceChanged = false;
+    
+    cart.forEach(item => {
+        let expectedPrice = null;
+        
+        if (item.type === 'paket_data') {
+            const prov = paketData.find(p => p.provider === item.provider);
+            if (prov) {
+                const dur = prov.durations.find(d => d.name === item.duration);
+                if (dur) {
+                    const catItem = dur.items.find(i => i[0] === item.quota);
+                    if (catItem) expectedPrice = catItem[1];
+                }
+            }
+        } else if (item.type === 'pulsa') {
+            const catItem = pulsaData.find(p => p[0] === item.nominal);
+            if (catItem) expectedPrice = catItem[1];
+        } else if (item.type === 'token_pln') {
+            const catItem = tokenPLNData.find(p => p[0] === item.nominal);
+            if (catItem) expectedPrice = catItem[1];
+        } else if (item.type === 'aksesoris') {
+            for (let cat of aksesorisData) {
+                const found = cat.items.find(i => `${cat.category} ${i.name}` === item.name);
+                if (found) { expectedPrice = found.price; break; }
+            }
+        } else if (item.type === 'game') {
+            for (let g of gameData) {
+                const found = g.items.find(i => `${g.game} ${i.name}` === item.name);
+                if (found) { expectedPrice = found.price; break; }
+            }
+        } else if (item.type === 'perdana') {
+            const prov = perdanaData.find(p => p.provider === item.provider);
+            if (prov) {
+                const dur = prov.durations.find(d => d.name === item.duration);
+                if (dur) {
+                    const catItem = dur.items.find(i => i[0] === item.quota);
+                    if (catItem) expectedPrice = catItem[1];
+                }
+            }
+        }
+        
+        if (expectedPrice !== null && item.price !== expectedPrice) {
+            item.price = expectedPrice;
+            priceChanged = true;
+        }
+    });
+    
+    return !priceChanged;
+}
     function saveCurrentFormData() {
         const namaEl = document.getElementById('cust-nama');
         if (namaEl) {
@@ -2338,7 +2388,7 @@ function stopBannerAutoScroll() {
             <div class="card p-3 mb-2">
                 <div class="flex items-start gap-3">
                     <div class="flex-1 min-w-0">
-                        <input type="text" value="${item.name}" readonly class="form-input text-xs font-semibold mb-2" style="padding:8px 10px;">
+                        <input type="text" value="${escapeHtml(item.name)}" readonly class="form-input text-xs font-semibold mb-2" style="padding:8px 10px;">
                         <input type="text" value="${formatRp(item.price)} / item" readonly class="form-input text-xs text-pk" style="padding:8px 10px;">
                     </div>
                     <button onclick="confirmRemoveItem(${idx})" class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400 flex-shrink-0 mt-1 active:scale-90 transition-transform" aria-label="Hapus">
@@ -2369,7 +2419,7 @@ function stopBannerAutoScroll() {
             const idCount = item.quantity;
             const oninputAttr = item.type === 'game' ? 'this.value=this.value.replace(/[^0-9\\/]/g, "")' : 'this.value=onlyDigits(this.value)';
                 for (let n = 0; n < idCount; n++) {
-            const itemLabel = idCount > 1 ? `${item.name} #${n+1}` : item.name;
+            const itemLabel = idCount > 1 ? `${escapeHtml(item.name)} #${n+1}` : item.name;
                     html += `
                     <div class="id-pel-group">
                         <div class="id-pel-group-label">
@@ -3379,6 +3429,19 @@ async function saveQRISImage() {
 }
     async function sendOrderToWhatsApp() {
     const d = window._orderData; if (!d) return;
+    if (!validateAndFixCartPrices()) {
+        showToast('Deteksi manipulasi harga! Harga telah dikoreksi otomatis.', 'error', 4000);
+    }
+    if (shippingMode === 'deliver' && destinationLat !== null && destinationLng !== null) {
+        const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
+        if (dist <= 10) {
+            shippingCost = calculateShippingCost(dist);
+        } else {
+            shippingCost = 0;
+        }
+    } else if (shippingMode !== 'deliver') {
+        shippingCost = 0;
+    }
     
     let verifiedPromoDiscount = 0;
     let verifiedPromoCode = '';
@@ -3403,7 +3466,7 @@ async function saveQRISImage() {
     appliedPromoCode = verifiedPromoCode;
     promoDiscount = verifiedPromoDiscount;
 
-    const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
+    const orderId = 'ORD-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     const now = new Date();
     const options = { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' };
     const waktuPemesanan = now.toLocaleString('id-ID', options) + ' WIB';
@@ -3411,7 +3474,7 @@ async function saveQRISImage() {
     
     let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*RANEL CELL - Pemesanan*\n\nWaktu Pemesanan: ${waktuPemesanan}\nID Transaksi: ${orderId}\n\nNama Lengkap: ${d.nama}\nNomor Telepon: ${d.telp}\n\n*Nama Barang:*\n`;
     
-    cart.forEach((item, idx) => { msg += `${idx+1}. ${item.name} - ${formatRp(item.price)}\n`; });
+    cart.forEach((item, idx) => { msg += `${idx+1}. ${escapeHtml(item.name)}} - ${formatRp(item.price)}\n`; });
     msg += `\n*Jumlah Barang:*\n`;
     cart.forEach((item, idx) => { msg += `${idx+1}. ${item.quantity}\n`; });
     
@@ -3426,7 +3489,7 @@ async function saveQRISImage() {
                     if (d.namaPelanggan && d.namaPelanggan[idx] && d.namaPelanggan[idx][n]) {
                         nameStr = ` (Nama: ${d.namaPelanggan[idx][n]})`;
                     }
-                    msg += `${pelNum}. ${id} (${item.name})${nameStr}\n`; 
+                    msg += `${pelNum}. ${id} (${escapeHtml(item.name)})${nameStr}\n`; 
                     pelNum++; 
                 }); 
             }
@@ -3671,7 +3734,7 @@ async function saveQRISImage() {
     if (!telp || telp.length < 8) { showToast('Nomor telepon tidak valid','error'); return; }
     if (!idpel) { showToast('ID Pelanggan wajib diisi','error'); return; }
     
-    const orderId = String(Date.now() + Math.floor(1000 + Math.random() * 9000));
+    const orderId = 'TAG-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     const transactionDate = new Date().toLocaleString('id-ID', { 
         timeZone: 'Asia/Jakarta',
         day: '2-digit', month: '2-digit', year: 'numeric',
@@ -3679,7 +3742,7 @@ async function saveQRISImage() {
         hour12: false
     });
 
-    const msg = `*RANEL CELL - Cek Tagihan*\n\nID Transaksi: ${orderId}\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`;
+    const msg = `*RANEL CELL - Cek Tagihan*\n\nID Transaksi: ${orderId}\nNama Lengkap: ${escapeHtml(nama)}\nNomor Telepon: ${telp}\nJenis Tagihan: ${jenis}\nID Pelanggan: ${idpel}`;
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     const localTransaction = {
@@ -3900,7 +3963,7 @@ async function saveQRISImage() {
         const email = document.getElementById('karir-email').value.trim();
         const posisi = document.getElementById('karir-posisi').value.trim();
         const pesan = document.getElementById('karir-pesan').value.trim();
-        const msg = `*RANEL CELL - Lamaran Pekerjaan*\n\nNama Lengkap: ${nama}\nNomor Telepon: ${telp}\nEmail: ${email}\nPosisi Dilamar: ${posisi}\n\n*Pesan/Pengalaman:*\n${pesan || '-'}\n\n*(Catatan: Saya akan melampirkan CV saya di chat ini)*`;
+        const msg = `*RANEL CELL - Lamaran Pekerjaan*\n\nNama Lengkap: ${escapeHtml(nama)}\nNomor Telepon: ${telp}\nEmail: ${email}\nPosisi Dilamar: ${posisi}\n\n*Pesan/Pengalaman:*\n${pesan || '-'}\n\n*(Catatan: Saya akan melampirkan CV saya di chat ini)*`;
         
         window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
         showThankYouOverlay("Lamaran Kamu Masih Di Tinjau, Mohon Ditunggu Kabar Baiknya");
@@ -4114,8 +4177,6 @@ function handleNotificationNavigation(transactionId) {
         e.preventDefault();
 
         deferredPrompt = e;
-        console.log('PWA Install Prompt siap ditampilkan.');
-    
         if (currentView === 'view-login' || currentView === 'view-signup' || currentView === 'view-home') {
 
             if (sessionStorage.getItem('pwa_prompt_dismissed') !== 'true') {
@@ -4127,7 +4188,6 @@ function handleNotificationNavigation(transactionId) {
     });
         window.addEventListener('appinstalled', () => {
             deferredPrompt = null;
-            console.log('Aplikasi PWA berhasil diinstall.');
             showToast('Terima kasih telah memasang aplikasi!', 'success');
     });
     function handleSignup() {
@@ -4369,7 +4429,6 @@ function handleNotificationNavigation(transactionId) {
     function renderUserProfile() {
         const user = window.firebaseAuth.auth.currentUser;
         if (!user) return;
-        console.log("User profile data loaded for: ", user.displayName || user.email);
     }
     function updateHomeGreeting() {
         const greetingEl = document.getElementById('greeting-banner');
@@ -4388,7 +4447,7 @@ function handleNotificationNavigation(transactionId) {
             } else if (hour >= 15 && hour < 18) {
                 salam = "Sore";
             }
-            textEl.innerHTML = `Selamat ${salam}, <span class="text-pk font-bold">${nama}</span> 👋<br>Selamat Berbelanja!`;
+            textEl.innerHTML = `Selamat ${salam}, <span class="text-pk font-bold">${escapeHtml(nama)}</span> 👋<br>Selamat Berbelanja!`;
             greetingEl.classList.remove('hidden');
         } else {
             greetingEl.classList.add('hidden');
@@ -4697,7 +4756,7 @@ async function showTransactionHistory() {
 
             let itemsHtml = '';
             transaction.items.slice(0, 2).forEach(item => {
-                itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${item.name}</p>`;
+                itemsHtml += `<p class="text-xs text-gray-300 truncate"><i class="fa-solid fa-box text-pk/60 text-[10px] mr-1"></i> ${item.quantity}x ${escapeHtml(item.name)}</p>`;
             });
             if (transaction.items.length > 2) {
                 itemsHtml += `<p class="text-[11px] text-gray-500 mt-1">+${transaction.items.length - 2} produk lainnya</p>`;
@@ -4934,7 +4993,7 @@ function showComplaintForm(transactionId) {
         }
 
         itemsHtml += `<div>
-                        <p class="font-medium text-white">${item.name}</p>
+                        <p class="font-medium text-white">${escapeHtml(item.name)}</p>
                         <p class="text-gray-500 mt-0.5">${item.quantity} x ${formatRp(item.price)}</p>`;
 
         if (hasIdPels) {
@@ -5079,10 +5138,10 @@ async function submitComplaint() {
     selectedTargets.forEach(sel => {
         const item = d.items[sel.idx];
         if (sel.type === 'item') {
-            msg += `- ${item.name} (${item.quantity}x)\n`;
+            msg += `- ${escapeHtml(item.name)} (${item.quantity}x)\n`;
         } else if (sel.type === 'idpel') {
             const idPel = d.idPelanggan[sel.idx][sel.idIdx];
-            msg += `- ${item.name} (ID: ${idPel})\n`;
+            msg += `- ${escapeHtml(item.name)} (ID: ${idPel})\n`;
         }
     });
     
@@ -5092,8 +5151,28 @@ async function submitComplaint() {
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     try {
-        let updatedItems = JSON.parse(JSON.stringify(d.items || []));
-        let updatedIdPelanggan = JSON.parse(JSON.stringify(d.idPelanggan || {}));
+    let updatedItems = JSON.parse(JSON.stringify(d.items || []));
+    let updatedIdPelanggan = JSON.parse(JSON.stringify(d.idPelanggan || {}));
+
+    selectedTargets.forEach(sel => {
+        if (sel.type === 'item') {
+            if (updatedItems[sel.idx] && !updatedItems[sel.idx].name.includes(' - Komplain')) {
+                updatedItems[sel.idx].name += ' - Komplain';
+            }
+            updatedItems[sel.idx].price = d.items[sel.idx].price;
+            updatedItems[sel.idx].quantity = d.items[sel.idx].quantity;
+        } else if (sel.type === 'idpel') {
+            if (updatedIdPelanggan[sel.idx] && updatedIdPelanggan[sel.idx][sel.idIdx] && !updatedIdPelanggan[sel.idx][sel.idIdx].includes(' - Komplain')) {
+                updatedIdPelanggan[sel.idx][sel.idIdx] += ' - Komplain';
+            }
+        }
+    });
+
+    let isDataValid = true;
+    for (let i = 0; i < updatedItems.length; i++) {
+        if (updatedItems[i].price !== d.items[i].price) { updatedItems[i].price = d.items[i].price; }
+        if (updatedItems[i].quantity !== d.items[i].quantity) { updatedItems[i].quantity = d.items[i].quantity; }
+    }
 
         selectedTargets.forEach(sel => {
             if (sel.type === 'item') {
@@ -5151,7 +5230,7 @@ async function submitComplaint() {
             return item.name;
         } else if (sel.type === 'idpel') {
             const idPel = d.idPelanggan[sel.idx][sel.idIdx];
-            return `${item.name} (ID: ${idPel})`;
+            return `${escapeHtml(item.name)} (ID: ${idPel})`;
         }
         return '';
     }).join(', ');
@@ -5644,6 +5723,18 @@ async function submitServiceGadget() {
             if (isActiveAntar) {
             if (!alamat) { showToast('Alamat wajib diisi', 'error'); return; }
             if (!date || !time) { showToast('Pilih jadwal jemput', 'error'); return; }
+            if (destinationLat !== null && destinationLng !== null) {
+            const dist = calculateDistance(storeLat, storeLng, destinationLat, destinationLng);
+            if (dist > 10) {
+                showToast('Maaf, jarak melebihi batas maksimal (10km)', 'error');
+                return;
+            }
+            serviceShippingCost = calculateShippingCost(dist);
+                } else {
+                    showToast('Lokasi belum dipilih di peta', 'error');
+                    return;
+                }
+            }
             if (serviceShippingCost === 0) { showToast('Klik "Cek Ongkir" terlebih dahulu', 'error'); return; }
             
             if (destinationLat !== null && destinationLng !== null) {
@@ -5664,7 +5755,7 @@ async function submitServiceGadget() {
 
     const rand1 = Math.floor(100 + Math.random() * 900);
     const rand2 = Math.floor(10 + Math.random() * 90);
-    const orderId = `${rand1}7777${rand2}`;
+    const orderId = 'SVG-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     let finalIssue = issue === 'Lainnya' ? customIssue : issue;
     
     if (isActiveAntar && serviceAppliedPromoCode) {
@@ -5673,7 +5764,6 @@ async function submitServiceGadget() {
             const docSnap = await window.firebaseAuth.getDoc(docRef);
             if (docSnap.exists() && docSnap.data().discount > 0 && docSnap.data().active !== false) {
                 if (docSnap.data().discount > serviceShippingCost) {
-                    showToast('Diskon promo melebihi ongkir! Promo dibatalkan.', 'error', 3000);
                     serviceAppliedPromoCode = '';
                     servicePromoDiscount = 0;
                 } else {
@@ -5684,16 +5774,19 @@ async function submitServiceGadget() {
                 servicePromoDiscount = 0;
             }
         } catch (error) {
-            console.error("Gagal verifikasi promo service:", error);
             serviceAppliedPromoCode = '';
             servicePromoDiscount = 0;
         }
+    } else if (!isActiveAntar) {
+        serviceShippingCost = 0;
+        servicePromoDiscount = 0;
+        serviceAppliedPromoCode = '';
     }
     
     const infoServiceText = document.getElementById('svc-detail')?.innerText.trim();
     const totalNotif = isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0;
     
-    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${nama}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
+    let msg = `_DATA JANGAN DIUBAH (Langsung Kirim Pesan)_\n\n*ServisinAja by Ranel Cell*\n\nID Transaksi: ${orderId}\nNama: ${escapeHtml(nama)}\nTelp: ${telp}\nOS: ${os}\nMerk: ${brand}\nTipe: ${model}\nMasalah: ${finalIssue}\n`;
     
     if (infoServiceText) {
         msg += `\n*Informasi Service:*\n${infoServiceText}\n`;
@@ -5877,8 +5970,6 @@ function serviceGadgetBack() {
                 });
 
                 if (currentToken) {
-                    console.log('Token Pelanggan berhasil didapat:', currentToken);
-
                     await setDoc(doc(db, "user_tokens", currentToken), { 
                         token: currentToken,
                         createdAt: new Date().toISOString()
@@ -5980,8 +6071,8 @@ function showPromoDetail(bannerId) {
     
     if (d.type === 'info') {
         const imgHtml = d.imageUrl ? `<div class="rounded-xl overflow-hidden mb-4" style="aspect-ratio: 2 / 1; background-color: #1A1A1A;"><img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 100%; object-fit: cover; display: block;" referrerpolicy="no-referrer"></div>` : '';
-        const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${d.title}</h3>` : '';
-        const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${d.isiPesan}</p>` : '';
+        const titleHtml = d.title ? `<h3 class="text-lg font-bold text-pk mb-4">${escapeHtml(d.title)}</h3>` : '';
+        const pesanHtml = d.isiPesan ? `<p class="text-sm text-gray-300 leading-relaxed text-justify whitespace-pre-line">${escapeHtml(d.isiPesan)}</p>` : '';
         
         el.innerHTML = `
             ${imgHtml}
