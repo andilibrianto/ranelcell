@@ -807,19 +807,21 @@
         <div id="profile-detail-view" class="fade-up">
     <div class="card p-6 mb-4 border-pk/20 relative overflow-hidden">
         <!-- Badge Point kuning di pojok kanan atas -->
-        <div class="absolute top-3 right-3 flex flex-col items-end z-10">
+        <div class="absolute top-4 right-4 flex flex-col items-end z-10">
             <span class="text-yellow-400 text-[10px] font-bold uppercase tracking-wider">Point</span>
             <span id="detail-user-points" class="text-yellow-400 text-xl font-extrabold leading-tight">0</span>
         </div>
         
-        <div class="flex items-center gap-3 mb-4">
+        <!-- Tambahkan pr-16 agar barcode tidak menabrak badge Point -->
+        <div class="flex items-center gap-3 mb-4 pr-16">
             <!-- Foto Profil -->
             <div id="detail-profile-pic" class="w-20 h-20 rounded-full bg-gradient-to-br from-pk/20 to-pk/5 border-2 border-pk/30 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden flex-shrink-0">
                 <i class="fa-solid fa-user"></i>
             </div>
             <!-- Barcode Nomor Telepon -->
             <div class="flex-1 bg-white rounded-lg p-2 overflow-hidden min-w-0 relative">
-                <canvas id="detail-user-barcode" width="220" height="70"></canvas>
+                <!-- Tambahkan max-width 100% agar canvas mengecil mengikuti container -->
+                <canvas id="detail-user-barcode" width="220" height="70" style="max-width: 100%; height: auto;"></canvas>
                 <p class="text-[9px] text-gray-700 text-center font-medium leading-tight">Scan untuk no. telepon</p>
             </div>
         </div>
