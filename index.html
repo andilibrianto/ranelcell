@@ -14,7 +14,6 @@
     <meta name="apple-mobile-web-app-title" content="RANEL CELL">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
@@ -805,48 +804,29 @@
     
     <div class="max-w-lg mx-auto px-4 py-8 pb-32">
         <div id="profile-detail-view" class="fade-up">
-    <div class="card p-6 mb-4 border-pk/20 relative overflow-hidden">
-        <!-- Badge Point kuning di pojok kanan atas -->
-        <div class="absolute top-4 right-4 flex flex-col items-end z-10">
-            <span class="text-yellow-400 text-[10px] font-bold uppercase tracking-wider">Point</span>
-            <span id="detail-user-points" class="text-yellow-400 text-xl font-extrabold leading-tight">0</span>
-        </div>
-        
-        <!-- Tambahkan pr-16 agar barcode tidak menabrak badge Point -->
-        <div class="flex items-center gap-3 mb-4 pr-16">
-            <!-- Foto Profil -->
-            <div id="detail-profile-pic" class="w-20 h-20 rounded-full bg-gradient-to-br from-pk/20 to-pk/5 border-2 border-pk/30 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden flex-shrink-0">
-                <i class="fa-solid fa-user"></i>
+            <div class="card p-6 mb-4 border-pk/20 text-center">
+                <div id="detail-profile-pic" class="w-24 h-24 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <p id="detail-user-name" class="font-bold text-lg uppercase">Nama User</p>
+                <p id="detail-user-email" class="text-xs text-gray-400 mb-4">email@user.com</p>
+                <div class="border-t border-dk-500/50 pt-4 text-left space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-500">No. Telepon</span>
+                        <span id="detail-user-telp" class="text-white font-medium">0812xxxx</span>
+                    </div>
+                </div>
             </div>
-            <!-- Barcode Nomor Telepon -->
-            <div class="flex-1 bg-white rounded-lg p-2 overflow-hidden min-w-0 relative">
-                <!-- Tambahkan max-width 100% agar canvas mengecil mengikuti container -->
-                <canvas id="detail-user-barcode" width="220" height="70" style="max-width: 100%; height: auto;"></canvas>
-                <p class="text-[9px] text-gray-700 text-center font-medium leading-tight">Scan untuk no. telepon</p>
-            </div>
+            <button onclick="showEditForm()" class="btn-pk w-full text-center">
+                <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Profil
+            </button>
+            <button onclick="showTransactionHistory()" class="btn-outline w-full text-center mt-3">
+                <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
+            </button>
+            <button onclick="handleLogout()" class="w-full text-center mt-3 py-3 rounded-xl border border-red-500/30 text-red-400 font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <i class="fa-solid fa-right-from-bracket"></i> Keluar Akun
+            </button>
         </div>
-        
-        <p id="detail-user-name" class="font-bold text-base uppercase text-center">Nama User</p>
-        <p id="detail-user-email" class="text-xs text-gray-400 mb-4 text-center">email@user.com</p>
-        
-        <div class="border-t border-dk-500/50 pt-4 text-left space-y-2">
-            <div class="flex justify-between text-sm">
-                <span class="text-gray-500">No. Telepon</span>
-                <span id="detail-user-telp" class="text-white font-medium">0812xxxx</span>
-            </div>
-        </div>
-    </div>
-    
-    <button onclick="showEditForm()" class="btn-pk w-full text-center">
-        <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Profil
-    </button>
-    <button onclick="showTransactionHistory()" class="btn-outline w-full text-center mt-3">
-        <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
-    </button>
-    <button onclick="handleLogout()" class="w-full text-center mt-3 py-3 rounded-xl border border-red-500/30 text-red-400 font-semibold text-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
-        <i class="fa-solid fa-right-from-bracket"></i> Keluar Akun
-    </button>
-</div>
 <div id="profile-edit-form" class="hidden">
     <div class="card p-6 fade-up">
         <div class="mb-4">
@@ -1170,9 +1150,6 @@ let perdanaState = { provider:null, duration:null };
 let currentView = 'view-home';
 let viewHistory = ['view-home'];
 let isPopstateNavigating = false;
-let userPoints = 0;                  // Saldo point user saat ini
-let redeemedPoints = 0;              // Jumlah point yang ditukar saat checkout
-let usedPointsDiscount = 0;          // Nilai rupiah diskon dari point (1:1)
 let savedFormData = null;
 let shouldRestoreForm = false;
 let modalConfirmCallback = null;
@@ -1787,8 +1764,6 @@ function stopBannerAutoScroll() {
             shippingCost = 0;
             appliedPromoCode = '';
             promoDiscount = 0;
-            redeemedPoints = 0;
-            usedPointsDiscount = 0;
             destinationLat = null;
             destinationLng = null;
             updateCartUI(); 
@@ -1809,7 +1784,6 @@ function stopBannerAutoScroll() {
                 promoDiscount = 0;
                 showToast('Kode promo tidak valid!!!', 'info');
             }
-            validateRedeemedPoints();
             updateCartUI(); 
             renderOrderForm();
         }, 'fa-solid fa-trash-can');
@@ -1890,9 +1864,8 @@ function stopBannerAutoScroll() {
         return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
     function getGrandTotal() {
-    const total = getCartTotal() + shippingCost - promoDiscount - usedPointsDiscount;
-    return Math.max(0, total); // Pastikan tidak negatif
-}
+        return getCartTotal() + shippingCost - promoDiscount;
+    }
     function selectCategory(cat) {
         if (!checkTelpRequired()) return;
         if (cat === 'cek_tagihan' && cart.length > 0) {
@@ -2280,7 +2253,6 @@ function stopBannerAutoScroll() {
             promoDiscount = 0;
             showToast('Kode promo tidak valid!!!', 'info');
         }
-        validateRedeemedPoints(); // Panggil fungsi validasi poin
         updateCartUI(); renderOrderForm();
     }
     function setQty(idx, val) {
@@ -2294,12 +2266,11 @@ function stopBannerAutoScroll() {
     function saveCurrentFormData() {
         const namaEl = document.getElementById('cust-nama');
         if (namaEl) {
-                        savedFormData = {
+            savedFormData = {
                 nama: namaEl.value,
                 telp: document.getElementById('cust-telp').value,
                 alamat: document.getElementById('cust-alamat').value,
                 keterangan: document.getElementById('cust-keterangan')?.value || '',
-                redeemedPointsInput: document.getElementById('redeem-points-input')?.value || '',
                 idPelanggan: {},
                 namaPelanggan: {}
             };
@@ -2507,54 +2478,7 @@ function stopBannerAutoScroll() {
                 </div>`;
             }
         }
-        // ====== SECTION TUKAR POINT ======
-        const loggedInUserForPoints = isUserLoggedIn ? window.firebaseAuth.auth.currentUser : null;
-        if (loggedInUserForPoints && userPoints >= 1000) {
-            const cartTotalForPoints = getCartTotal() + shippingCost - promoDiscount;
-            const maxUsable = Math.min(userPoints, cartTotalForPoints);
-            const pointsActive = redeemedPoints > 0;
-            
-            html += `
-            <div class="mb-5">
-                <h3 class="section-label">Tukar Point</h3>
-                <div class="card p-4 border-yellow-500/20 bg-yellow-500/5">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs text-gray-400"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i>Saldo Point Anda</span>
-                        <span class="text-sm font-bold text-yellow-400">${userPoints.toLocaleString('id-ID')} Point</span>
-                    </div>
-                    <p class="text-[11px] text-gray-500 mb-3">Minimal tukar 1000 point • 1 Point = Rp 1</p>
-                    
-                    <div class="flex gap-2">
-                        <input type="number" id="redeem-points-input" 
-                               class="form-input flex-1 text-sm" 
-                               placeholder="Masukkan jumlah point (min 1000)" 
-                               min="1000" 
-                               max="${maxUsable}"
-                               value="${pointsActive ? redeemedPoints : ''}"
-                               oninput="this.value=onlyDigits(this.value); handleRedeemPointsInput(this.value)">
-                        <button onclick="toggleUsePoints()" id="use-points-btn" 
-                                class="btn-pk px-4 text-xs py-2 ${pointsActive ? 'btn-outline' : ''}">
-                            ${pointsActive ? '<i class=\"fa-solid fa-xmark mr-1\"></i> Batal' : 'Pakai'}
-                        </button>
-                    </div>
-                    ${pointsActive ? `<p class="text-[11px] text-green-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Anda menukar <b>${redeemedPoints.toLocaleString('id-ID')}</b> point = <b>${formatRp(usedPointsDiscount)}</b></p>` : ''}
-                    ${!pointsActive && maxUsable < 1000 ? `<p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Total belanja harus minimal Rp 1.000 untuk menukar point</p>` : ''}
-                </div>
-            </div>`;
-        } else if (loggedInUserForPoints && userPoints > 0 && userPoints < 1000) {
-            html += `
-            <div class="mb-5">
-                <h3 class="section-label">Tukar Point</h3>
-                <div class="card p-4 border-dk-500/30 bg-dk-700/30">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs text-gray-400"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i>Saldo Point Anda</span>
-                        <span class="text-sm font-bold text-yellow-400">${userPoints.toLocaleString('id-ID')} Point</span>
-                    </div>
-                    <p class="text-[11px] text-gray-500">Anda butuh minimal 1000 point untuk menukar. Lakukan transaksi lagi untuk mengumpulkan point!</p>
-                </div>
-            </div>`;
-        }
-        // ====== END SECTION TUKAR POINT ======
+
         const subtotal = getCartTotal();
         const grandTotal = getGrandTotal();
 
@@ -2570,19 +2494,13 @@ function stopBannerAutoScroll() {
                 <span class="text-sm font-semibold text-gray-200">${formatRp(shippingCost)}</span>
             </div>
             ` : ''}
-                    ${promoDiscount > 0 ? `
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-300">Diskon Promo</span>
-            <span class="text-sm font-semibold text-red-400">- ${formatRp(promoDiscount)}</span>
-        </div>
-        ` : ''}
-        ${usedPointsDiscount > 0 ? `
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-300"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i> Diskon Point</span>
-            <span class="text-sm font-semibold text-yellow-400">- ${formatRp(usedPointsDiscount)}</span>
-        </div>
-        ` : ''}
-        ${(hasShippingItems() && shippingMode === 'deliver' && shippingCost > 0) || promoDiscount > 0 || usedPointsDiscount > 0 ? '<hr class="border-dk-600 my-2">' : ''}
+            ${promoDiscount > 0 ? `
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-300">Diskon Promo</span>
+                <span class="text-sm font-semibold text-red-400">- ${formatRp(promoDiscount)}</span>
+            </div>
+            ` : ''}
+            ${(hasShippingItems() && shippingMode === 'deliver' && shippingCost > 0) || promoDiscount > 0 ? '<hr class="border-dk-600 my-2">' : ''}
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-300">Total Harga</span>
                 <span class="text-xl font-extrabold text-pk">${formatRp(grandTotal)}</span>
@@ -2615,10 +2533,6 @@ function stopBannerAutoScroll() {
                     const key = inp.dataset.idx + '_' + inp.dataset.num;
                     if (savedFormData.namaPelanggan[key]) inp.value = savedFormData.namaPelanggan[key];
                 });
-            }
-                        if (savedFormData.redeemedPointsInput) {
-                const redeemInput = document.getElementById('redeem-points-input');
-                if (redeemInput) redeemInput.value = savedFormData.redeemedPointsInput;
             }
         }
     }
@@ -2763,111 +2677,6 @@ async function applyPromoCode() {
         renderOrderForm();
         showToast('Kode promo dihapus', 'info');
     }
-    // ====== FUNGSI-FUNGSI PENUKARAN POINT ======
-
-// Fungsi untuk menangani input jumlah point yang ingin ditukar
-function handleRedeemPointsInput(val) {
-    const n = parseInt(val) || 0;
-    const cartTotalForPoints = getCartTotal() + shippingCost - promoDiscount;
-    const maxUsable = Math.min(userPoints, cartTotalForPoints);
-    
-    // Reset dulu
-    redeemedPoints = 0;
-    usedPointsDiscount = 0;
-    
-    if (n === 0) {
-        saveCurrentFormData();
-        renderOrderForm();
-        return;
-    }
-    
-    if (n < 1000) {
-        showToast('Minimal tukar 1000 point', 'error');
-    } else if (n > userPoints) {
-        showToast(`Saldo point Anda hanya ${userPoints.toLocaleString('id-ID')}`, 'error');
-    } else if (n > cartTotalForPoints) {
-        showToast(`Point melebihi total pembayaran (${formatRp(cartTotalForPoints)})`, 'error');
-    } else {
-        redeemedPoints = n;
-        usedPointsDiscount = n; // 1 point = 1 rupiah
-        showToast(`Berhasil tukar ${n} point = ${formatRp(n)}`, 'success');
-    }
-    
-    saveCurrentFormData();
-    renderOrderForm();
-}
-
-// Fungsi untuk toggle pake/batal point
-function toggleUsePoints() {
-    if (redeemedPoints > 0) {
-        // Batal
-        redeemedPoints = 0;
-        usedPointsDiscount = 0;
-        showToast('Penukaran point dibatalkan', 'info');
-    } else {
-        // Pakai
-        const input = document.getElementById('redeem-points-input');
-        if (input && input.value) {
-            handleRedeemPointsInput(input.value);
-        } else {
-            showToast('Masukkan jumlah point terlebih dahulu', 'error');
-        }
-        return;
-    }
-    saveCurrentFormData();
-    renderOrderForm();
-}
-
-// Fungsi validasi otomatis jika cart berubah (misal item dihapus)
-function validateRedeemedPoints() {
-    if (redeemedPoints === 0) return;
-    
-    const cartTotalForPoints = getCartTotal() + shippingCost - promoDiscount;
-    if (redeemedPoints > cartTotalForPoints) {
-        redeemedPoints = 0;
-        usedPointsDiscount = 0;
-        showToast('Penukaran point direset karena total berubah', 'info');
-    }
-}
-
-// Hitung point yang akan didapat dari transaksi
-function calculateEarnedPoints(cartItems) {
-    let earnedPoints = 0;
-    cartItems.forEach(item => {
-        const qty = item.quantity || 1;
-        // 10 point: voucher, isi ulang (paket_data), pulsa, token_pln, game
-        if (item.type === 'paket_data' || item.type === 'pulsa' || 
-            item.type === 'token_pln' || item.type === 'game') {
-            earnedPoints += 10 * qty;
-        }
-        // 50 point: aksesoris gadget, kartu perdana
-        else if (item.type === 'aksesoris' || item.type === 'perdana') {
-            earnedPoints += 50 * qty;
-        }
-    });
-    return earnedPoints;
-}
-
-// Fungsi untuk memotong point user di Firestore
-async function deductUserPoints(uid, pointsToDeduct) {
-    try {
-        const userDocRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", uid);
-        const docSnap = await window.firebaseAuth.getDoc(userDocRef);
-        if (docSnap.exists()) {
-            const currentPoints = docSnap.data().points || 0;
-            const newPoints = Math.max(0, currentPoints - pointsToDeduct);
-            await window.firebaseAuth.setDoc(userDocRef, {
-                points: newPoints
-            }, { merge: true });
-            userPoints = newPoints;
-            return true;
-        }
-        return false;
-    } catch (err) {
-        console.error("Gagal deduct points:", err);
-        return false;
-    }
-}
     function checkShippingCost() {
         if (currentView === 'view-order') {
             mapCaller = 'cart';
@@ -3174,12 +2983,6 @@ async function deductUserPoints(uid, pointsToDeduct) {
         window._orderData.shippingCost = shippingCost;
         window._orderData.promoCode = appliedPromoCode;
         window._orderData.promoDiscount = promoDiscount;
-            window._orderData.redeemedPoints = redeemedPoints;
-    window._orderData.pointsDiscount = usedPointsDiscount;
-    
-    // Hitung point yang akan didapat dari transaksi ini
-    const earnedPts = calculateEarnedPoints(cart);
-    window._orderData.earnedPoints = earnedPts;
         showView('view-preview');
     }
         function renderPreview() {
@@ -3242,14 +3045,6 @@ async function deductUserPoints(uid, pointsToDeduct) {
                 <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
             </div>`;
         }
-                let pointsHtml = '';
-        if (d.pointsDiscount > 0 && d.redeemedPoints) {
-            pointsHtml += `
-            <div class="flex justify-between text-xs mt-2">
-                <span class="text-gray-300"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i> Diskon Point (${d.redeemedPoints.toLocaleString('id-ID')})</span>
-                <span class="text-yellow-400 font-semibold">- ${formatRp(d.pointsDiscount)}</span>
-            </div>`;
-        }
         el.innerHTML = `
             <div class="card p-4 mb-4 border-pk/20">
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
@@ -3280,7 +3075,6 @@ async function deductUserPoints(uid, pointsToDeduct) {
                     <span class="text-white font-semibold">${formatRp(d.shippingCost)}</span>
                 </div>` : ''}
                 ${promoHtml}
-                ${pointsHtml}
             </div>
             ${d.keterangan ? `
             <div class="card p-4 mb-4 border-pk/20">
@@ -3293,12 +3087,6 @@ async function deductUserPoints(uid, pointsToDeduct) {
                     <span class="text-xl font-extrabold text-pk">${formatRp(getGrandTotal())}</span>
                 </div>
             </div>
-                    ${d.earnedPoints > 0 ? `
-        <div class="card p-3 mb-4 border-yellow-500/20 bg-yellow-500/5">
-            <p class="text-xs text-yellow-400 text-center">
-                <i class="fa-solid fa-gift mr-1"></i> Anda akan mendapatkan <b>${d.earnedPoints} Point</b> setelah transaksi dikonfirmasi berhasil!
-            </p>
-        </div>` : ''}
             <div class="flex gap-3">
                 <button onclick="showView('view-order')" class="btn-outline flex-1 text-sm py-3">
                     <i class="fa-solid fa-pen-to-square mr-2"></i> Edit Data
@@ -3583,8 +3371,6 @@ async function saveQRISImage() {
     shippingCost = 0;
     appliedPromoCode = '';
     promoDiscount = 0;
-    redeemedPoints = 0;           // TAMBAHAN
-    usedPointsDiscount = 0;       // TAMBAHAN
     destinationLat = null;
     destinationLng = null;
     selectedPaymentMethod = '';
@@ -3664,14 +3450,7 @@ async function saveQRISImage() {
         msg += `*Kode Promo:* ${d.promoCode}\n`;
         msg += `*Diskon Promo:* -${formatRp(d.promoDiscount)}\n\n`;
     }
-        if (d.pointsDiscount > 0 && d.redeemedPoints) {
-        msg += `*Point Ditukar:* ${d.redeemedPoints.toLocaleString('id-ID')} Point\n`;
-        msg += `*Diskon Point:* -${formatRp(d.pointsDiscount)}\n\n`;
-    }
     
-    if (d.earnedPoints > 0) {
-        msg += `*Point Akan Didapat:* ${d.earnedPoints} Point (setelah konfirmasi)\n\n`;
-    }
     msg += `*Total Harga: ${formatRp(getGrandTotal())}*\n`;
     
     if (selectedPaymentMethod) {
@@ -3818,23 +3597,17 @@ async function saveQRISImage() {
     const paymentMethod = selectedPaymentMethod;
     
     try {
-                const earnedPts = calculateEarnedPoints(cartItems);
-        
         await window.firebaseAuth.setDoc(orderRef, {
             orderId: orderId,
             userId: user.uid,
             userName: d.nama,
             userTelp: d.telp,
-            items: cartItems,
+            items: cartItems, // Gunakan variabel yang dikunci
             subtotal: subtotalProduk,
             shippingMode: d.shippingMode || null,
             shippingCost: d.shippingCost || 0,
             promoCode: d.promoCode || '',
             promoDiscount: d.promoDiscount || 0,
-            redeemedPoints: d.redeemedPoints || 0,
-            pointsDiscount: d.pointsDiscount || 0,
-            earnedPoints: earnedPts,
-            pointsAwarded: false,
             total: grandTotal,
             paymentMethod: paymentMethod,
             address: d.alamat || '-',
@@ -3847,17 +3620,6 @@ async function saveQRISImage() {
                 hour12: false
             })
         });
-        
-        // Jika ada point yang ditukar, langsung potong dari saldo user
-        if (d.redeemedPoints && d.redeemedPoints > 0) {
-            const deducted = await deductUserPoints(user.uid, d.redeemedPoints);
-            if (deducted) {
-                console.log(`Berhasil memotong ${d.redeemedPoints} point dari user`);
-            } else {
-                console.error("Gagal memotong point user");
-                showToast("Peringatan: Gagal memotong point. Hubungi admin.", "error", 5000);
-            }
-        }
     const _user = window.firebaseAuth.auth.currentUser;
     if (_user) {
         const _idToken = await _user.getIdToken();
@@ -3955,10 +3717,6 @@ async function saveQRISImage() {
             await window.firebaseAuth.setDoc(orderRef, {
                 orderId: orderId,
                 userId: user.uid,
-                earnedPoints: 0,
-                pointsAwarded: true,
-                redeemedPoints: 0,
-                pointsDiscount: 0,
                 userName: nama,
                 userTelp: telp,
                 items: [{ name: `Cek Tagihan ${jenis}`, price: 0, quantity: 1 }],
@@ -4636,36 +4394,26 @@ function handleNotificationNavigation(transactionId) {
             greetingEl.classList.add('hidden');
         }
     }
-    async function showEditProfile() {
+    function showEditProfile() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
 
     document.getElementById('detail-user-name').textContent = user.displayName || 'User';
     document.getElementById('detail-user-email').textContent = user.email || '-';
     document.getElementById('detail-user-telp').textContent = window.currentUserTelp || '-';
-    
     const detailPic = document.getElementById('detail-profile-pic');
     if (user.photoURL) {
         detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
     } else {
-        // Tampilkan inisial nama
-        const initial = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
-        detailPic.innerHTML = `<span class="text-3xl font-bold">${initial}</span>`;
+        detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2">`;
     }
 
-    // Load points dari Firestore
-    await loadUserPoints(user.uid);
-    
-    // Generate barcode nomor telepon
-    generateUserBarcode(window.currentUserTelp || user.phoneNumber || '');
-    
     document.getElementById('edit-nama').value = user.displayName || '';
     document.getElementById('edit-telp').value = window.currentUserTelp || '';
     document.getElementById('edit-email').value = user.email || '';
     document.getElementById('edit-old-password').value = '';
     document.getElementById('edit-new-password').value = '';
     document.getElementById('edit-confirm-password').value = '';
-    
     const isGoogleUser = (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com');
     const passSection = document.getElementById('password-section');
     const togglePassBtn = document.getElementById('toggle-password-btn');
@@ -4687,81 +4435,11 @@ function handleNotificationNavigation(transactionId) {
     saveBtn.style.opacity = '0.5';
     saveBtn.style.cursor = 'not-allowed';
     saveBtn.innerHTML = '<i class="fa-solid fa-save mr-2"></i> Simpan Perubahan';
-    
     document.getElementById('profile-detail-view').classList.remove('hidden');
     document.getElementById('profile-edit-form').classList.add('hidden');
     document.getElementById('edit-profile-title').textContent = 'Detail Akun';
 
     showView('view-edit-profile');
-    
-    // Re-generate barcode setelah view tampil (untuk memastikan canvas siap)
-    setTimeout(() => {
-        generateUserBarcode(window.currentUserTelp || user.phoneNumber || '');
-    }, 100);
-}
-
-// Function baru: Load points dari Firestore
-async function loadUserPoints(uid) {
-    try {
-        const docRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", uid);
-        const docSnap = await window.firebaseAuth.getDoc(docRef);
-        if (docSnap.exists()) {
-            userPoints = docSnap.data().points || 0;
-        } else {
-            userPoints = 0;
-        }
-        const pointsEl = document.getElementById('detail-user-points');
-        if (pointsEl) pointsEl.textContent = userPoints.toLocaleString('id-ID');
-    } catch (err) {
-        console.error("Gagal load points:", err);
-        userPoints = 0;
-        const pointsEl = document.getElementById('detail-user-points');
-        if (pointsEl) pointsEl.textContent = '0';
-    }
-}
-
-// Function baru: Generate barcode nomor telepon
-function generateUserBarcode(phoneNumber) {
-    const canvas = document.getElementById('detail-user-barcode');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (!phoneNumber || phoneNumber.length < 8) {
-        // Tampilkan placeholder jika no telp belum ada
-        ctx.fillStyle = '#999';
-        ctx.font = '11px Poppins, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('No. Telepon belum diisi', canvas.width / 2, canvas.height / 2);
-        return;
-    }
-    
-    try {
-        if (typeof JsBarcode === 'undefined') {
-            console.error('JsBarcode library belum loaded');
-            return;
-        }
-        
-        JsBarcode(canvas, phoneNumber, {
-            format: "CODE128",
-            width: 1.8,
-            height: 45,
-            displayValue: true,
-            fontSize: 12,
-            textMargin: 2,
-            margin: 4,
-            background: "#ffffff",
-            lineColor: "#000000",
-            font: "Poppins"
-        });
-    } catch (err) {
-        console.error("Gagal generate barcode:", err);
-        ctx.fillStyle = '#dc2626';
-        ctx.font = '11px Poppins, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Gagal membuat barcode', canvas.width / 2, canvas.height / 2);
-    }
 }
 function showEditForm() {
     document.getElementById('profile-detail-view').classList.add('hidden');
@@ -5137,14 +4815,6 @@ async function showTransactionDetail(transactionId) {
             <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
         </div>`;
     }
-        let detailPointsHtml = '';
-    if (d.pointsDiscount > 0 && d.redeemedPoints) {
-        detailPointsHtml += `
-        <div class="flex justify-between text-xs mt-2">
-            <span class="text-gray-300"><i class="fa-solid fa-coins text-yellow-400 mr-1"></i> Diskon Point (${d.redeemedPoints.toLocaleString('id-ID')})</span>
-            <span class="text-yellow-400 font-semibold">- ${formatRp(d.pointsDiscount)}</span>
-        </div>`;
-    }
     let statusColor = 'bg-yellow-500/20 text-yellow-400';
     if (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau') statusColor = 'bg-green-500/20 text-green-400';
     else if (d.status === 'Unit Belum Diserahkan' || d.status === 'Proses Cek Unit') statusColor = 'bg-orange-500/20 text-orange-400';
@@ -5195,7 +4865,6 @@ async function showTransactionDetail(transactionId) {
                 <span class="text-white font-semibold">${formatRp(d.shippingCost)}</span>
             </div>` : ''}
             ${promoHtml}
-            ${detailPointsHtml}
         </div>
         <div class="card p-4 mb-5 border-pk/30 bg-pk/5 fade-up">
             <div class="flex justify-between items-center">
@@ -5219,15 +4888,7 @@ async function showTransactionDetail(transactionId) {
             }
             return '';
         })()}
-        ${d.earnedPoints > 0 ? `
-        <div class="card p-3 mb-4 border-yellow-500/20 bg-yellow-500/5">
-            <p class="text-xs text-yellow-400 text-center">
-                <i class="fa-solid fa-gift mr-1"></i> 
-                ${d.pointsAwarded ? 
-                    `Anda mendapatkan <b>${d.earnedPoints} Point</b> dari transaksi ini` : 
-                    `Anda akan mendapatkan <b>${d.earnedPoints} Point</b> setelah transaksi dikonfirmasi`}
-            </p>
-        </div>` : ''}
+
         <button onclick="showTransactionHistory()" class="btn-outline w-full text-sm py-3">
             <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
         </button>
@@ -6050,7 +5711,7 @@ async function submitServiceGadget() {
         }
         msg += `Total Ongkir: ${formatRp(totalNotif)}\n`;
     }
-    msg += `\n*Point Akan Didapat:* 50 Point (setelah konfirmasi)\n\n`;
+    
     msg += `\n_(Catatan: Harga service/part ditentukan setelah pengecekan unit)_`;
     
     window.open(`https://wa.me/${WA_NUMBER1}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -6124,8 +5785,6 @@ async function saveServiceGadgetToFirestore(orderId, d) {
         await window.firebaseAuth.setDoc(orderRef, {
             orderId: orderId,
             userId: user.uid,
-            earnedPoints: 50,           // TAMBAHAN
-            pointsAwarded: false,       // TAMBAHAN
             userName: d.nama,
             userTelp: d.telp,
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ranel-cell-cache-v.0.3.1.0';
+const CACHE_NAME = 'ranel-cell-cache-v.0.3.1.1';
 const urlsToCache = [
     './',
     './index.html',
@@ -7,8 +7,7 @@ const urlsToCache = [
     'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
     'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js'
+    'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 self.addEventListener('install', event => {
