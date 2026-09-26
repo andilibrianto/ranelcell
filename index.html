@@ -30,9 +30,6 @@
         appId: "1:267696476787:web:5fda181cfdaeec413e5006"
     };
     const app = initializeApp(firebaseConfig);
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-    }
     const appCheck = initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider('6Le6GHotAAAAANiAaJBAx3UoO3DY8EfPVush6jAs'),
         isTokenAutoRefreshEnabled: true
