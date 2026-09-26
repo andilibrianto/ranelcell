@@ -1182,14 +1182,15 @@ let modalConfirmCallback = null;
 let modalCancelCallback = null;
 let serverTimeIsOpen = null;
 
-// FUNGSI LOAD KATALOG DARI FIRESTORE (HEMAT KUOTA - SEKALI BACA)
+// FUNGSI LOAD KATALOG DARI FIRESTORE (HEMAT KUOTA - LAZY LOAD)
 function loadCatalogs() {
     if (!window.firebaseAuth) return;
-    const { db, collection, getDocs } = window.firebaseAuth;
+    const { db, collection, getDocs, query, limit } = window.firebaseAuth;
     
-    const setupListener = async (colName, callback) => {
+    const setupGetDocs = async (colName, callback, limitCount = 500) => {
         try {
-            const querySnapshot = await getDocs(collection(db, colName));
+            const q = query(collection(db, colName), limit(limitCount));
+            const querySnapshot = await getDocs(q);
             let docs = [];
             querySnapshot.forEach(doc => docs.push(doc.data()));
             callback(docs);
@@ -1198,7 +1199,7 @@ function loadCatalogs() {
         }
     };
 
-    setupListener('katalog_paket_data', (docs) => {
+    setupGetDocs('katalog_paket_data', (docs) => {
         let grouped = {};
         docs.forEach(d => {
             if (!grouped[d.provider]) grouped[d.provider] = { provider: d.provider, durations: {} };
@@ -1209,7 +1210,7 @@ function loadCatalogs() {
         if (currentView === 'view-pricelist') renderPricelist();
     });
 
-    setupListener('katalog_perdana', (docs) => {
+    setupGetDocs('katalog_perdana', (docs) => {
         let grouped = {};
         docs.forEach(d => {
             if (!grouped[d.provider]) grouped[d.provider] = { provider: d.provider, durations: {} };
@@ -1220,17 +1221,17 @@ function loadCatalogs() {
         if (currentView === 'view-perdana') renderPerdana();
     });
 
-    setupListener('katalog_pulsa', (docs) => {
+    setupGetDocs('katalog_pulsa', (docs) => {
         pulsaData = docs.map(d => [d.nominal, d.price]);
         if (currentView === 'view-pricelist') renderPricelist();
     });
 
-    setupListener('katalog_token_pln', (docs) => {
+    setupGetDocs('katalog_token_pln', (docs) => {
         tokenPLNData = docs.map(d => [d.nominal, d.price]);
         if (currentView === 'view-pricelist') renderPricelist();
     });
 
-    setupListener('katalog_aksesoris', (docs) => {
+    setupGetDocs('katalog_aksesoris', (docs) => {
         let grouped = {};
         docs.forEach(d => {
             if (!grouped[d.category]) grouped[d.category] = { category: d.category, items: [] };
@@ -1240,7 +1241,7 @@ function loadCatalogs() {
         if (currentView === 'view-accessories') renderAccessories();
     });
 
-    setupListener('katalog_game', (docs) => {
+    setupGetDocs('katalog_game', (docs) => {
         let grouped = {};
         docs.forEach(d => {
             if (!grouped[d.game]) grouped[d.game] = { game: d.game, items: [] };
@@ -1249,8 +1250,30 @@ function loadCatalogs() {
         gameData = Object.values(grouped).sort((a, b) => a.game.localeCompare(b.game, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-game') renderGame();
     });
+    
+    // KATALOG GADGET & KENDALA DIHAPUS DARI SINI AGAR TIDAK BOROS KUOTA SAAT AWAL BUKA APLIKASI
+}
+// FUNGSI KHUSUS UNTUK LOAD KATALOG SERVISINAJA (DIPANGGIL SAAT DIBUTUHKAN)
+let isGadgetCatalogLoaded = false;
+function loadGadgetAndIssuesCatalog() {
+    if (isGadgetCatalogLoaded || !window.firebaseAuth) return;
+    isGadgetCatalogLoaded = true; // Tandai sudah pernah diload
+    
+    const { db, collection, getDocs, query, limit } = window.firebaseAuth;
+    
+    const setupGetDocs = async (colName, callback, limitCount = 2000) => {
+        try {
+            const q = query(collection(db, colName), limit(limitCount));
+            const querySnapshot = await getDocs(q);
+            let docs = [];
+            querySnapshot.forEach(doc => docs.push(doc.data()));
+            callback(docs);
+        } catch (err) {
+            console.error(`Gagal load ${colName}`, err);
+        }
+    };
 
-    setupListener('katalog_gadget', (docs) => {
+    setupGetDocs('katalog_gadget', (docs) => {
         gadgetDb = {};
         docs.forEach(d => {
             if (!gadgetDb[d.os]) gadgetDb[d.os] = {};
@@ -1258,9 +1281,9 @@ function loadCatalogs() {
             gadgetDb[d.os][d.brand].push(d.model);
         });
         if (currentView === 'view-service-gadget') updateServiceBrands();
-    });
+    }, 2000); // Limit 2000 tipe HP
 
-    setupListener('katalog_kendala', (docs) => {
+    setupGetDocs('katalog_kendala', (docs) => {
         serviceIssuesDb = {};
         docs.forEach(d => {
             if (d.name === "Lainnya") {
@@ -1274,9 +1297,8 @@ function loadCatalogs() {
                 };
             }
         });
-    });
+    }, 500); // Limit 500 jenis kerusakan
 }
-
     function pushHistory() {
             window.history.pushState({ app: 'ranel-cell' }, '');
         }
@@ -1513,7 +1535,10 @@ function stopBannerAutoScroll() {
         if (viewId !== 'view-game') { gameState.game = null; }
         if (viewId !== 'view-accessories') { accessoriesState.category = null; }
         if (viewId !== 'view-perdana') { perdanaState.provider = null; perdanaState.duration = null; }
-        if (viewId === 'view-service-gadget') initServiceGadget();
+        if (viewId === 'view-service-gadget') {
+            loadGadgetAndIssuesCatalog(); // PANGGIL KATALOG GADGET HANYA SAAT INI
+            initServiceGadget();
+        }
 
         if (currentView !== viewId && !isPopstateNavigating) {
             pushHistory(); 
