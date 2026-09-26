@@ -18,7 +18,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { initializeAppCheck, ReCaptchaV3Provider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check.js';
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence, sendEmailVerification, sendPasswordResetEmail, signInWithPopup, GoogleAuthProvider, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, onSnapshot, limit } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 
     const firebaseConfig = {
@@ -30,6 +30,9 @@
         appId: "1:267696476787:web:5fda181cfdaeec413e5006"
     };
     const app = initializeApp(firebaseConfig);
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+    }
     const appCheck = initializeAppCheck(app, {
         provider: new ReCaptchaV3Provider('6Le6GHotAAAAANiAaJBAx3UoO3DY8EfPVush6jAs'),
         isTokenAutoRefreshEnabled: true
@@ -50,6 +53,7 @@
         where,
         getDocs,
         onSnapshot,
+        limit,
         createUserWithEmailAndPassword,
         signInWithEmailAndPassword,
         signInWithPopup, 
@@ -72,6 +76,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script>
     tailwind.config = {
         theme: {
@@ -804,12 +809,29 @@
     
     <div class="max-w-lg mx-auto px-4 py-8 pb-32">
         <div id="profile-detail-view" class="fade-up">
-            <div class="card p-6 mb-4 border-pk/20 text-center">
-                <div id="detail-profile-pic" class="w-24 h-24 mx-auto mb-4 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden">
-                    <i class="fa-solid fa-user"></i>
+            <div class="card p-6 mb-4 border-pk/20">
+                <!-- Point Indicator (kuning, kanan atas) -->
+                <div class="flex justify-end mb-3">
+                    <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30">
+                        <i class="fa-solid fa-star text-yellow-400 text-[10px]"></i>
+                        <span class="text-yellow-400 text-[11px] font-bold">Point: <span id="detail-user-points">0</span></span>
+                    </div>
                 </div>
-                <p id="detail-user-name" class="font-bold text-lg uppercase">Nama User</p>
-                <p id="detail-user-email" class="text-xs text-gray-400 mb-4">email@user.com</p>
+                
+                <!-- Foto Profil & Barcode -->
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    <div id="detail-profile-pic" class="w-24 h-24 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden flex-shrink-0">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white p-2 rounded-lg">
+                            <svg id="user-barcode" style="width:120px; height:50px;"></svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <p id="detail-user-name" class="font-bold text-lg uppercase text-center">Nama User</p>
+                <p id="detail-user-email" class="text-xs text-gray-400 mb-4 text-center">email@user.com</p>
                 <div class="border-t border-dk-500/50 pt-4 text-left space-y-2">
                     <div class="flex justify-between text-sm">
                         <span class="text-gray-500">No. Telepon</span>
@@ -1015,6 +1037,9 @@
                 <p id="svc-price-note" class="text-[10px] text-gray-500 mt-2">*Harga service/part ditentukan setelah pengecekan unit</p>
             </div>
 
+            <div class="text-center text-xs text-yellow-400 mb-3 mt-1">
+                <i class="fa-solid fa-star mr-1"></i> Anda akan mendapatkan 50 Point dari transaksi ini
+            </div>
             <button onclick="submitServiceGadget()" class="btn-pk w-full text-center">
                 <i class="fa-brands fa-whatsapp mr-2"></i> Kirim Data
             </button>
@@ -1100,7 +1125,7 @@
     </div>
 
     <script>
-    const WA_NUMBER = '6281936664217';
+const WA_NUMBER = '6281936664217';
 const WA_NUMBER1 = '6288989518213';
 function escapeHtml(text) {
     if (!text) return '';
@@ -1152,21 +1177,28 @@ let viewHistory = ['view-home'];
 let isPopstateNavigating = false;
 let savedFormData = null;
 let shouldRestoreForm = false;
+let userPoints = 0;
+let redeemedPoints = 0;
+let pointsUnsubscribe = null; 
+window._transactionsUnsubscribe = null;
 let modalConfirmCallback = null;
 let modalCancelCallback = null;
 let serverTimeIsOpen = null;
 
-// FUNGSI LOAD KATALOG DARI FIRESTORE
+// FUNGSI LOAD KATALOG DARI FIRESTORE (HEMAT KUOTA - SEKALI BACA)
 function loadCatalogs() {
     if (!window.firebaseAuth) return;
-    const { db, collection, query, onSnapshot } = window.firebaseAuth;
+    const { db, collection, getDocs } = window.firebaseAuth;
     
-    const setupListener = (colName, callback) => {
-        onSnapshot(query(collection(db, colName)), (snapshot) => {
+    const setupListener = async (colName, callback) => {
+        try {
+            const querySnapshot = await getDocs(collection(db, colName));
             let docs = [];
-            snapshot.forEach(doc => docs.push(doc.data()));
+            querySnapshot.forEach(doc => docs.push(doc.data()));
             callback(docs);
-        }, (err) => console.error(`Gagal load ${colName}`, err));
+        } catch (err) {
+            console.error(`Gagal load ${colName}`, err);
+        }
     };
 
     setupListener('katalog_paket_data', (docs) => {
@@ -1207,7 +1239,6 @@ function loadCatalogs() {
             if (!grouped[d.category]) grouped[d.category] = { category: d.category, items: [] };
             grouped[d.category].items.push({ name: d.name, price: d.price });
         });
-        // URUTKAN KATEGORI AKSESORIS SESUAI ABJAD (A-Z)
         aksesorisData = Object.values(grouped).sort((a, b) => a.category.localeCompare(b.category, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-accessories') renderAccessories();
     });
@@ -1218,7 +1249,6 @@ function loadCatalogs() {
             if (!grouped[d.game]) grouped[d.game] = { game: d.game, items: [] };
             grouped[d.game].items.push({ name: d.name, price: d.price });
         });
-        // URUTKAN NAMA GAME SESUAI ABJAD (A-Z)
         gameData = Object.values(grouped).sort((a, b) => a.game.localeCompare(b.game, 'id', { numeric: true, sensitivity: 'base' }));
         if (currentView === 'view-game') renderGame();
     });
@@ -1522,6 +1552,208 @@ function stopBannerAutoScroll() {
         }
     }
     function formatRp(n) { return 'Rp ' + n.toLocaleString('id-ID'); }
+        // Listener real-time untuk points user
+    function loadUserPoints() {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
+        
+        if (pointsUnsubscribe) pointsUnsubscribe();
+        
+        const userRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+        pointsUnsubscribe = window.firebaseAuth.onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+                userPoints = docSnap.data().points || 0;
+                if (currentView === 'view-edit-profile') {
+                    updatePointsDisplay();
+                }
+                if (currentView === 'view-order') {
+                    if (redeemedPoints > userPoints) {
+                        redeemedPoints = 0;
+                        renderOrderForm();
+                    }
+                }
+            }
+        }, (err) => {
+            console.error("Error listening to user points:", err);
+        });
+
+        // Pasang listener HANYA untuk transaksi yang belum diklaim point-nya
+        listenToUnclaimedTransactions();
+    }
+        // Listener real-time HEMAT untuk transaksi yang belum diklaim
+    function listenToUnclaimedTransactions() {
+        const user = window.firebaseAuth.auth.currentUser;
+        if (!user) return;
+
+        if (window._transactionsUnsubscribe) window._transactionsUnsubscribe();
+
+        // Query HANYA transaksi yang pointsClaimed-nya FALSE
+        const q = window.firebaseAuth.query(
+            window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
+            window.firebaseAuth.where("userId", "==", user.uid),
+            window.firebaseAuth.where("pointsClaimed", "==", false),
+            window.firebaseAuth.limit(20) // BATASI HANYA 20 TRANSAKSI YANG BELUM DIKLAIM
+        );
+
+        window._transactionsUnsubscribe = window.firebaseAuth.onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                let totalPointsToClaim = 0;
+                let transactionsToUpdate = [];
+                
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    if (data.status === 'Berhasil' || data.status === 'Berhasil Ditinjau') {
+                        const points = calculateTransactionPoints(data);
+                        totalPointsToClaim += points;
+                        transactionsToUpdate.push(docSnap.id);
+                    }
+                });
+                
+                if (transactionsToUpdate.length > 0 && !window._isClaimingPoints) {
+                    window._isClaimingPoints = true;
+                    
+                    (async () => {
+                        try {
+                            if (totalPointsToClaim > 0) {
+                                const userRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+                                const userDoc = await window.firebaseAuth.getDoc(userRef);
+                                const currentPoints = userDoc.exists() ? (userDoc.data().points || 0) : 0;
+                                
+                                await window.firebaseAuth.setDoc(userRef, {
+                                    points: currentPoints + totalPointsToClaim
+                                }, { merge: true });
+                            }
+                            
+                            for (const orderId of transactionsToUpdate) {
+                                const orderRef = window.firebaseAuth.doc(window.firebaseAuth.db, "Riwayat_Pesanan", orderId);
+                                await window.firebaseAuth.setDoc(orderRef, {
+                                    pointsClaimed: true
+                                }, { merge: true });
+                            }
+                            
+                            if (totalPointsToClaim > 0) {
+                                console.log(`[POINT] Berhasil klaim ${totalPointsToClaim} point dari ${transactionsToUpdate.length} transaksi`);
+                                showToast(`🎉 Anda mendapatkan ${totalPointsToClaim} point dari transaksi yang berhasil!`, 'success', 4000);
+                            } else {
+                                console.log(`[POINT] Menandai ${transactionsToUpdate.length} transaksi sebagai selesai (0 point)`);
+                            }
+                        } catch (err) {
+                            console.error("[POINT] Error claiming pending points:", err);
+                        } finally {
+                            window._isClaimingPoints = false;
+                        }
+                    })();
+                }
+            }
+        }, (err) => {
+            console.error("Error listening to unclaimed transactions:", err);
+        });
+    }
+    
+        function stopUserPointsListener() {
+        if (pointsUnsubscribe) {
+            pointsUnsubscribe();
+            pointsUnsubscribe = null;
+        }
+        if (window._transactionsUnsubscribe) {
+            window._transactionsUnsubscribe();
+            window._transactionsUnsubscribe = null;
+        }
+    }
+    
+    function updatePointsDisplay() {
+        const pointsEl = document.getElementById('detail-user-points');
+        if (pointsEl) {
+            pointsEl.textContent = userPoints.toLocaleString('id-ID');
+        }
+    }
+    
+    // Generate barcode dari nomor telepon
+    function generateUserBarcode(phoneNumber) {
+        const svg = document.getElementById('user-barcode');
+        if (!svg) return;
+        
+        if (!phoneNumber || phoneNumber.length < 8) {
+            svg.innerHTML = '<text x="60" y="30" fill="#999" font-size="9" text-anchor="middle" font-family="sans-serif">No. Telp belum diisi</text>';
+            return;
+        }
+        
+        try {
+            if (typeof JsBarcode !== 'undefined') {
+                JsBarcode(svg, phoneNumber, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 45,
+                    displayValue: false,
+                    background: "transparent",
+                    lineColor: "#000000",
+                    margin: 2
+                });
+            }
+        } catch (err) {
+            console.error("Gagal generate barcode:", err);
+        }
+    }
+    
+    // Hitung point untuk sebuah transaksi
+    function calculateTransactionPoints(transaction) {
+        if (!transaction.items) return 0;
+        let totalPoints = 0;
+        transaction.items.forEach(item => {
+            const qty = item.quantity || 1;
+            
+            if (item.type) {
+                // 10 Point: voucher, isi ulang, pulsa, token PLN, topup game
+                if (['paket_data', 'pulsa', 'token_pln', 'game'].includes(item.type)) {
+                    totalPoints += 10 * qty;
+                }
+                // 50 Point: aksesoris gadget, kartu perdana
+                else if (['aksesoris', 'perdana'].includes(item.type)) {
+                    totalPoints += 50 * qty;
+                }
+            } else if (transaction.serviceDetails) {
+                // servisinAja = 50 Point
+                totalPoints += 50 * qty;
+            }
+            // Cek tagihan = 0 point
+        });
+        return totalPoints;
+    }
+    // Tukar point di halaman pesanan
+    function applyPointRedemption() {
+        const input = document.getElementById('points-input');
+        if (!input) return;
+        
+        const points = parseInt(input.value) || 0;
+        
+        if (points < 2000) {
+            showToast('Minimal tukar 2000 point', 'error');
+            return;
+        }
+        
+        if (points > userPoints) {
+            showToast('Point tidak mencukupi', 'error');
+            return;
+        }
+        
+        const maxRedeemable = getCartTotal() + shippingCost - promoDiscount;
+        if (points > maxRedeemable) {
+            showToast(`Point melebihi total pembayaran (maks ${formatRp(maxRedeemable)})`, 'error');
+            return;
+        }
+        
+        redeemedPoints = points;
+        saveCurrentFormData();
+        renderOrderForm();
+        showToast(`Berhasil menukar ${points} point`, 'success');
+    }
+    
+    function removePointRedemption() {
+        redeemedPoints = 0;
+        saveCurrentFormData();
+        renderOrderForm();
+        showToast('Penukaran point dibatalkan', 'info');
+    }
     function onlyDigits(val) { return val.replace(/[^0-9]/g, ''); }
     function togglePassword(inputId, btnEl) {
         const input = document.getElementById(inputId);
@@ -1764,6 +1996,7 @@ function stopBannerAutoScroll() {
             shippingCost = 0;
             appliedPromoCode = '';
             promoDiscount = 0;
+            redeemedPoints = 0;
             destinationLat = null;
             destinationLng = null;
             updateCartUI(); 
@@ -1864,7 +2097,7 @@ function stopBannerAutoScroll() {
         return cart.some(i => i.type === 'aksesoris' || i.type === 'perdana' || (i.type === 'paket_data' && paketMode === 'voucher'));
     }
     function getGrandTotal() {
-        return getCartTotal() + shippingCost - promoDiscount;
+        return Math.max(0, getCartTotal() + shippingCost - promoDiscount - redeemedPoints);
     }
     function selectCategory(cat) {
         if (!checkTelpRequired()) return;
@@ -1881,6 +2114,7 @@ function stopBannerAutoScroll() {
                     shippingCost = 0;
                     appliedPromoCode = '';
                     promoDiscount = 0;
+                    redeemedPoints = 0;
                     updateCartUI(); 
                     renderOrderForm();
                     showToast('Pesanan dihapus', 'info');
@@ -2263,7 +2497,7 @@ function stopBannerAutoScroll() {
     function getCartTotal() { return cart.reduce((s,i) => s + i.price * i.quantity, 0); }
     function getTotalItems() { return cart.reduce((s,i) => s + i.quantity, 0); }
     function hasPaketData() { return cart.some(i => i.type === 'paket_data'); }
-    function saveCurrentFormData() {
+        function saveCurrentFormData() {
         const namaEl = document.getElementById('cust-nama');
         if (namaEl) {
             savedFormData = {
@@ -2272,7 +2506,8 @@ function stopBannerAutoScroll() {
                 alamat: document.getElementById('cust-alamat').value,
                 keterangan: document.getElementById('cust-keterangan')?.value || '',
                 idPelanggan: {},
-                namaPelanggan: {}
+                namaPelanggan: {},
+                redeemedPoints: redeemedPoints
             };
             document.querySelectorAll('.id-pel-input').forEach(inp => {
                 savedFormData.idPelanggan[inp.dataset.idx + '_' + inp.dataset.num] = inp.value;
@@ -2479,6 +2714,40 @@ function stopBannerAutoScroll() {
             }
         }
 
+                // Validasi redeemedPoints
+        const maxRedeemable = getCartTotal() + shippingCost - promoDiscount;
+        if (redeemedPoints > maxRedeemable || redeemedPoints > userPoints) {
+            redeemedPoints = 0;
+        }
+
+        // Section Tukar Point
+        if (isUserLoggedIn && userPoints >= 2000) {
+            const pointsApplied = redeemedPoints > 0;
+            html += `
+            <div class="mb-5">
+                <h3 class="section-label">Tukar Point</h3>
+                <div class="card p-4 bg-yellow-500/5 border-yellow-500/20">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs text-gray-400">Point Anda</span>
+                        <span class="text-sm font-bold text-yellow-400">${userPoints.toLocaleString('id-ID')} Point</span>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mb-3"><i class="fa-solid fa-circle-info mr-1"></i>Minimal tukar 2000 point (1 Point = Rp 1)</p>
+                    <div class="flex gap-2">
+                        <input type="number" id="points-input" class="form-input flex-1 text-sm" 
+                            placeholder="Masukkan jumlah point" min="2000" max="${Math.min(userPoints, maxRedeemable)}"
+                            value="${pointsApplied ? redeemedPoints : ''}" 
+                            ${pointsApplied ? 'readonly' : ''}
+                            oninput="this.value=onlyDigits(this.value)">
+                        ${pointsApplied ? 
+                            `<button onclick="removePointRedemption()" class="btn-outline px-4 text-xs py-2">Hapus</button>` :
+                            `<button onclick="applyPointRedemption()" class="btn-pk px-4 text-xs py-2">Tukar</button>`
+                        }
+                    </div>
+                    ${pointsApplied ? `<p class="text-[11px] text-green-400 mt-2"><i class="fa-solid fa-circle-check mr-1"></i> Anda menukar <b>${redeemedPoints}</b> point. Hemat ${formatRp(redeemedPoints)}</p>` : ''}
+                </div>
+            </div>`;
+        }
+
         const subtotal = getCartTotal();
         const grandTotal = getGrandTotal();
 
@@ -2500,7 +2769,13 @@ function stopBannerAutoScroll() {
                 <span class="text-sm font-semibold text-red-400">- ${formatRp(promoDiscount)}</span>
             </div>
             ` : ''}
-            ${(hasShippingItems() && shippingMode === 'deliver' && shippingCost > 0) || promoDiscount > 0 ? '<hr class="border-dk-600 my-2">' : ''}
+            ${redeemedPoints > 0 ? `
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-300">Tukar Point</span>
+                <span class="text-sm font-semibold text-yellow-400">- ${formatRp(redeemedPoints)}</span>
+            </div>
+            ` : ''}
+            ${(hasShippingItems() && shippingMode === 'deliver' && shippingCost > 0) || promoDiscount > 0 || redeemedPoints > 0 ? '<hr class="border-dk-600 my-2">' : ''}
             <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-300">Total Harga</span>
                 <span class="text-xl font-extrabold text-pk">${formatRp(grandTotal)}</span>
@@ -2767,7 +3042,7 @@ async function applyPromoCode() {
         const TARIF_DASAR = 4000;
         const BATAS_JARAK_DASAR = 3;
         const TARIF_PER_KM = 3000;
-        const BIAYA_LAYANAN = 1000;
+        const BIAYA_LAYANAN = 2000;
         let jarakDibulatkan = Math.ceil(jarakInput); 
         let totalTarif = 0;
 
@@ -2979,16 +3254,31 @@ async function applyPromoCode() {
         });
         window._orderData.namaPelanggan = namaMap;
         window._orderData.idPelanggan = idMap;
-        window._orderData.shippingMode = shippingMode;
+                window._orderData.shippingMode = shippingMode;
         window._orderData.shippingCost = shippingCost;
         window._orderData.promoCode = appliedPromoCode;
         window._orderData.promoDiscount = promoDiscount;
+        window._orderData.redeemedPoints = redeemedPoints;
         showView('view-preview');
     }
-        function renderPreview() {
+            function renderPreview() {
         const el = document.getElementById('preview-content');
         const d = window._orderData;
         if (!d) return;
+        
+        // Hitung estimasi point di sini agar pasti terbaca
+        let estimatedPoints = 0;
+        cart.forEach(item => {
+            const qty = item.quantity || 1;
+            if (item.type) {
+                if (['paket_data', 'pulsa', 'token_pln', 'game'].includes(item.type)) {
+                    estimatedPoints += 10 * qty;
+                } else if (['aksesoris', 'perdana'].includes(item.type)) {
+                    estimatedPoints += 50 * qty;
+                }
+            }
+        });
+
         let itemsHtml = '';
         cart.forEach((item, idx) => {
             itemsHtml += `
@@ -3045,6 +3335,27 @@ async function applyPromoCode() {
                 <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
             </div>`;
         }
+        if (d.redeemedPoints > 0) {
+            promoHtml += `
+            <div class="flex justify-between text-xs mt-2">
+                <span class="text-gray-300">Tukar Point (${d.redeemedPoints} point)</span>
+                <span class="text-yellow-400 font-semibold">- ${formatRp(d.redeemedPoints)}</span>
+            </div>`;
+        }
+
+        // Format teks point
+        let pointsHtml = '';
+        if (estimatedPoints > 0) {
+            pointsHtml = `
+                <div class="mt-3 pt-3 border-t border-dk-500/50 flex justify-between items-center">
+                    <span class="text-xs text-yellow-400 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-star"></i> Anda akan mendapatkan
+                    </span>
+                    <span class="text-sm font-bold text-yellow-400">${estimatedPoints} Point</span>
+                </div>
+            `;
+        }
+
         el.innerHTML = `
             <div class="card p-4 mb-4 border-pk/20">
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
@@ -3086,6 +3397,7 @@ async function applyPromoCode() {
                     <span class="text-sm text-gray-300 font-medium">Total Pembayaran</span>
                     <span class="text-xl font-extrabold text-pk">${formatRp(getGrandTotal())}</span>
                 </div>
+                ${pointsHtml}
             </div>
             <div class="flex gap-3">
                 <button onclick="showView('view-order')" class="btn-outline flex-1 text-sm py-3">
@@ -3371,6 +3683,7 @@ async function saveQRISImage() {
     shippingCost = 0;
     appliedPromoCode = '';
     promoDiscount = 0;
+    redeemedPoints = 0;
     destinationLat = null;
     destinationLng = null;
     selectedPaymentMethod = '';
@@ -3451,6 +3764,11 @@ async function saveQRISImage() {
         msg += `*Diskon Promo:* -${formatRp(d.promoDiscount)}\n\n`;
     }
     
+    if (d.redeemedPoints > 0) {
+        msg += `*Tukar Point:* ${d.redeemedPoints} point\n`;
+        msg += `*Diskon Point:* -${formatRp(d.redeemedPoints)}\n\n`;
+    }
+    
     msg += `*Total Harga: ${formatRp(getGrandTotal())}*\n`;
     
     if (selectedPaymentMethod) {
@@ -3467,7 +3785,7 @@ async function saveQRISImage() {
         msg += `\n\n*Lokasi Maps:* https://maps.google.com/?q=${destinationLat},${destinationLng}`;
     }
 
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     let defaultStatus = "Sedang Dalam Proses";
     if (selectedPaymentMethod === 'QRIS Bank BCA') {
@@ -3483,18 +3801,20 @@ async function saveQRISImage() {
             items: cart.map(item => ({
                 name: item.name,
                 price: item.price,
-                quantity: item.quantity
+                quantity: item.quantity,
+                type: item.type || ''
             })),
             subtotal: getCartTotal(),
             shippingMode: d.shippingMode || null,
             shippingCost: d.shippingCost || 0,
             promoCode: d.promoCode || '',
             promoDiscount: d.promoDiscount || 0,
-            total: getGrandTotal(),
+            redeemedPoints: d.redeemedPoints || 0,
+            pointsClaimed: false,
+            total: getGrandTotal(), // Pastikan getGrandTotal dihitung di sini
             paymentMethod: selectedPaymentMethod,
             address: d.alamat || '-',
             idPelanggan: d.idPelanggan || {},
-            namaPelanggan: d.namaPelanggan || {},
             status: defaultStatus,
             transactionDate: new Date().toLocaleString('id-ID', { 
                 timeZone: 'Asia/Jakarta',
@@ -3507,7 +3827,8 @@ async function saveQRISImage() {
     
     if (!window._historyCache) window._historyCache = [];
     window._historyCache.unshift(localTransaction);
-    saveTransactionToFirestore(d, orderId);
+    await saveTransactionToFirestore(d, orderId);
+    
     resetCartState();
     showTransactionDetail(orderId);
     showLocalTransactionNotification(orderId, totalNotif);
@@ -3587,14 +3908,17 @@ async function saveQRISImage() {
     if (selectedPaymentMethod === 'QRIS Bank BCA') {
         defaultStatus = "Menunggu Pembayaran";
     }
+    // Tambahkan field type untuk perhitungan point
     const cartItems = cart.map(item => ({
         name: item.name,
         price: item.price,
-        quantity: item.quantity
+        quantity: item.quantity,
+        type: item.type || ''
     }));
     const subtotalProduk = getCartTotal();
     const grandTotal = getGrandTotal();
     const paymentMethod = selectedPaymentMethod;
+    const redeemedPointsValue = d.redeemedPoints || 0;
     
     try {
         await window.firebaseAuth.setDoc(orderRef, {
@@ -3602,12 +3926,14 @@ async function saveQRISImage() {
             userId: user.uid,
             userName: d.nama,
             userTelp: d.telp,
-            items: cartItems, // Gunakan variabel yang dikunci
+            items: cartItems,
             subtotal: subtotalProduk,
             shippingMode: d.shippingMode || null,
             shippingCost: d.shippingCost || 0,
             promoCode: d.promoCode || '',
             promoDiscount: d.promoDiscount || 0,
+            redeemedPoints: redeemedPointsValue,
+            pointsClaimed: false,
             total: grandTotal,
             paymentMethod: paymentMethod,
             address: d.alamat || '-',
@@ -3620,6 +3946,18 @@ async function saveQRISImage() {
                 hour12: false
             })
         });
+        
+        // Kurangi points user jika ada penukaran point
+        if (redeemedPointsValue > 0) {
+            const userRef = window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid);
+            const userDoc = await window.firebaseAuth.getDoc(userRef);
+            const currentPoints = userDoc.exists() ? (userDoc.data().points || 0) : 0;
+            await window.firebaseAuth.setDoc(userRef, {
+                points: Math.max(0, currentPoints - redeemedPointsValue)
+            }, { merge: true });
+            console.log(`[POINT] Berhasil kurangi ${redeemedPointsValue} point dari user`);
+        }
+        
     const _user = window.firebaseAuth.auth.currentUser;
     if (_user) {
         const _idToken = await _user.getIdToken();
@@ -3719,12 +4057,14 @@ async function saveQRISImage() {
                 userId: user.uid,
                 userName: nama,
                 userTelp: telp,
-                items: [{ name: `Cek Tagihan ${jenis}`, price: 0, quantity: 1 }],
+                items: [{ name: `Cek Tagihan ${jenis}`, price: 0, quantity: 1, type: '' }],
                 subtotal: 0,
                 shippingMode: null,
                 shippingCost: 0,
                 promoCode: '',
                 promoDiscount: 0,
+                redeemedPoints: 0,
+                pointsClaimed: false,
                 total: 0,
                 paymentMethod: 'Cek via WhatsApp',
                 address: '-',
@@ -4248,6 +4588,8 @@ function handleNotificationNavigation(transactionId) {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
+                loadUserPoints();
+                
             }
             
             isProcessingAuth = false;
@@ -4339,6 +4681,8 @@ function handleNotificationNavigation(transactionId) {
                 updateHomeGreeting();
                 initPresenceSystem(user); 
                 setupCustomerFCM();
+                loadUserPoints();
+                
                 
                 isProcessingAuth = false;
             })
@@ -4355,9 +4699,12 @@ function handleNotificationNavigation(transactionId) {
     function handleLogout() {
         showConfirmModal("Keluar Akun?", "Apakah Anda yakin ingin keluar dari akun ini?", () => {
         stopPresenceSystem();
+        stopUserPointsListener();
         window.firebaseAuth.signOut(window.firebaseAuth.auth).then(() => {
             isProcessingAuth = false; 
             window.currentUserTelp = ''; 
+            userPoints = 0;
+            redeemedPoints = 0;
 
             updateHomeGreeting();
             showToast('Anda telah keluar', 'info');
@@ -4394,13 +4741,30 @@ function handleNotificationNavigation(transactionId) {
             greetingEl.classList.add('hidden');
         }
     }
-    function showEditProfile() {
+    async function showEditProfile() {
     const user = window.firebaseAuth.auth.currentUser;
     if (!user) return;
+
+    // Fetch data user termasuk points
+    try {
+        const userDoc = await window.firebaseAuth.getDoc(
+            window.firebaseAuth.doc(window.firebaseAuth.db, "users", user.uid)
+        );
+        if (userDoc.exists()) {
+            userPoints = userDoc.data().points || 0;
+        }
+    } catch (err) {
+        console.error("Gagal mengambil data point:", err);
+    }
 
     document.getElementById('detail-user-name').textContent = user.displayName || 'User';
     document.getElementById('detail-user-email').textContent = user.email || '-';
     document.getElementById('detail-user-telp').textContent = window.currentUserTelp || '-';
+    updatePointsDisplay();
+    
+    // Generate barcode dari nomor telepon
+    generateUserBarcode(window.currentUserTelp);
+    
     const detailPic = document.getElementById('detail-profile-pic');
     if (user.photoURL) {
         detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
@@ -4653,12 +5017,14 @@ async function showTransactionHistory() {
     const contentEl = document.getElementById('history-content');
     contentEl.innerHTML = `<div class="text-center py-10 text-gray-500 text-sm">Memuat riwayat...</div>`;
     
+    
     showView('view-history');
 
     try {
         const q = window.firebaseAuth.query(
             window.firebaseAuth.collection(window.firebaseAuth.db, "Riwayat_Pesanan"),
-            window.firebaseAuth.where("userId", "==", user.uid)
+            window.firebaseAuth.where("userId", "==", user.uid),
+            window.firebaseAuth.limit(50) // BATASI HANYA 50 TRANSAKSI TERAKHIR
         );
 
         const querySnapshot = await window.firebaseAuth.getDocs(q);
@@ -4815,10 +5181,45 @@ async function showTransactionDetail(transactionId) {
             <span class="text-red-400 font-semibold">- ${formatRp(d.promoDiscount)}</span>
         </div>`;
     }
+    if (d.redeemedPoints > 0) {
+        promoHtml += `
+        <div class="flex justify-between text-xs mt-2">
+            <span class="text-gray-300">Tukar Point (${d.redeemedPoints} point)</span>
+            <span class="text-yellow-400 font-semibold">- ${formatRp(d.redeemedPoints)}</span>
+        </div>`;
+    }
     let statusColor = 'bg-yellow-500/20 text-yellow-400';
     if (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau') statusColor = 'bg-green-500/20 text-green-400';
     else if (d.status === 'Unit Belum Diserahkan' || d.status === 'Proses Cek Unit') statusColor = 'bg-orange-500/20 text-orange-400';
     else if (d.status === 'Gagal' || d.status === 'Refund') statusColor = 'bg-red-500/20 text-red-400';
+
+    // HITUNG ULANG TOTAL SEBAGAI FALLBACK JIKA d.total BERNILAI NULL/UNDEFINED
+    let calculatedTotal = d.total;
+    if (calculatedTotal === undefined || calculatedTotal === null) {
+        calculatedTotal = (d.subtotal || 0) + (d.shippingCost || 0) - (d.promoDiscount || 0) - (d.redeemedPoints || 0);
+    }
+
+    // HITUNG PEROLEHAN POINT DARI TRANSAKSI INI
+    const earnedPoints = calculateTransactionPoints(d);
+    let pointsInfoHtml = '';
+    if (earnedPoints > 0) {
+        let pointsLabel = 'Point yang akan didapat';
+        let pointsColor = 'text-yellow-400';
+        
+        // Jika status sudah berhasil, ubah teksnya
+        if (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau') {
+            pointsLabel = 'Point yang didapat';
+        }
+        
+        pointsInfoHtml = `
+            <div class="mt-3 pt-3 border-t border-dk-500/50 flex justify-between items-center">
+                <span class="text-xs ${pointsColor} font-medium flex items-center gap-1.5">
+                    <i class="fa-solid fa-star"></i> ${pointsLabel}
+                </span>
+                <span class="text-sm font-bold ${pointsColor}">+ ${earnedPoints} Point</span>
+            </div>
+        `;
+    }
 
     el.innerHTML = `
         <div class="card p-4 mb-4 border-pk/20 fade-up">
@@ -4866,15 +5267,38 @@ async function showTransactionDetail(transactionId) {
             </div>` : ''}
             ${promoHtml}
         </div>
-        <div class="card p-4 mb-5 border-pk/30 bg-pk/5 fade-up">
+            <div class="card p-4 mb-5 border-pk/30 bg-pk/5 fade-up">
             <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-300 font-medium">Total Pembayaran</span>
-                <span class="text-xl font-extrabold text-pk">${formatRp(d.total || 0)}</span>
+                <span class="text-xl font-extrabold text-pk">${formatRp(calculatedTotal)}</span>
             </div>
             <div class="flex justify-between items-center mt-2">
                 <span class="text-xs text-gray-400">Metode Pembayaran</span>
                 <span class="text-xs text-white font-medium">${escapeHtml(d.paymentMethod || '-')}</span>
             </div>
+            ${pointsInfoHtml}
+        </div>
+            ${(() => {
+                let estPoints = 0;
+                cart.forEach(item => {
+                    const qty = item.quantity || 1;
+                    if (item.type) {
+                        if (['paket_data', 'pulsa', 'token_pln', 'game'].includes(item.type)) {
+                            estPoints += 10 * qty;
+                        } else if (['aksesoris', 'perdana'].includes(item.type)) {
+                            estPoints += 50 * qty;
+                        }
+                    }
+                });
+                if (estPoints > 0) {
+                    return `
+                    <div class="mt-3 pt-3 border-t border-dk-500/50 flex justify-between items-center">
+                        <span class="text-xs text-yellow-400 font-medium"><i class="fa-solid fa-star mr-1"></i>Point yang akan didapat</span>
+                        <span class="text-sm font-bold text-yellow-400">+ ${estPoints} Point</span>
+                    </div>`;
+                }
+                return '';
+            })()}
         </div>
 
         ${(() => {
@@ -5208,6 +5632,8 @@ async function submitComplaint() {
                 updateHomeGreeting();
                 initPresenceSystem(user);
                 setupCustomerFCM();
+                loadUserPoints();
+                
                 
                 isAuthReady = true; // Tandai bahwa Auth sepenuhnya siap
 
@@ -5782,22 +6208,26 @@ async function saveServiceGadgetToFirestore(orderId, d) {
     let defaultStatus = d.isActiveAntar ? "Sedang Ditinjau" : "Unit Belum Diserahkan";
     
     try {
-        await window.firebaseAuth.setDoc(orderRef, {
+        const payload = {
             orderId: orderId,
             userId: user.uid,
             userName: d.nama,
             userTelp: d.telp,
-
             items: [{
                 name: `${d.brand} ${d.model} (${d.finalIssue})`,
                 price: 0,
-                quantity: 1
+                quantity: 1,
+                type: ''
             }],
             subtotal: 0,
             shippingMode: d.isActiveAntar ? 'deliver' : 'pickup',
             shippingCost: d.isActiveAntar ? serviceShippingCost : 0,
             promoCode: d.isActiveAntar ? serviceAppliedPromoCode : '',
             promoDiscount: d.isActiveAntar ? servicePromoDiscount : 0,
+            redeemedPoints: 0,
+            pointsClaimed: false,
+            idPelanggan: {}, // Tambahan agar tidak null
+            namaPelanggan: {}, // Tambahan agar tidak null
             total: d.isActiveAntar ? (serviceShippingCost - servicePromoDiscount) : 0,
             paymentMethod: 'Pending',
             address: d.isActiveAntar ? d.alamat : 'Datang ke Toko',
@@ -5815,10 +6245,14 @@ async function saveServiceGadgetToFirestore(orderId, d) {
                 issue: d.finalIssue,
                 schedule: d.isActiveAntar ? `${d.date} (${d.time})` : '-'
             }
-        });
+        };
+        
+        await window.firebaseAuth.setDoc(orderRef, payload);
         console.log("Transaksi Service Gadget berhasil disimpan ke Firestore");
     } catch (err) {
         console.error("Gagal menyimpan transaksi ke Firestore:", err);
+        console.error("Detail Error:", err.code, err.message);
+        showToast("Gagal menyimpan data transaksi: " + err.message, 'error', 5000);
     }
 }
 function resetServiceGadgetForm() {
