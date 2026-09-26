@@ -3952,6 +3952,21 @@ async function saveQRISImage() {
             await window.firebaseAuth.setDoc(userRef, {
                 points: Math.max(0, currentPoints - redeemedPointsValue)
             }, { merge: true });
+            
+            // CATAT LOG POINT KELUAR (PENUKARAN)
+            await window.firebaseAuth.setDoc(
+                window.firebaseAuth.doc(window.firebaseAuth.collection(window.firebaseAuth.db, "Log_Point")), 
+                {
+                    userId: user.uid,
+                    userName: d.nama,
+                    type: 'keluar',
+                    amount: redeemedPointsValue,
+                    description: `Tukar Point: ${orderId}`,
+                    orderId: orderId,
+                    createdAt: new Date().toISOString(),
+                    cancelled: false
+                }
+            );
             console.log(`[POINT] Berhasil kurangi ${redeemedPointsValue} point dari user`);
         }
         
