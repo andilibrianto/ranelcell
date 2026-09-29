@@ -1660,10 +1660,13 @@ function loadGadgetAndIssuesCatalog() {
             svg.innerHTML = '<text x="60" y="30" fill="#999" font-size="9" text-anchor="middle" font-family="sans-serif">No. Telp belum diisi</text>';
             return;
         }
-        
+        let barcodeValue = phoneNumber;
+        if (barcodeValue.startsWith('0')) {
+            barcodeValue = '+62' + barcodeValue.substring(1);
+        }
         try {
             if (typeof JsBarcode !== 'undefined') {
-                JsBarcode(svg, phoneNumber, {
+                JsBarcode(svg, barcodeValue, {
                     format: "CODE128",
                     width: 2,
                     height: 45,
