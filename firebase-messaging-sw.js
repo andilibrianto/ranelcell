@@ -9,10 +9,8 @@ const firebaseConfig = {
     messagingSenderId: "267696476787",
     appId: "1:267696476787:web:5fda181cfdaeec413e5006"
 };
-
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     event.waitUntil(
