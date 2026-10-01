@@ -4980,9 +4980,83 @@ function loadGadgetAndIssuesCatalog() {
             contentEl.innerHTML = `<div class="text-center py-10 text-red-400 text-sm">Gagal memuat data.</div>`;
         }
     }
+    async function belanjaLagi(transactionId) {
+        let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
+        if (!transactionObj) return;
+        const d = transactionObj.data;
+        const doAddToCart = () => {
+            d.items.forEach(item => {
+                const existing = cart.find(c => c.name === item.name);
+                if (existing) {
+                    existing.quantity += (item.quantity || 1);
+                } else {
+                    cart.push({ 
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity || 1,
+                        type: item.type || '',
+                        id: Date.now() + Math.floor(Math.random() * 1000)
+                    });
+                }
+            });
+            let restoredIdPelanggan = {};
+            let restoredNamaPelanggan = {};
+            if (d.idPelanggan) {
+                for (const idx in d.idPelanggan) {
+                    const idPels = d.idPelanggan[idx];
+                    if (Array.isArray(idPels)) {
+                        idPels.forEach((id, num) => {
+                            restoredIdPelanggan[idx + '_' + num] = id;
+                        });
+                    }
+                }
+            }
+            if (d.namaPelanggan) {
+                for (const idx in d.namaPelanggan) {
+                    const namaPels = d.namaPelanggan[idx];
+                    if (Array.isArray(namaPels)) {
+                        namaPels.forEach((nama, num) => {
+                            restoredNamaPelanggan[idx + '_' + num] = nama;
+                        });
+                    }
+                }
+            }
+            savedFormData = {
+                nama: d.userName || '',
+                telp: d.userTelp || '',
+                alamat: (d.address && d.address !== '-' && d.address !== 'Datang ke Toko') ? d.address : '',
+                keterangan: '',
+                idPelanggan: restoredIdPelanggan,
+                namaPelanggan: restoredNamaPelanggan,
+                redeemedPoints: 0
+            };
+            shouldRestoreForm = true;
+            redeemedPoints = 0;
+            appliedPromoCode = '';
+            promoDiscount = 0;
+            updateCartUI();
+            showToast('Barang berhasil ditambahkan ke pesanan', 'success');
+            showView('view-order');
+        };
+
+        if (cart.length > 0) {
+            showConfirmModal(
+                "Keranjang Tidak Kosong", 
+                "Keranjang Anda saat ini sudah berisi barang. Apakah Anda ingin menghapusnya dan menggantinya dengan barang dari transaksi ini?", 
+                () => {
+                    cart = [];
+                    doAddToCart();
+                }, 
+                'fa-solid fa-cart-shopping', 
+                'Iya, Ganti', 
+                'Batal'
+            );
+        } else {
+            doAddToCart();
+        }
+    }
     async function showTransactionDetail(transactionId) {
         let transactionObj = window._historyCache ? window._historyCache.find(t => t.id === transactionId) : null;
-        
         if (!transactionObj) {
             if (!window.firebaseAuth) return;
             showLoading('Memuat detail transaksi...');
@@ -5007,10 +5081,8 @@ function loadGadgetAndIssuesCatalog() {
                 return;
             }
         }
-
         const d = transactionObj.data;
         const el = document.getElementById('history-detail-content');
-
         let itemsHtml = '';
         d.items.forEach((item, idx) => {
             itemsHtml += `
@@ -5022,7 +5094,6 @@ function loadGadgetAndIssuesCatalog() {
                     <p class="font-semibold text-white whitespace-nowrap">${formatRp(item.price * item.quantity)}</p>
                 </div>`;
         });
-
         let idPelHtml = '';
         if (d.idPelanggan && Object.keys(d.idPelanggan).length > 0) {
             idPelHtml += `<div class="mt-4 pt-4 border-t border-dk-500/50">`;
@@ -5038,7 +5109,6 @@ function loadGadgetAndIssuesCatalog() {
             });
             idPelHtml += `</div>`;
         }
-
         let shippingHtml = '';
         if (d.shippingMode) {
             shippingHtml += `<div class="mt-4 pt-4 border-t border-dk-500/50">`;
@@ -5051,7 +5121,6 @@ function loadGadgetAndIssuesCatalog() {
             }
             shippingHtml += `</div>`;
         }
-
         let promoHtml = '';
         if (d.promoDiscount > 0 && d.promoCode) {
             promoHtml += `
@@ -5071,22 +5140,18 @@ function loadGadgetAndIssuesCatalog() {
         if (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau') statusColor = 'bg-green-500/20 text-green-400';
         else if (d.status === 'Unit Belum Diserahkan' || d.status === 'Proses Cek Unit') statusColor = 'bg-orange-500/20 text-orange-400';
         else if (d.status === 'Gagal' || d.status === 'Refund') statusColor = 'bg-red-500/20 text-red-400';
-
         let calculatedTotal = d.total;
         if (calculatedTotal === undefined || calculatedTotal === null) {
             calculatedTotal = (d.subtotal || 0) + (d.shippingCost || 0) - (d.promoDiscount || 0) - (d.redeemedPoints || 0);
         }
-
         const earnedPoints = calculateTransactionPoints(d);
         let pointsInfoHtml = '';
         if (earnedPoints > 0) {
             let pointsLabel = 'Point yang akan didapat';
             let pointsColor = 'text-yellow-400';
-            
             if (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau') {
                 pointsLabel = 'Point yang didapat';
             }
-            
             pointsInfoHtml = `
                 <div class="mt-3 pt-3 border-t border-dk-500/50 flex justify-between items-center">
                     <span class="text-xs ${pointsColor} font-medium flex items-center gap-1.5">
@@ -5096,7 +5161,6 @@ function loadGadgetAndIssuesCatalog() {
                 </div>
             `;
         }
-
         el.innerHTML = `
             <div class="card p-4 mb-4 border-pk/20 fade-up">
                 <div class="flex justify-between items-start mb-3 pb-3 border-b border-dk-500/50">
@@ -5177,39 +5241,39 @@ function loadGadgetAndIssuesCatalog() {
                 })()}
             </div>
 
-            ${(() => {
-                const isCompleted = (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau');
-                if (isCompleted) {
-                    return `
-                        <button onclick="showComplaintForm('${transactionObj.id}')" class="btn-pk w-full text-sm py-3 mb-3">
-                            <i class="fa-solid fa-headset mr-2"></i> Pengaduan / Bantuan
-                        </button>
-                    `;
-                }
-                return '';
-            })()}
+        <button onclick="belanjaLagi('${transactionObj.id}')" class="btn-pk w-full text-sm py-3 mb-3">
+            <i class="fa-solid fa-cart-plus mr-2"></i> Belanja Lagi
+        </button>
 
-            <button onclick="showTransactionHistory()" class="btn-outline w-full text-sm py-3">
-                <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
-            </button>
-        `;
+        ${(() => {
+            const isCompleted = (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau');
+            if (isCompleted) {
+                return `
+                    <button onclick="showComplaintForm('${transactionObj.id}')" class="btn-outline w-full text-sm py-3 mb-3">
+                        <i class="fa-solid fa-headset mr-2"></i> Pengaduan / Bantuan
+                    </button>
+                `;
+            }
+            return '';
+        })()}
 
-        showView('view-history-detail');
-    }
+        <button onclick="showTransactionHistory()" class="btn-outline w-full text-sm py-3">
+            <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
+        </button>
+    `;
+    showView('view-history-detail');
+}
     let currentComplaintTransaction = null;
     let currentComplaintId = null;
     function showComplaintForm(transactionId) {
         if (!window._historyCache) return;
         const transactionObj = window._historyCache.find(t => t.id === transactionId);
         if (!transactionObj) return;
-
         currentComplaintTransaction = transactionObj.data;
         currentComplaintId = transactionId; 
         window._currentComplaintId = transactionId;
-
         const d = currentComplaintTransaction;
         const el = document.getElementById('complaint-content');
-
         let totalTargets = 0;
         d.items.forEach((item, idx) => {
             if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
@@ -5218,13 +5282,10 @@ function loadGadgetAndIssuesCatalog() {
                 totalTargets++;
             }
         });
-
         const showCheckbox = totalTargets > 1;
-
         let itemsHtml = '';
         d.items.forEach((item, idx) => {
             const hasIdPels = d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0;
-
             itemsHtml += `
                 <div class="flex justify-between items-start text-xs mb-3 p-2 rounded-lg ${showCheckbox ? 'bg-dk-700' : ''}">
                     <div class="flex-1 mr-2 flex items-start gap-2">`;
@@ -5265,8 +5326,7 @@ function loadGadgetAndIssuesCatalog() {
                         <p class="text-[10px] text-gray-500 uppercase tracking-wider">Waktu Transaksi</p>
                         <p class="text-xs text-white mt-1">${d.transactionDate || '-'}</p>
                     </div>
-                </div>
-                
+                </div>               
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Data Pemesan</h3>
                 <div class="text-xs space-y-2 mb-4">
                     <div class="flex justify-between">
@@ -5278,16 +5338,13 @@ function loadGadgetAndIssuesCatalog() {
                         <span class="text-white font-medium">${d.userTelp || '-'}</span>
                     </div>
                 </div>
-
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Detail Pesanan</h3>
-                ${itemsHtml}
-                
+                ${itemsHtml}               
                 <div class="mt-4 pt-4 border-t border-dk-500/50 flex justify-between text-xs">
                     <span class="text-gray-300 font-medium">Total Pembayaran</span>
                     <span class="text-white font-bold">${formatRp(d.total || 0)}</span>
                 </div>
             </div>
-
             <div class="card p-4 mb-4 border-pk/20 fade-up">
                 <h3 class="text-xs font-bold text-pk mb-3 uppercase tracking-wider">Detail Pengaduan</h3>
                 <div class="mb-3">
@@ -5308,12 +5365,10 @@ function loadGadgetAndIssuesCatalog() {
                     <textarea id="complaint-message" class="form-input" rows="4" placeholder="Tuliskan detail keluhan atau bantuan yang Anda butuhkan..." style="resize:none;"></textarea>
                 </div>
             </div>
-
             <button onclick="submitComplaint()" class="btn-pk w-full text-center">
                 <i class="fa-brands fa-whatsapp mr-2"></i> Kirim Pengaduan
             </button>
         `;
-
         showView('view-complaint');
     }
     async function submitComplaint() {
@@ -5331,7 +5386,6 @@ function loadGadgetAndIssuesCatalog() {
             showToast('Detail pengaduan minimal 15 karakter', 'error'); 
             return; 
         }
-
         let totalTargets = 0;
         d.items.forEach((item, idx) => {
             if (d.idPelanggan && d.idPelanggan[idx] && d.idPelanggan[idx].length > 0) {
@@ -5340,7 +5394,6 @@ function loadGadgetAndIssuesCatalog() {
                 totalTargets++;
             }
         });
-
         let selectedTargets = [];
         if (totalTargets > 1) {
             document.querySelectorAll('.complaint-target-check').forEach(check => {
@@ -5374,8 +5427,7 @@ function loadGadgetAndIssuesCatalog() {
         msg += `Nama: ${d.userName || '-'}\n`;
         msg += `No. Telp: ${d.userTelp || '-'}\n\n`;
         msg += `*Kategori Pengaduan:*\n${category}\n\n`;
-        msg += `*Barang yang Diadukan:*\n`;
-        
+        msg += `*Barang yang Diadukan:*\n`;       
         selectedTargets.forEach(sel => {
             const item = d.items[sel.idx];
             if (sel.type === 'item') {
