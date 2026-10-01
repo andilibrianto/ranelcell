@@ -2703,7 +2703,7 @@ function loadGadgetAndIssuesCatalog() {
                         <span class="text-xs text-gray-400">Point Anda</span>
                         <span class="text-sm font-bold text-yellow-400">${userPoints.toLocaleString('id-ID')} Point</span>
                     </div>
-                    <p class="text-[10px] text-gray-500 mb-3"><i class="fa-solid fa-circle-info mr-1"></i>Minimal tukar 2000 point (1 Point = Rp 1)</p>
+                    <p class="text-[10px] text-gray-500 mb-3"><i class="fa-solid fa-circle-info mr-1"></i>1 Point = Rp 1</p>
                     <div class="flex gap-2">
                         <input type="number" id="points-input" class="form-input flex-1 text-sm" 
                             placeholder="Masukkan jumlah point" min="2000" max="${Math.min(userPoints, maxRedeemable)}"
@@ -5241,14 +5241,13 @@ function loadGadgetAndIssuesCatalog() {
                 })()}
             </div>
 
-        <button onclick="belanjaLagi('${transactionObj.id}')" class="btn-pk w-full text-sm py-3 mb-3">
-            <i class="fa-solid fa-cart-plus mr-2"></i> Belanja Lagi
-        </button>
-
         ${(() => {
             const isCompleted = (d.status === 'Berhasil' || d.status === 'Berhasil Ditinjau');
             if (isCompleted) {
                 return `
+                    <button onclick="belanjaLagi('${transactionObj.id}')" class="btn-pk w-full text-sm py-3 mb-3">
+                        <i class="fa-solid fa-cart-plus mr-2"></i> Belanja Lagi
+                    </button>
                     <button onclick="showComplaintForm('${transactionObj.id}')" class="btn-outline w-full text-sm py-3 mb-3">
                         <i class="fa-solid fa-headset mr-2"></i> Pengaduan / Bantuan
                     </button>
@@ -5256,7 +5255,6 @@ function loadGadgetAndIssuesCatalog() {
             }
             return '';
         })()}
-
         <button onclick="showTransactionHistory()" class="btn-outline w-full text-sm py-3">
             <i class="fa-solid fa-chevron-left mr-2"></i> Kembali ke Riwayat
         </button>
