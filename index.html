@@ -800,8 +800,8 @@
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="bg-white p-1.5 rounded-lg flex items-center justify-center overflow-hidden" style="width: 150px; height: 60px;">
-                            <svg id="user-barcode" style="max-width: 100%; max-height: 100%;"></svg>
+                        <div class="bg-white p-1.5 rounded-lg flex items-center justify-center">
+                            <svg id="user-barcode" style="height: 50px; width: auto;"></svg>
                         </div>
                     </div>
                 </div>
@@ -1668,7 +1668,7 @@ function loadGadgetAndIssuesCatalog() {
             if (typeof JsBarcode !== 'undefined') {
                 JsBarcode(svg, barcodeValue, {
                     format: "CODE128",
-                    width: 2,
+                    width: 1.5,
                     height: 50,
                     displayValue: false,
                     background: "transparent",
