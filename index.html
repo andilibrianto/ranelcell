@@ -796,14 +796,15 @@
                 </div>
                 
                 <div class="flex items-center justify-center gap-4 mb-4">
-                    <div id="detail-profile-pic" class="w-24 h-24 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden flex-shrink-0">
+                    <div id="detail-profile-pic" class="w-24 h-24 rounded-full bg-pk/10 flex items-center justify-center text-pk font-bold text-2xl overflow-hidden flex-shrink-0 border border-dk-600">
                         <i class="fa-solid fa-user"></i>
                     </div>
                     <div class="flex flex-col items-center">
-                        <div class="bg-white p-2 rounded-lg">
-                            <svg id="user-barcode" style="width:120px; height:50px;"></svg>
+                        <div class="bg-white p-1.5 rounded-lg w-[130px] h-[55px] flex items-center justify-center overflow-hidden">
+                            <svg id="user-barcode" style="width: 100%; height: 100%;"></svg>
                         </div>
                     </div>
+                </div>
                 
                 <p id="detail-user-name" class="font-bold text-lg uppercase text-center">Nama User</p>
                 <p id="detail-user-email" class="text-xs text-gray-400 mb-4 text-center">email@user.com</p>
@@ -1668,11 +1669,11 @@ function loadGadgetAndIssuesCatalog() {
                 JsBarcode(svg, barcodeValue, {
                     format: "CODE128",
                     width: 2,
-                    height: 45,
+                    height: 40,
                     displayValue: false,
                     background: "transparent",
                     lineColor: "#000000",
-                    margin: 2
+                    margin: 0
                 });
             }
         } catch (err) {
@@ -4650,11 +4651,10 @@ function loadGadgetAndIssuesCatalog() {
         
         const detailPic = document.getElementById('detail-profile-pic');
         if (user.photoURL) {
-            detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover">`;
+            detailPic.innerHTML = `<img src="${user.photoURL}" referrerpolicy="no-referrer" class="w-full h-full object-cover rounded-full">`;
         } else {
-            detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2">`;
+            detailPic.innerHTML = `<img src="./Gambar/Logo_WH_intuls-removebg-preview.png" alt="Logo" class="w-full h-full object-contain p-2 rounded-full">`;
         }
-
         document.getElementById('edit-nama').value = user.displayName || '';
         document.getElementById('edit-telp').value = window.currentUserTelp || '';
         document.getElementById('edit-email').value = user.email || '';
