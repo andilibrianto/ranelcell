@@ -1169,7 +1169,7 @@
             </div>
             <h2 class="text-2xl font-extrabold text-pk mb-3 tracking-[0.15em]">PEMELIHARAAN SISTEM</h2>
             <p class="text-sm text-gray-300 mb-2 leading-relaxed">Website sedang dalam pemeliharaan</p>
-            <p class="text-base font-bold text-white mb-6">14:40 - 15:10 WIB</p>
+            <p class="text-base font-bold text-white mb-6">23:40 - 00:10 WIB</p>
             <div class="maintenance-progress">
                 <div class="maintenance-progress-bar"></div>
             </div>
@@ -6335,8 +6335,8 @@ function loadGadgetAndIssuesCatalog() {
         updateCartUI();
         checkMaintenanceMode();
     }
-    const MAINTENANCE_START = 14 * 60 + 40; // 23:40 = 1420 menit
-    const MAINTENANCE_END = 15 * 60 + 10;    // 00:10 = 10 menit
+    const MAINTENANCE_START = 23 * 60 + 40; // 23:40 = 1420 menit
+    const MAINTENANCE_END = 0 * 60 + 10;    // 00:10 = 10 menit
     function checkMaintenanceMode() {
         const now = new Date();
         const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
