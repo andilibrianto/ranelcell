@@ -1160,6 +1160,22 @@
             <div id="cek-form-content" class="max-w-lg mx-auto px-4 py-4 pb-32"></div>
         </div>
     </div>
+    <div id="maintenance-overlay" class="hidden fixed inset-0 z-[10000] flex items-center justify-center p-4">
+        <div class="text-center max-w-sm maintenance-text-anim">
+            <div class="maintenance-icon-wrapper mb-8">
+                <i class="fa-solid fa-screwdriver-wrench text-pk text-6xl animate-bounce-slow"></i>
+                <div class="maintenance-gear-1"><i class="fa-solid fa-gear text-pk-light text-2xl"></i></div>
+                <div class="maintenance-gear-2"><i class="fa-solid fa-gear text-pk/60 text-xl"></i></div>
+            </div>
+            <h2 class="text-2xl font-extrabold text-pk mb-3 tracking-[0.15em]">PEMELIHARAAN SISTEM</h2>
+            <p class="text-sm text-gray-300 mb-2 leading-relaxed">Website sedang dalam pemeliharaan</p>
+            <p class="text-base font-bold text-white mb-6">23:40 - 00:10 WIB</p>
+            <div class="maintenance-progress">
+                <div class="maintenance-progress-bar"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-6 leading-relaxed">Mohon tunggu, kami akan kembali segera.<br>Terima kasih atas pengertian Anda.</p>
+        </div>
+    </div>
 
     <script>
 const WA_NUMBER = '6281936664217';
@@ -6483,21 +6499,5 @@ function loadGadgetAndIssuesCatalog() {
      }
     });
     </script>
-    <div id="maintenance-overlay" class="hidden fixed inset-0 z-[10000] flex items-center justify-center p-4">
-        <div class="text-center max-w-sm maintenance-text-anim">
-            <div class="maintenance-icon-wrapper mb-8">
-                <i class="fa-solid fa-screwdriver-wrench text-pk text-6xl animate-bounce-slow"></i>
-                <div class="maintenance-gear-1"><i class="fa-solid fa-gear text-pk-light text-2xl"></i></div>
-                <div class="maintenance-gear-2"><i class="fa-solid fa-gear text-pk/60 text-xl"></i></div>
-            </div>
-            <h2 class="text-2xl font-extrabold text-pk mb-3 tracking-[0.15em]">PEMELIHARAAN SISTEM</h2>
-            <p class="text-sm text-gray-300 mb-2 leading-relaxed">Website sedang dalam pemeliharaan</p>
-            <p class="text-base font-bold text-white mb-6">23:40 - 00:10 WIB</p>
-            <div class="maintenance-progress">
-                <div class="maintenance-progress-bar"></div>
-            </div>
-            <p class="text-xs text-gray-500 mt-6 leading-relaxed">Mohon tunggu, kami akan kembali segera.<br>Terima kasih atas pengertian Anda.</p>
-        </div>
-    </div>
 </body>
 </html>
