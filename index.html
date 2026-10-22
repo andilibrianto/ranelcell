@@ -350,6 +350,68 @@
         .leaflet-tile-pane {
         filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.7);
         }
+        #maintenance-overlay {
+            background: radial-gradient(circle at center, #1a1a1a 0%, #050505 100%);
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spin-reverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(255,45,120,0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(255,45,120,0.9)); }
+        }
+        @keyframes progress-fill {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .maintenance-icon-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .maintenance-gear-1 {
+            position: absolute;
+            top: -15px;
+            right: -20px;
+            animation: spin-slow 4s linear infinite;
+        }
+        .maintenance-gear-2 {
+            position: absolute;
+            bottom: -10px;
+            left: -20px;
+            animation: spin-reverse 5s linear infinite;
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 2s ease-in-out infinite, pulse-glow 2s ease-in-out infinite;
+        }
+        .maintenance-progress {
+            width: 100%;
+            height: 4px;
+            background: #1a1a1a;
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid #222;
+        }
+        .maintenance-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FF2D78, #FF6B9D);
+            animation: progress-fill 30s linear infinite;
+        }
+        .maintenance-text-anim {
+            animation: fade-in-up 0.8s ease-out forwards;
+        }
     </style>
 </head>
 <body>
@@ -6255,7 +6317,40 @@ function loadGadgetAndIssuesCatalog() {
     function init() { 
         setupPWA(); 
         updateCartUI();
+        checkMaintenanceMode();
     }
+    const MAINTENANCE_START = 14 * 60 + 40; // 23:40 = 1420 menit
+    const MAINTENANCE_END = 15 * 60 + 10;    // 00:10 = 10 menit
+    function checkMaintenanceMode() {
+        const now = new Date();
+        const wibTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+        const totalMinutes = wibTime.getHours() * 60 + wibTime.getMinutes();
+        const isMaintenance = totalMinutes >= MAINTENANCE_START || totalMinutes < MAINTENANCE_END;
+        const overlay = document.getElementById('maintenance-overlay');
+        if (isMaintenance) {
+            overlay.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.querySelectorAll('.view').forEach(v => v.style.pointerEvents = 'none');
+        } else {
+            if (!overlay.classList.contains('hidden')) {
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+                document.querySelectorAll('.view').forEach(v => v.style.pointerEvents = '');
+                if (isUserLoggedIn) {
+                    loadUserPoints();
+                    checkAndClaimPoints();
+                }
+            }
+        }
+        return isMaintenance;
+    }
+    checkMaintenanceMode();
+    setInterval(checkMaintenanceMode, 30000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            checkMaintenanceMode();
+        }
+    });
     let allBanners = [];
     async function loadBanners() {
         if (!window.firebaseAuth) return;
@@ -6388,5 +6483,21 @@ function loadGadgetAndIssuesCatalog() {
      }
     });
     </script>
+    <div id="maintenance-overlay" class="hidden fixed inset-0 z-[10000] flex items-center justify-center p-4">
+        <div class="text-center max-w-sm maintenance-text-anim">
+            <div class="maintenance-icon-wrapper mb-8">
+                <i class="fa-solid fa-screwdriver-wrench text-pk text-6xl animate-bounce-slow"></i>
+                <div class="maintenance-gear-1"><i class="fa-solid fa-gear text-pk-light text-2xl"></i></div>
+                <div class="maintenance-gear-2"><i class="fa-solid fa-gear text-pk/60 text-xl"></i></div>
+            </div>
+            <h2 class="text-2xl font-extrabold text-pk mb-3 tracking-[0.15em]">PEMELIHARAAN SISTEM</h2>
+            <p class="text-sm text-gray-300 mb-2 leading-relaxed">Website sedang dalam pemeliharaan</p>
+            <p class="text-base font-bold text-white mb-6">23:40 - 00:10 WIB</p>
+            <div class="maintenance-progress">
+                <div class="maintenance-progress-bar"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-6 leading-relaxed">Mohon tunggu, kami akan kembali segera.<br>Terima kasih atas pengertian Anda.</p>
+        </div>
+    </div>
 </body>
 </html>
